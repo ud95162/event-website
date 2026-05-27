@@ -1,26 +1,277 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #080808;
+  --foreground: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Century Gothic', sans-serif;
+  overflow-x: hidden;
 }
+
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+@keyframes hero-enter {
+  from { transform: translateX(6%); opacity: 0; }
+  to   { transform: translateX(0);  opacity: 1; }
+}
+
+@keyframes title-rise {
+  from { opacity: 0; transform: translateY(28px); filter: blur(8px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0px); }
+}
+
+@keyframes letter-up {
+  from { transform: translateY(110%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes letter-bold {
+  0%   {
+    opacity: 0.3;
+    text-shadow: none;
+  }
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 0.5px currentColor,
+      0 0 1px currentColor,
+      0 0 14px rgba(255,255,255,0.1);
+  }
+}
+
+/* ── Accent: hot-pink (matches reference design #e91e8c) ───────────────── */
+.btn-accent {
+  background: #e91e8c;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+.btn-accent:hover {
+  background: #d4177f;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(233, 30, 140, 0.4);
+}
+
+/* ── Primary CTA: solid white, black text ──────────────────────────────── */
+.btn-primary {
+  background: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+.btn-primary:hover {
+  background: #e0e0e0;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
+}
+
+/* ── Secondary: outlined white ─────────────────────────────────────────── */
+.btn-outline {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+.btn-outline:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(255, 255, 255, 0.06);
+}
+
+/* ── Rolling green border on event cards ───────────────────────────────── */
+@keyframes border-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.event-card-wrapper {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  padding: 1.5px; /* Border thickness */
+  background: rgba(255, 255, 255, 0.08); /* Default static border style */
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+  aspect-ratio: 3 / 4;
+}
+
+/* 1. The rotating green light trail */
+.event-card-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    #39BD69 0deg,
+    #39BD69 40deg,
+    transparent 120deg
+  );
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* 2. The solid green outline fill that appears after the rolling sweep */
+.event-card-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #39BD69;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transition-delay: 0s; /* Fades out instantly on hover exit */
+  pointer-events: none;
+}
+
+.event-card-wrapper:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(57, 189, 105, 0.2); /* Glowing green shadow on hover */
+}
+
+.event-card-wrapper:hover::before {
+  opacity: 1;
+  animation: border-spin 2.2s linear infinite;
+}
+
+.event-card-wrapper:hover::after {
+  opacity: 1;
+  transition-delay: 1.2s; /* Delays the solid fill so the rolling effect plays first! */
+}
+
+.event-card-inner {
+  position: relative;
+  z-index: 1;
+  background: #0b0b0b; /* Solid dark background to mask the rotating gradient */
+  border-radius: calc(1rem - 1.5px);
+  width: 100%;
+  height: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.event-card-wrapper:hover .event-card-inner {
+  background: #060606; /* Slightly darker background on hover for higher contrast */
+}
+
+.artist-card:hover .artist-overlay { opacity: 1; }
+
+/* ── Orb animations ────────────────────────────────────────────────────── */
+@keyframes orb1 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(80px, 60px) scale(1.15); }
+  66%  { transform: translate(-40px, 100px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb2 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(-100px, 50px) scale(1.1); }
+  66%  { transform: translate(60px, -80px) scale(0.95); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb3 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  50%  { transform: translate(70px, -60px) scale(1.2); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb4 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  40%  { transform: translate(50px, 80px) scale(1.1); }
+  80%  { transform: translate(-30px, 40px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-orb-1 { animation: orb1 18s ease-in-out infinite; }
+.animate-orb-2 { animation: orb2 22s ease-in-out infinite; }
+.animate-orb-3 { animation: orb3 16s ease-in-out infinite; }
+.animate-orb-4 { animation: orb4 14s ease-in-out infinite; }
+
+/* ── Preloader ─────────────────────────────────────────────────────────── */
+@keyframes pl-enter {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes pl-exit {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-100%); }
+}
+@keyframes vinyl-cw  { to { transform: rotate( 360deg); } }
+@keyframes spin-y {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+@keyframes vinyl-ccw { to { transform: rotate(-360deg); } }
+@keyframes eq-pulse  {
+  0%, 100% { transform: scaleY(0.08); }
+  50%      { transform: scaleY(1);    }
+}
+@keyframes ring-ripple {
+  0%   { transform: scale(0.25); opacity: 0.55; }
+  100% { transform: scale(3.2);  opacity: 0;    }
+}
+@keyframes spiral-draw {
+  from { stroke-dashoffset: 1200; opacity: 0; }
+  to   { stroke-dashoffset: 0;    opacity: 1; }
+}
+@keyframes icon-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50%      { opacity: 0.7;  transform: scale(1.1); }
+}
+@keyframes counter-num {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Brand marquee ────────────────────────────────────────────────────── */
+@keyframes marquee-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+/* Custom premium horizontal scrollbar for tags */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 2px; /* Super thin flat line */
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1); /* Solid dark line track spanning full width */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(233, 24, 79, 1); /* Vibrant red flat thumb */
+  border-radius: 0px; /* Sharp flat edges */
+}
+
