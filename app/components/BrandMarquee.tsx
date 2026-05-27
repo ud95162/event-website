@@ -1,8 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-/* ── Inline SVG brand logos (monochrome white) ───────────────────────── */
+/* ── Brand colors ─────────────────────────────────────────────────────── */
+const BRAND_COLORS: Record<string, string> = {
+  spotify:      "#1DB954",
+  youtube:      "#FF0000",
+  redbull:      "#E8002A",
+  samsung:      "#5B8AF5",
+  cocacola:     "#FF1A1A",
+  jbl:          "#FF8C00",
+  nike:         "#F5492E",
+  heineken:     "#00B84A",
+  visa:         "#F7B600",
+  livenation:   "#E01A2C",
+  monster:      "#A0D200",
+  bose:         "#D4A853",
+  sennheiser:   "#3399FF",
+  ticketmaster: "#0088FF",
+  pioneer:      "#E02020",
+  sony:         "#6699FF",
+  yamaha:       "#CF0A2C",
+  adidas:       "#88BBFF",
+  mastercard:   "#FF6B35",
+  pepsi:        "#4D88FF",
+};
+
+/* ── Inline SVG brand logos (use fill="currentColor" — color driven by parent) ── */
 
 const SpotifyLogo = () => (
   <svg viewBox="0 0 168 168" width={120} height={40} fill="currentColor">
@@ -91,11 +115,11 @@ const PioneerLogo = () => (
   </svg>
 );
 
-const MasterCardLogo = () => (
-  <svg viewBox="0 0 200 50" width={120} height={30} fill="currentColor">
-    <circle cx="38" cy="25" r="22" opacity="0.7"/>
-    <circle cx="62" cy="25" r="22" opacity="0.5"/>
-    <text x="95" y="34" fontFamily="'Century Gothic', sans-serif" fontWeight="600" fontSize="22" letterSpacing="1">mastercard</text>
+const MasterCardLogo = ({ hovered }: { hovered: boolean }) => (
+  <svg viewBox="0 0 200 50" width={120} height={30}>
+    <circle cx="38" cy="25" r="22" fill={hovered ? "#EB001B" : "currentColor"} opacity={hovered ? 1 : 0.7}/>
+    <circle cx="62" cy="25" r="22" fill={hovered ? "#F79E1B" : "currentColor"} opacity={hovered ? 0.85 : 0.5}/>
+    <text x="95" y="34" fontFamily="'Century Gothic', sans-serif" fontWeight="600" fontSize="22" letterSpacing="1" fill="currentColor">mastercard</text>
   </svg>
 );
 
@@ -129,55 +153,83 @@ const TicketmasterLogo = () => (
   </svg>
 );
 
-/* ── Brand rows ───────────────────────────────────────────────────────── */
+/* ── Brand entries ────────────────────────────────────────────────────── */
 
-const row1 = [
-  <SpotifyLogo key="spotify" />,
-  <RedBullLogo key="redbull" />,
-  <YoutubeLogo key="youtube" />,
-  <SamsungLogo key="samsung" />,
-  <CocaColaLogo key="cocacola" />,
-  <JBLLogo key="jbl" />,
-  <NikeLogo key="nike" />,
-  <HeinekenLogo key="heineken" />,
-  <VisaLogo key="visa" />,
-  <LiveNationLogo key="livenation" />,
+type BrandEntry = { id: string; logo: (hovered: boolean) => React.ReactNode };
+
+const row1Brands: BrandEntry[] = [
+  { id: "spotify",     logo: () => <SpotifyLogo /> },
+  { id: "redbull",     logo: () => <RedBullLogo /> },
+  { id: "youtube",     logo: () => <YoutubeLogo /> },
+  { id: "samsung",     logo: () => <SamsungLogo /> },
+  { id: "cocacola",    logo: () => <CocaColaLogo /> },
+  { id: "jbl",         logo: () => <JBLLogo /> },
+  { id: "nike",        logo: () => <NikeLogo /> },
+  { id: "heineken",    logo: () => <HeinekenLogo /> },
+  { id: "visa",        logo: () => <VisaLogo /> },
+  { id: "livenation",  logo: () => <LiveNationLogo /> },
 ];
 
-const row2 = [
-  <MonsterLogo key="monster" />,
-  <BoseLogo key="bose" />,
-  <SennheiserLogo key="sennheiser" />,
-  <TicketmasterLogo key="ticketmaster" />,
-  <PioneerLogo key="pioneer" />,
-  <SonyLogo key="sony" />,
-  <YamahaLogo key="yamaha" />,
-  <AdidasLogo key="adidas" />,
-  <MasterCardLogo key="mastercard" />,
-  <PepsiLogo key="pepsi" />,
+const row2Brands: BrandEntry[] = [
+  { id: "monster",      logo: () => <MonsterLogo /> },
+  { id: "bose",         logo: () => <BoseLogo /> },
+  { id: "sennheiser",   logo: () => <SennheiserLogo /> },
+  { id: "ticketmaster", logo: () => <TicketmasterLogo /> },
+  { id: "pioneer",      logo: () => <PioneerLogo /> },
+  { id: "sony",         logo: () => <SonyLogo /> },
+  { id: "yamaha",       logo: () => <YamahaLogo /> },
+  { id: "adidas",       logo: () => <AdidasLogo /> },
+  { id: "mastercard",   logo: (h) => <MasterCardLogo hovered={h} /> },
+  { id: "pepsi",        logo: () => <PepsiLogo /> },
 ];
 
-function MarqueeRow({ logos, direction }: { logos: React.ReactNode[]; direction: "left" | "right" }) {
-  const items = [...logos, ...logos];
+/* ── Single brand card with hover color ──────────────────────────────── */
+
+function BrandCard({ id, logo }: BrandEntry) {
+  const [hovered, setHovered] = useState(false);
+  const color = BRAND_COLORS[id] ?? "#ffffff";
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="flex-shrink-0 cursor-default rounded-xl px-6 py-4 flex items-center justify-center backdrop-blur-md"
+      style={{
+        color: hovered ? color : "rgba(255,255,255,0.22)",
+        background: hovered
+          ? `linear-gradient(135deg, ${color}1A 0%, ${color}08 100%)`
+          : "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+        border: `1px solid ${hovered ? color + "55" : "rgba(255,255,255,0.08)"}`,
+        boxShadow: hovered
+          ? `inset 0 1px 0 ${color}22, 0 4px 24px rgba(0,0,0,0.3), 0 0 24px ${color}28`
+          : "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.2)",
+        transition: "color 0.4s ease, background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease",
+      }}
+    >
+      {logo(hovered)}
+    </div>
+  );
+}
+
+/* ── Marquee row ──────────────────────────────────────────────────────── */
+
+function MarqueeRow({ brands, direction }: { brands: BrandEntry[]; direction: "left" | "right" }) {
+  const items = [...brands, ...brands];
   const trackRef = useRef<HTMLDivElement>(null);
 
-  /* JS-driven infinite scroll — no CSS keyframes needed */
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
 
-    const speed = direction === "left" ? -0.5 : 0.5; // px per frame (~30px/s)
+    const speed = direction === "left" ? -0.5 : 0.5;
     let pos = direction === "right" ? -(el.scrollWidth / 2) : 0;
     let raf: number;
 
     const step = () => {
       pos += speed;
       const half = el.scrollWidth / 2;
-
-      // Seamless loop: reset once a full set has scrolled past
       if (direction === "left" && pos <= -half) pos += half;
       if (direction === "right" && pos >= 0) pos -= half;
-
       el.style.transform = `translateX(${pos}px)`;
       raf = requestAnimationFrame(step);
     };
@@ -188,7 +240,6 @@ function MarqueeRow({ logos, direction }: { logos: React.ReactNode[]; direction:
 
   return (
     <div className="relative overflow-hidden py-6">
-      {/* Fade edges */}
       <div className="absolute left-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to right, #080808, transparent)" }} />
       <div className="absolute right-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to left, #080808, transparent)" }} />
 
@@ -196,28 +247,19 @@ function MarqueeRow({ logos, direction }: { logos: React.ReactNode[]; direction:
         ref={trackRef}
         className="flex items-center gap-20 whitespace-nowrap w-max will-change-transform"
       >
-        {items.map((logo, i) => (
-          <div
-            key={i}
-            className="flex-shrink-0 text-white/20 hover:text-white/50 transition-colors duration-500 cursor-default rounded-xl px-6 py-4 flex items-center justify-center backdrop-blur-md"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.2)",
-            }}
-          >
-            {logo}
-          </div>
+        {items.map((brand, i) => (
+          <BrandCard key={`${brand.id}-${i}`} id={brand.id} logo={brand.logo} />
         ))}
       </div>
     </div>
   );
 }
 
+/* ── Section ──────────────────────────────────────────────────────────── */
+
 export default function BrandMarquee() {
   return (
     <section className="py-16 overflow-hidden">
-      {/* Header */}
       <div className="text-center mb-10 select-none">
         <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase mb-3">
           TRUSTED BY THE BEST
@@ -227,12 +269,8 @@ export default function BrandMarquee() {
         </h2>
       </div>
 
-      {/* Row 1 — scrolls left */}
-      <MarqueeRow logos={row1} direction="left" />
-
-      {/* Row 2 — scrolls right */}
-      <MarqueeRow logos={row2} direction="right" />
-
+      <MarqueeRow brands={row1Brands} direction="left" />
+      <MarqueeRow brands={row2Brands} direction="right" />
     </section>
   );
 }
