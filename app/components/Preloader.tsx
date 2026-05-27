@@ -8,6 +8,7 @@ interface PreloaderProps {
   setPhase: (phase: "idle" | "exit" | "gone") => void;
 }
 
+
 /* ══════════════════════════════════════════════════════════════════════════ */
 export default function Preloader({ phase, setPhase }: PreloaderProps) {
   const [progress, setProgress] = useState(0);
@@ -317,7 +318,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
                         y="95"
                         textAnchor="middle"
                         fontSize="110"
-                        fontWeight="900"
+                        fontWeight="100"
                         fontFamily="'Century Gothic', sans-serif"
                         letterSpacing="0.08em"
                         style={config ? {
@@ -357,7 +358,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
                         y="95"
                         textAnchor="middle"
                         fontSize="110"
-                        fontWeight="900"
+                        fontWeight="100"
                         fontFamily="'Century Gothic', sans-serif"
                         letterSpacing="0.08em"
                         style={{
@@ -405,7 +406,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
                         y="32"
                         textAnchor="middle"
                         fontSize="30"
-                        fontWeight="900"
+                        fontWeight="100"
                         fontFamily="'Century Gothic', sans-serif"
                         letterSpacing="0.35em"
                         style={config ? {
@@ -445,7 +446,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
                         y="32"
                         textAnchor="middle"
                         fontSize="30"
-                        fontWeight="900"
+                        fontWeight="100"
                         fontFamily="'Century Gothic', sans-serif"
                         letterSpacing="0.35em"
                         style={{
