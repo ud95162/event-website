@@ -37,9 +37,10 @@ const bottomSocials = [
 ];
 
 const navLinks = [
-  { label: "Home", href: "#" }, { label: "About Us", href: "#about" },
-  { label: "Explore Events", href: "#events" }, { label: "Upcoming Events", href: "#upcoming" },
-  { label: "Artists", href: "#artists" }, { label: "Contact Us", href: "#contact" },
+  { label: "Home",     href: "#"        },
+  { label: "Events",   href: "#events"  },
+  { label: "Artists",  href: "#artists" },
+  { label: "About Us", href: "#about"   },
 ];
 
 export default function Footer() {

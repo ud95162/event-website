@@ -7,6 +7,8 @@ interface Particle {
   vx: number; vy: number;
   r: number;
   alpha: number;
+  color: string;
+  glow: string;
 }
 
 const COUNT       = 140;
@@ -29,14 +31,19 @@ export default function ParticleField() {
     resize();
     window.addEventListener("resize", resize);
 
-    const particles: Particle[] = Array.from({ length: COUNT }, () => ({
-      x:     Math.random() * window.innerWidth,
-      y:     Math.random() * window.innerHeight,
-      vx:    (Math.random() - 0.5) * 0.4,
-      vy:    (Math.random() - 0.5) * 0.4,
-      r:     Math.random() * 1.8 + 0.8,
-      alpha: Math.random() * 0.45 + 0.2,
-    }));
+    const particles: Particle[] = Array.from({ length: COUNT }, () => {
+      const isGreen = Math.random() < 0.22;
+      return {
+        x:     Math.random() * window.innerWidth,
+        y:     Math.random() * window.innerHeight,
+        vx:    (Math.random() - 0.5) * 0.4,
+        vy:    (Math.random() - 0.5) * 0.4,
+        r:     Math.random() * 1.8 + 0.8,
+        alpha: Math.random() * 0.45 + 0.2,
+        color: isGreen ? "#39BD69" : "#ffffff",
+        glow:  isGreen ? "rgba(57,189,105,0.9)" : "rgba(255,255,255,0.8)",
+      };
+    });
 
     const onMove  = (e: MouseEvent) => { mouse.current = { x: e.clientX, y: e.clientY }; };
     const onLeave = () => { mouse.current = { x: -9999, y: -9999 }; };
@@ -67,11 +74,11 @@ export default function ParticleField() {
       for (const p of particles) {
         ctx.save();
         ctx.globalAlpha = p.alpha;
-        ctx.shadowColor = "rgba(255,255,255,0.8)";
+        ctx.shadowColor = p.glow;
         ctx.shadowBlur  = 10;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = p.color;
         ctx.fill();
         ctx.restore();
       }

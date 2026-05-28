@@ -5,13 +5,11 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import FeaturedEvents from "./components/FeaturedEvents";
 import FeaturedArtists from "./components/FeaturedArtists";
-import UpcomingEvents from "./components/UpcomingEvents";
 import Footer from "./components/Footer";
 import ParticleField from "./components/ParticleField";
 import GradientOrbs from "./components/GradientOrbs";
 // import FloatingMusicians from "./components/FloatingMusicians";
 import Preloader from "./components/Preloader";
-import ScrollRotator from "./components/ScrollRotator";
 import StickySearchFilters from "./components/StickySearchFilters";
 import StatsCounter from "./components/StatsCounter";
 import BrandMarquee from "./components/BrandMarquee";
@@ -25,9 +23,6 @@ export default function Home() {
       {preloaderPhase !== "gone" && (
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
       )}
-
-      {/* Scroll-driven rotating treble clef tied to the #events section */}
-      <ScrollRotator />
 
       {/* Layer 0 – subtle white orbs */}
       <GradientOrbs />
@@ -67,7 +62,6 @@ export default function Home() {
           <StatsCounter />
           <FeaturedEvents />
           <FeaturedArtists />
-          <UpcomingEvents />
           <BrandMarquee />
         </div>
 

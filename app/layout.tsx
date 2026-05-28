@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LocationProvider } from "./context/LocationContext";
 
 export const metadata: Metadata = {
   title: "Events Company — Experience the Biggest Music Festivals",
@@ -14,7 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col antialiased">{children}</body>
+      <body className="min-h-full flex flex-col antialiased">
+        <LocationProvider>{children}</LocationProvider>
+      </body>
     </html>
   );
 }

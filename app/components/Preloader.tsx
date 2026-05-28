@@ -95,6 +95,13 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
 
   const isLoaded = progress >= 100;
 
+  /* ── Auto-exit 1 s after loading completes ───────────────────────────── */
+  useEffect(() => {
+    if (!isLoaded) return;
+    const id = setTimeout(() => triggerExit(), 1000);
+    return () => clearTimeout(id);
+  }, [isLoaded, triggerExit]);
+
   /* ── Fade-scale-bloom animation states ───────────────────────────────── */
   const [showEmblem, setShowEmblem]   = useState(false);
   const [showDivider, setShowDivider] = useState(false);

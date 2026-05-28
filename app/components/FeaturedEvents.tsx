@@ -1,99 +1,147 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Calendar, MapPin, DollarSign } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
+import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 
 const events = [
   {
     id: 1, tag: "MUSIC FESTIVAL", title: "New Single Urban Music",
     date: "27 August 2025", location: "Colombo", price: "Starting from LKR 4,500",
     image: "/events/event1.png", badge: null,
+    lat:  6.9271, lon:  79.8612,
   },
   {
     id: 2, tag: "MUSIC PARTY", title: "Urban Music Party",
     date: "27 August 2025", location: "Colombo", price: "Starting from LKR 4,500",
     image: "/events/event2.png", badge: "HOT",
+    lat:  6.9271, lon:  79.8612,
   },
   {
     id: 3, tag: "MUSIC CONCERT", title: "Lovers Night 2027",
     date: "12 February 2027", location: "Brisbane", price: "Starting from LKR 4,500",
     image: "/events/event3.png", badge: null,
+    lat: -27.4698, lon: 153.0251,
   },
   {
     id: 4, tag: "DJ NIGHT", title: "Tharle DJ Night",
     date: "27 August 2026", location: "Colombo", price: "Starting from LKR 4,500",
     image: "/events/event4.png", badge: "COMING SOON",
+    lat:  6.9271, lon:  79.8612,
   },
   {
     id: 5, tag: "LIVE CONCERT", title: "Neon Beats Live",
     date: "05 March 2027", location: "Galle", price: "Starting from LKR 3,500",
     image: "/events/event1.png", badge: "NEW",
+    lat:  6.0329, lon:  80.2168,
   },
   {
     id: 6, tag: "CULTURAL NIGHT", title: "Rhythm & Soul",
     date: "18 November 2026", location: "Kandy", price: "Starting from LKR 5,000",
     image: "/events/event2.png", badge: null,
+    lat:  7.2906, lon:  80.6337,
   },
 ];
 
 const CARD_W     = 280;
 const CARD_H     = 370;
-const RADIUS_X   = 420;    // horizontal spread
-const SCROLL_PX  = 2400;   // scroll distance for full experience
+const RADIUS_X   = 420;
 const N          = events.length;
 const ANGLE_STEP = (Math.PI * 2) / N;
-const STICKY_TOP  = 130;   // navbar (64px) + filter bar (~66px) height
 
 export default function FeaturedEvents() {
-  const spiralRef = useRef<HTMLDivElement>(null);
-  const [progress, setProgress] = useState(0);
+  const { userLocation } = useUserLocation();
 
-  useEffect(() => {
-    const onScroll = () => {
-      if (!spiralRef.current) return;
-      const top = spiralRef.current.getBoundingClientRect().top;
-      const range = spiralRef.current.offsetHeight - window.innerHeight;
-      const p = Math.max(0, Math.min(1, -top / range));
-      setProgress(p);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  /* ── Angle state: current (animated) vs target (snaps on click) ─────── */
+  const currentAngle = useRef(0);
+  const targetAngle  = useRef(0);
+  const rafRef       = useRef<number>(0);
+  const animFn       = useRef<() => void>(() => {});
 
-  // Map progress to rotation angle (1.5 full turns)
-  const baseAngle = progress * Math.PI * 2 * 1.5;
+  const [baseAngle,  setBaseAngle]  = useState(0);
+  const [liked,      setLiked]      = useState<Set<number>>(new Set());
+  const [shared,     setShared]     = useState<Set<number>>(new Set());
 
-  // Calculate each card's projected position
+  const toggleLike = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLiked(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  };
+
+  const handleShare = (id: number, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (navigator.share) {
+      navigator.share({ title, url: window.location.href });
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+    }
+    setShared(prev => { const s = new Set(prev); s.add(id); return s; });
+    setTimeout(() => setShared(prev => { const s = new Set(prev); s.delete(id); return s; }), 1500);
+  };
+
+  /* RAF lerp — same momentum feel as the scroll version */
+  animFn.current = () => {
+    const diff = targetAngle.current - currentAngle.current;
+    if (Math.abs(diff) < 0.0003) {
+      currentAngle.current = targetAngle.current;
+      setBaseAngle(targetAngle.current);
+      return;
+    }
+    currentAngle.current += diff * 0.09;   // 0.09 ≈ scroll easing speed
+    setBaseAngle(currentAngle.current);
+    rafRef.current = requestAnimationFrame(() => animFn.current());
+  };
+
+  const startAnim = () => {
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => animFn.current());
+  };
+
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+
+  /* Active card index derived from target angle */
+  const activeIndex = ((-Math.round(targetAngle.current / ANGLE_STEP)) % N + N) % N;
+
+  /* ── Navigation helpers ──────────────────────────────────────────────── */
+  const next = () => {
+    targetAngle.current -= ANGLE_STEP;
+    startAnim();
+  };
+
+  const prev = () => {
+    targetAngle.current += ANGLE_STEP;
+    startAnim();
+  };
+
+  /* Jump to specific dot — takes the shortest rotation path */
+  const goTo = (i: number) => {
+    const base = -i * ANGLE_STEP;
+    const k    = Math.round((targetAngle.current - base) / (N * ANGLE_STEP));
+    targetAngle.current = base + k * (N * ANGLE_STEP);
+    startAnim();
+  };
+
+  /* ── Card positions ──────────────────────────────────────────────────── */
   const cards = events.map((event, i) => {
-    const angle = baseAngle + i * ANGLE_STEP;
-    const x = Math.sin(angle) * RADIUS_X;
-    const z = Math.cos(angle);                    // -1 (back) to 1 (front)
-    const depth = (z + 1) / 2;                    // 0 (back) to 1 (front)
-    const scale = 0.55 + depth * 0.45;            // 0.55 → 1.0
-    const opacity = 0.25 + depth * 0.75;          // 0.25 → 1.0
-    const y = Math.sin(angle * 0.5) * 30;         // gentle vertical wave
-    const zIndex = Math.round(depth * 100);
+    const angle   = baseAngle + i * ANGLE_STEP;
+    const x       = Math.sin(angle) * RADIUS_X;
+    const z       = Math.cos(angle);
+    const depth   = (z + 1) / 2;
+    const scale   = 0.55 + depth * 0.45;
+    const opacity = 0.25 + depth * 0.75;
+    const y       = Math.sin(angle * 0.5) * 30;
+    const zIndex  = Math.round(depth * 100);
     const isFront = depth > 0.92;
-
-    return { ...event, x, y, z, depth, scale, opacity, zIndex, isFront, index: i };
+    return { ...event, x, y, depth, scale, opacity, zIndex, isFront };
   });
 
-  // Sort by depth so back cards render first
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section
-      id="events"
-      ref={spiralRef}
-      style={{ height: SCROLL_PX + 900 }}
-    >
-      <div
-        className="sticky flex flex-col items-center justify-center overflow-hidden"
-        style={{ top: STICKY_TOP, height: `calc(100vh - ${STICKY_TOP}px)` }}
-      >
-        {/* ── Header — stays visible inside the sticky viewport ──── */}
-        <div className="text-center mb-4 relative z-[200] select-none">
+    <section id="events" className="py-20 overflow-hidden">
+      <div className="flex flex-col items-center justify-center">
+
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <div className="text-center mb-8 relative z-[200] select-none">
           <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase mb-3">
             YOUR BEST FAVORITE EVENTS START HERE
           </p>
@@ -101,12 +149,24 @@ export default function FeaturedEvents() {
             Featured Events
           </h2>
         </div>
-          {/* ── Spiral Carousel ───────────────────────────────────── */}
-          <div
-            className="relative"
-            style={{ width: "100%", maxWidth: 1100, height: CARD_H + 40 }}
+
+        {/* ── Carousel + Arrows ─────────────────────────────────────── */}
+        <div
+          className="relative flex items-center justify-center w-full"
+          style={{ maxWidth: 1100 }}
+        >
+          {/* Prev arrow */}
+          <button
+            onClick={prev}
+            aria-label="Previous event"
+            className="absolute left-4 z-[200] w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/prev"
           >
-            {sorted.map((card) => (
+            <ArrowRight size={14} className="text-white group-hover/prev:text-black transition-colors rotate-180" />
+          </button>
+
+          {/* Card stage */}
+          <div className="relative" style={{ width: "100%", height: CARD_H + 40 }}>
+            {sorted.map(card => (
               <div
                 key={card.id}
                 className="absolute rounded-2xl overflow-hidden cursor-pointer"
@@ -117,23 +177,17 @@ export default function FeaturedEvents() {
                   top: "50%",
                   background: "#0a0a2e",
                   border: "1px solid rgba(255,255,255,0.08)",
-                  transform: `translate(-50%, -50%) translateX(${card.x}px) translateY(${card.y}px) scale(${card.scale})`,
+                  transform: `translate(-50%,-50%) translateX(${card.x}px) translateY(${card.y}px) scale(${card.scale})`,
                   opacity: card.opacity,
                   filter: card.isFront ? "brightness(1.1)" : `brightness(${0.4 + card.depth * 0.5})`,
                   zIndex: card.zIndex,
-                  transition: "transform 0.15s linear, opacity 0.15s linear, filter 0.25s ease",
+                  willChange: "transform",
                 }}
               >
-                {/* Image — top 60% */}
+                {/* Image */}
                 <div className="relative w-full" style={{ height: "58%" }}>
-                  <img
-                    src={card.image}
-                    alt={card.title}
-                    className="w-full h-full object-cover object-top"
-                  />
+                  <img src={card.image} alt={card.title} className="w-full h-full object-cover object-top" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a2e] via-transparent to-transparent" />
-
-                  {/* Badge */}
                   {card.badge && (
                     <div className="absolute top-3 left-3 z-10">
                       <span className="bg-white text-black text-[8px] font-black px-2.5 py-1 rounded-full tracking-[0.18em] uppercase">
@@ -141,26 +195,59 @@ export default function FeaturedEvents() {
                       </span>
                     </div>
                   )}
+                  {/* Heart + Share */}
+                  <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+                    <button
+                      onClick={(e) => toggleLike(card.id, e)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
+                      style={{
+                        background: liked.has(card.id) ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.45)",
+                        border: liked.has(card.id) ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.15)",
+                        backdropFilter: "blur(6px)",
+                      }}
+                    >
+                      <Heart
+                        size={11}
+                        strokeWidth={2.5}
+                        className="transition-colors"
+                        style={{ color: liked.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }}
+                        fill={liked.has(card.id) ? "#fff" : "none"}
+                      />
+                    </button>
+                    <button
+                      onClick={(e) => handleShare(card.id, card.title, e)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
+                      style={{
+                        background: shared.has(card.id) ? "rgba(57,189,105,0.85)" : "rgba(0,0,0,0.45)",
+                        border: shared.has(card.id) ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.15)",
+                        backdropFilter: "blur(6px)",
+                      }}
+                    >
+                      <Share2
+                        size={11}
+                        strokeWidth={2.5}
+                        style={{ color: shared.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }}
+                      />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Text area — bottom 42% */}
+                {/* Info */}
                 <div className="px-4 pb-3 pt-1 text-center flex flex-col justify-between" style={{ height: "42%" }}>
                   <div>
-                    <p className="text-white/40 text-[9px] font-bold tracking-[0.25em] uppercase mb-1.5">
-                      {card.tag}
-                    </p>
-                    <h3 className="text-white font-black text-sm uppercase mb-2 tracking-wide leading-tight">
-                      {card.title}
-                    </h3>
-                    <p className="text-white/40 text-[11px] leading-relaxed">
-                      Date: {card.date} | Location: {card.location}
-                    </p>
-                    <p className="text-white/40 text-[11px]">
-                      Price: {card.price.replace("Starting from ", "")}
-                    </p>
+                    <p className="text-white/40 text-[9px] font-bold tracking-[0.25em] uppercase mb-1.5">{card.tag}</p>
+                    <h3 className="text-white font-black text-sm uppercase mb-2 tracking-wide leading-tight">{card.title}</h3>
+                    <p className="text-white/40 text-[11px] leading-relaxed">Date: {card.date} | Location: {card.location}</p>
+                    <p className="text-white/40 text-[11px]">Price: {card.price.replace("Starting from ", "")}</p>
+                    {userLocation && (
+                      <div className="flex items-center justify-center gap-1 mt-1.5">
+                        <MapPin size={9} className="text-[#39BD69]" />
+                        <span className="text-[10px] font-semibold" style={{ color: "#39BD69" }}>
+                          {formatDistance(haversineKm(userLocation.lat, userLocation.lon, card.lat, card.lon))}
+                        </span>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Green accent bar */}
                   <div className="flex justify-center mt-2">
                     <div
                       className="h-[3px] rounded-full"
@@ -176,29 +263,33 @@ export default function FeaturedEvents() {
             ))}
           </div>
 
-          {/* ── Dot indicators ────────────────────────────────────── */}
-          <div className="flex gap-2 mt-6 relative z-[200]">
-            {events.map((_, i) => {
-              const angle = baseAngle + i * ANGLE_STEP;
-              const z = Math.cos(angle);
-              const active = (z + 1) / 2 > 0.92;
-              return (
-                <div
-                  key={i}
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    width: active ? 24 : 6,
-                    height: 6,
-                    background: active ? "#39BD69" : "rgba(255,255,255,0.25)",
-                  }}
-                />
-              );
-            })}
-          </div>
+          {/* Next arrow */}
+          <button
+            onClick={next}
+            aria-label="Next event"
+            className="absolute right-4 z-[200] w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/next"
+          >
+            <ArrowRight size={14} className="text-white group-hover/next:text-black transition-colors" />
+          </button>
+        </div>
 
-          <p className="text-white/20 text-[9px] tracking-[0.3em] uppercase mt-3 select-none relative z-[200]">
-            SCROLL TO EXPLORE
-          </p>
+        {/* ── Dot indicators ────────────────────────────────────────── */}
+        <div className="flex gap-2 mt-6 relative z-[200]">
+          {events.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Go to event ${i + 1}`}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === activeIndex ? 24 : 6,
+                height: 6,
+                background: i === activeIndex ? "#39BD69" : "rgba(255,255,255,0.25)",
+              }}
+            />
+          ))}
+        </div>
+
       </div>
     </section>
   );

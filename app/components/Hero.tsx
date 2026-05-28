@@ -137,9 +137,9 @@ export default function Hero() {
     <section className="pt-4 flex flex-col">
 
       {/* ── Hero — all 3 panels absolutely positioned, slots animate ──── */}
-      <div className="flex-1 w-full pb-6">
+      <div className="flex-1 w-full pb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className="h-[480px] lg:h-[560px]"
+          className="h-[480px] lg:h-[560px] rounded-2xl"
           style={{ position: "relative", overflow: "hidden" }}
         >
           {panels.map((p, i) => {

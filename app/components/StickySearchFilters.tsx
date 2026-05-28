@@ -1,41 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, Calendar } from "lucide-react";
 
-const GREEN  = "green";
-const BLUE   = "blue";
-const PURPLE = "purple";
-const RED    = "red";
-
-const GROUP_COLOR: Record<string, string> = {
-  green:  "#39BD69", // Swapped general green with brand theme green for ultimate styling cohesiveness!
-  blue:   "#60a5fa",
-  purple: "#a855f7",
-  red:    "#f43f5e",
-};
-
-const categories = [
-  { label: "Music",            group: GREEN  },
-  { label: "Concerts",         group: GREEN  },
-  { label: "DJ Night",         group: GREEN  },
-  { label: "Festivals",        group: GREEN  },
-  { label: "Business",         group: BLUE   },
-  { label: "Workshops",        group: BLUE   },
-  { label: "Tech Events",      group: PURPLE },
-  { label: "Sports",           group: PURPLE },
-  { label: "Food & Drinks",    group: PURPLE },
-  { label: "Networking",       group: RED    },
-  { label: "Family Events",    group: RED    },
-  { label: "Community Events", group: RED    },
+const genres = [
+  { label: "Electronic Music", color: "#39BD69" },
+  { label: "Sinhala Music",    color: "#f59e0b" },
+  { label: "Tamil Music",      color: "#a855f7" },
+  { label: "Hindi Music",      color: "#f43f5e" },
 ];
 
+const dates = [
+  { label: "Today"      },
+  { label: "This Week"  },
+  { label: "This Month" },
+  { label: "Choose Dates", icon: true },
+];
+
+const artistFilters = [
+  { label: "All Artists"     },
+  { label: "Recommended"     },
+  { label: "Followed Artists"},
+];
+
+const DATE_COLOR   = "#60a5fa";
+const ARTIST_COLOR = "#e879f9";
+
+function Pill({
+  label, color, isActive, onClick, icon,
+}: {
+  label: string; color: string; isActive: boolean; onClick: () => void; icon?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full transition-all active:scale-95 cursor-pointer"
+      style={{
+        background:    isActive ? `${color}18` : "transparent",
+        color,
+        border:        `1px solid ${color}60`,
+        boxShadow:     isActive ? `0 0 10px ${color}25` : "none",
+        fontWeight:    300,
+        fontSize:      "10px",
+        lineHeight:    "100%",
+        letterSpacing: "0.1em",
+      }}
+    >
+      {icon && <Calendar size={9} strokeWidth={2} />}
+      {label}
+    </button>
+  );
+}
+
 export default function StickySearchFilters() {
-  const [activeByGroup, setActiveByGroup] = useState<Record<string, string>>({ green: "Music" });
+  const [activeGenre,  setActiveGenre]  = useState<string | null>(null);
+  const [activeDate,   setActiveDate]   = useState<string | null>(null);
+  const [activeArtist, setActiveArtist] = useState<string>("All Artists");
 
   return (
-    <div className="sticky top-16 z-40 bg-[#080808]/95 backdrop-blur-md border-b border-white/10 py-4 transition-all duration-300 shadow-lg">
-      {/* ── Search bar ──────────────────────────────────────────── */}
+    <div className="sticky top-16 z-[290] bg-[#080808]/95 backdrop-blur-md border-b border-white/10 py-4 transition-all duration-300 shadow-lg">
+
+      {/* ── Search bar ──────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-3">
         <div className="bg-black/60 backdrop-blur-md rounded-full flex items-center px-2 py-1.5 border border-white/12">
           <button className="flex items-center gap-2 text-white/55 text-[11px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap flex-shrink-0">
@@ -57,39 +82,35 @@ export default function StickySearchFilters() {
         </div>
       </div>
 
-      {/* ── Category tag pills ────────────────────────────────────── */}
+      {/* ── All filters in one row ──────────────────────────────────── */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-3">
-          {categories.map(({ label, group }) => {
-            const color    = GROUP_COLOR[group];
-            const isActive = activeByGroup[group] === label;
-            return (
-              <button
-                key={label}
-                onClick={() =>
-                  setActiveByGroup((prev) => {
-                    if (prev[group] === label) { const n = { ...prev }; delete n[group]; return n; }
-                    return { ...prev, [group]: label };
-                  })
-                }
-                className="flex-shrink-0 px-3 py-1 rounded-full transition-all active:scale-95"
-                style={{
-                  background: isActive ? `${color}18` : "transparent",
-                  color:      color,
-                  border:     group === "green"
-                    ? "1px solid rgba(57, 189, 105, 0.5)"
-                    : `1px solid ${color}60`,
-                  boxShadow:  isActive ? `0 0 10px ${color}25` : "none",
-                  fontWeight: 300,
-                  fontSize:   "10px",
-                  lineHeight: "100%",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+
+          {/* Date filters */}
+          {dates.map(({ label, icon }) => (
+            <Pill key={label} label={label} color={DATE_COLOR}
+              isActive={activeDate === label} icon={icon}
+              onClick={() => setActiveDate(prev => prev === label ? null : label)} />
+          ))}
+
+          <div className="flex-shrink-0 w-px h-4 bg-white/15 mx-1" />
+
+          {/* Artist filters */}
+          {artistFilters.map(({ label }) => (
+            <Pill key={label} label={label} color={ARTIST_COLOR}
+              isActive={activeArtist === label}
+              onClick={() => setActiveArtist(label)} />
+          ))}
+
+          <div className="flex-shrink-0 w-px h-4 bg-white/15 mx-1" />
+
+          {/* Genre filters */}
+          {genres.map(({ label, color }) => (
+            <Pill key={label} label={label} color={color}
+              isActive={activeGenre === label}
+              onClick={() => setActiveGenre(prev => prev === label ? null : label)} />
+          ))}
+
         </div>
       </div>
     </div>
