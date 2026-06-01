@@ -159,7 +159,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
           style={{
             width: "45vmax", height: "45vmax",
             top: "15%", left: "10%",
-            background: "radial-gradient(circle, rgba(20,50,120,0.35) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(20,90,45,0.28) 0%, transparent 70%)",
             filter: "blur(80px)",
             animation: "aurora-1 16s ease-in-out infinite",
           }}
@@ -169,7 +169,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
           style={{
             width: "40vmax", height: "40vmax",
             top: "40%", right: "5%",
-            background: "radial-gradient(circle, rgba(70,20,100,0.30) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(15,80,40,0.22) 0%, transparent 70%)",
             filter: "blur(80px)",
             animation: "aurora-2 20s ease-in-out infinite",
           }}
@@ -179,7 +179,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
           style={{
             width: "35vmax", height: "35vmax",
             bottom: "10%", left: "30%",
-            background: "radial-gradient(circle, rgba(10,70,80,0.25) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(25,100,55,0.20) 0%, transparent 70%)",
             filter: "blur(70px)",
             animation: "aurora-3 14s ease-in-out infinite",
           }}
@@ -189,7 +189,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
           style={{
             width: "30vmax", height: "30vmax",
             top: "5%", right: "25%",
-            background: "radial-gradient(circle, rgba(100,30,60,0.18) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(10,75,40,0.16) 0%, transparent 70%)",
             filter: "blur(60px)",
             animation: "aurora-4 18s ease-in-out infinite",
           }}
