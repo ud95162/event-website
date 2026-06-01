@@ -4,13 +4,59 @@ import { ArrowRight } from "lucide-react";
 
 export default function NewsletterSection() {
   return (
-    <section className="relative py-24 px-4 text-center overflow-hidden">
-      <img
-        src="/bg/footer.png"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover object-center"
-      />
-      <div className="absolute inset-0 bg-black/50" />
+    <section className="relative py-24 px-4 text-center overflow-hidden" style={{ background: "#080808" }}>
+
+      {/* Keyframe styles */}
+      <style>{`
+        @keyframes pattern-drift-a {
+          0%   { background-position: 0px 0px; }
+          100% { background-position: 72px 72px; }
+        }
+        @keyframes pattern-drift-b {
+          0%   { background-position: 0px 0px; }
+          100% { background-position: -72px 72px; }
+        }
+        @keyframes glow-pulse {
+          0%, 100% { opacity: 0.7; transform: scale(1); }
+          50%       { opacity: 1;   transform: scale(1.08); }
+        }
+      `}</style>
+
+      {/* Animated diagonal lines — drifting right-down */}
+      <div className="absolute inset-0" style={{
+        backgroundImage: `repeating-linear-gradient(
+          45deg,
+          rgba(255,255,255,0.04) 0px,
+          rgba(255,255,255,0.04) 1px,
+          transparent 1px,
+          transparent 18px
+        )`,
+        animation: "pattern-drift-a 6s linear infinite",
+      }} />
+
+      {/* Animated diagonal lines — drifting left-down */}
+      <div className="absolute inset-0" style={{
+        backgroundImage: `repeating-linear-gradient(
+          -45deg,
+          rgba(255,255,255,0.025) 0px,
+          rgba(255,255,255,0.025) 1px,
+          transparent 1px,
+          transparent 18px
+        )`,
+        animation: "pattern-drift-b 9s linear infinite",
+      }} />
+
+      {/* Pulsing green glow */}
+      <div className="absolute inset-0" style={{
+        background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(57,189,105,0.08) 0%, transparent 70%)",
+        animation: "glow-pulse 4s ease-in-out infinite",
+      }} />
+
+      {/* Fade edges to black */}
+      <div className="absolute inset-0" style={{
+        background: "radial-gradient(ellipse 110% 100% at 50% 50%, transparent 35%, #080808 80%)",
+      }} />
+
       <div className="relative z-10">
         <p className="text-white/50 text-[12px] font-semibold tracking-[0.4em] uppercase mb-4">
           NEWSLETTER SUBSCRIPTION
