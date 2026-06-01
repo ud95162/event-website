@@ -36,21 +36,21 @@ const categories = [
 
 const panels = [
   {
-    image: "/banner1.png",
+    image: "/banner3.png",
     tag:   "MUSIC FESTIVAL",
     date:  "15 08 2026 • COLOMBO RACECOURSE",
     title: ["MUSIC", "FESTIVAL"],
     desc:  "International DJs, live performances, and immersive stage experiences.",
   },
   {
-    image: "/banner2.png",
+    image: "/banner4.png",
     tag:   "WORLD MUSIC DAY",
     date:  "21 06 2026 • COLOMBO CITY CENTRE",
     title: ["WORLD", "MUSIC DAY"],
     desc:  "Live acts, DJ sets, and cultural performances for the whole family.",
   },
   {
-    image: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1200&h=800&fit=crop",
+    image: "/banner5.png",
     tag:   "CONCERT NIGHT",
     date:  "12 09 2026 • KANDY OPEN GROUNDS",
     title: ["LIVE MUSIC", "& CULTURE"],
@@ -58,26 +58,10 @@ const panels = [
   },
 ];
 
-/*
-  Three-slot rotation — each panel occupies one slot at a time:
-    "big"      → left panel, 65.5% wide, full text visible
-    "small"    → right panel, 33% wide, badge only
-    "offRight" → waiting off-screen right (no transition when teleporting here)
-    "offLeft"  → just exited off-screen left (transition target after leaving big)
-*/
-type Slot = "big" | "small" | "offRight" | "offLeft";
-
-const SLOT_STYLE: Record<Slot, { left: string; width: string; opacity: number }> = {
-  big:      { left: "0%",    width: "80%", opacity: 1 },
-  small:    { left: "81%",   width: "19%", opacity: 1 },
-  offRight: { left: "105%",  width: "19%", opacity: 0 },
-  offLeft:  { left: "-85%",  width: "80%", opacity: 0 },
-};
-
 export default function Hero() {
-  /* slots[i] = which slot panel i is currently in */
-  const [slots,        setSlots]        = useState<Slot[]>(["big", "small", "offRight"]);
-  const [noTrans,      setNoTrans]      = useState<boolean[]>([false, false, false]);
+  const [current,      setCurrent]      = useState(0);
+  const [prev,         setPrev]         = useState<number | null>(null);
+  const [direction,    setDirection]    = useState<"left" | "right">("left");
   const [activeByGroup, setActiveByGroup] = useState<Record<string, string>>({ green: "Music" });
 
   const animatingRef = useRef(false);
@@ -87,35 +71,15 @@ export default function Hero() {
   const doSwitch = () => {
     if (animatingRef.current) return;
     animatingRef.current = true;
-
-    /* Rotate: big→offLeft, small→big, offRight→small */
-    setSlots((prev) => prev.map((s) => {
-      if (s === "big")      return "offLeft";
-      if (s === "small")    return "big";
-      if (s === "offRight") return "small";
-      return s; // offLeft stays (handled below after timeout)
-    }) as Slot[]);
-
+    setDirection("left");
+    setCurrent((c) => {
+      const next = (c + 1) % panels.length;
+      setPrev(c);
+      return next;
+    });
     setTimeout(() => {
-      /* Teleport the offLeft panel back to offRight with no transition */
-      let teleportIdx = -1;
-      setSlots((prev) => {
-        const next = [...prev] as Slot[];
-        teleportIdx = prev.indexOf("offLeft");
-        if (teleportIdx !== -1) next[teleportIdx] = "offRight";
-        return next;
-      });
-
-      /* Disable transition for that panel for 1 frame so teleport is instant */
-      setNoTrans((prev) => {
-        const n = [...prev];
-        if (teleportIdx !== -1) n[teleportIdx] = true;
-        return n;
-      });
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        setNoTrans([false, false, false]);
-        animatingRef.current = false;
-      }));
+      setPrev(null);
+      animatingRef.current = false;
     }, ANIM_MS + 50);
   };
 
@@ -131,7 +95,7 @@ export default function Hero() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const bigIdx = slots.indexOf("big");
+  const bigIdx = current;
 
   return (
     <section className="pt-4 flex flex-col">
@@ -143,10 +107,10 @@ export default function Hero() {
           style={{ position: "relative", overflow: "hidden" }}
         >
           {panels.map((p, i) => {
-            const slot    = slots[i];
-            const isBig   = slot === "big";
-            const isSmall = slot === "small";
-            const { left, width, opacity } = SLOT_STYLE[slot];
+            const isCurrent = i === current;
+            const isPrev    = i === prev;
+            const isBig     = isCurrent;
+            if (!isCurrent && !isPrev) return null;
 
             return (
               <div
@@ -154,18 +118,14 @@ export default function Hero() {
                 style={{
                   position:   "absolute",
                   top:        0,
-                  height:     slot === "small" ? "78%" : "100%",
-                  left,
-                  width,
-                  opacity,
+                  height:     "100%",
+                  left:       isCurrent ? "0%" : "-100%",
+                  width:      "100%",
+                  opacity: 1,
                   overflow:   "hidden",
-                  cursor:     isSmall ? "pointer" : "default",
-                  transition: noTrans[i]
-                    ? "none"
-                    : `left ${ease}, width ${ease}, height ${ease}, opacity ${ease}`,
-                  zIndex: isBig ? 2 : isSmall ? 1 : 0,
+                  transition: `left ${ease}`,
+                  zIndex:     isCurrent ? 2 : 1,
                 }}
-                onClick={() => isSmall && manualSwitch()}
               >
                 <img
                   src={p.image}
@@ -207,7 +167,7 @@ export default function Hero() {
                   {/* Date — letter-by-letter bold reveal */}
                   <p
                     key={`date-${i}-${bigIdx}`}
-                    className="text-[10px] tracking-[0.35em] uppercase mb-3"
+                    className="text-[12px] tracking-[0.35em] uppercase mb-3"
                   >
                     {p.date.split("").map((char, k) => (
                       <span
@@ -228,7 +188,7 @@ export default function Hero() {
                   </p>
 
                   {/* Title lines — each rises with stagger */}
-                  <h1 className="text-white font-black text-3xl lg:text-[2.8rem] leading-none uppercase mb-4 max-w-md tracking-tight">
+                  <h1 className="text-white font-black text-4xl lg:text-[3.1rem] leading-none uppercase mb-4 max-w-lg tracking-tight">
                     {p.title.map((line, j) => (
                       <span key={`${i}-${j}-${bigIdx}`} className="block overflow-hidden">
                         {line.split("").map((char, k) => (
@@ -252,7 +212,7 @@ export default function Hero() {
                   {/* Description — letter-by-letter bold reveal after title */}
                   <p
                     key={`desc-${i}-${bigIdx}`}
-                    className="text-sm font-semibold mb-7 max-w-sm leading-relaxed"
+                    className="text-base font-semibold mb-7 max-w-sm leading-relaxed"
                   >
                     {p.desc.split("").map((char, k) => (
                       <span
@@ -281,7 +241,7 @@ export default function Hero() {
                       transition: "opacity 0.4s ease",
                     }}
                   >
-                    <span className="text-white text-xs font-bold tracking-[0.25em] uppercase border-b border-white/30 pb-0.5 group-hover/btn:border-white transition-colors">
+                    <span className="text-white text-sm font-bold tracking-[0.25em] uppercase border-b border-white/30 pb-0.5 group-hover/btn:border-white transition-colors">
                       EXPLORE EVENT
                     </span>
                     <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover/btn:bg-white group-hover/btn:border-white transition-all">
@@ -294,7 +254,7 @@ export default function Hero() {
           })}
 
           {/* ── Dots ──────────────────────────────────────────────────── */}
-          <div className="absolute top-4 flex gap-1.5" style={{ left: "calc(80% - 72px)", zIndex: 20 }}>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-1.5" style={{ zIndex: 20 }}>
             {panels.map((_, i) => (
               <button
                 key={i}
@@ -329,7 +289,7 @@ export default function Hero() {
                 <ArrowRight size={14} className="text-white group-hover/b:text-black transition-colors" />
               </button>
             </div>
-            <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
+            <p className="text-white/30 text-[11px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
             <ChevronDown size={13} className="text-white/30" />
           </div>
 

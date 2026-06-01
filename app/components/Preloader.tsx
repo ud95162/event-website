@@ -103,13 +103,11 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
   }, [isLoaded, triggerExit]);
 
   /* ── Fade-scale-bloom animation states ───────────────────────────────── */
-  const [showEmblem, setShowEmblem]   = useState(false);
-  const [showDivider, setShowDivider] = useState(false);
-  const [bloomPhase, setBloomPhase]   = useState(false);
+  const [showEmblem, setShowEmblem] = useState(false);
+  const [bloomPhase, setBloomPhase] = useState(false);
   const [startFill, setStartFill]     = useState(false);
   const [animationConfig, setAnimationConfig] = useState<{
-    events: { delay: number; duration: number; dashOffsetStart: number }[];
-    company: { delay: number; duration: number; dashOffsetStart: number }[];
+    all: { delay: number; duration: number; dashOffsetStart: number }[];
   } | null>(null);
 
   const animStarted = useRef(false);
@@ -119,30 +117,23 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
     animStarted.current = true;
 
     // Generate random drawing parameters on client side to avoid hydration mismatch
-    const eventsConfigs = ["E", "V", "E", "N", "T", "S"].map(() => ({
-      delay: Math.random() * 300,
-      duration: 1000 + Math.random() * 400,
-      dashOffsetStart: Math.random() > 0.5 ? 450 : -450,
-    }));
-    const companyConfigs = ["C", "O", "M", "P", "A", "N", "Y"].map(() => ({
-      delay: 350 + Math.random() * 250,
-      duration: 900 + Math.random() * 350,
-      dashOffsetStart: Math.random() > 0.5 ? 150 : -150,
-    }));
-    setAnimationConfig({ events: eventsConfigs, company: companyConfigs });
+    const allConfigs = ["E","V","E","N","T","S",".",  "L",  "K"].map((_, i) => {
+      const isSmall = i >= 6;
+      const dashOffset = isSmall ? 150 : 450;
+      return {
+        delay:            i < 6 ? Math.random() * 300          : 350 + Math.random() * 250,
+        duration:         i < 6 ? 1000 + Math.random() * 400   : 900  + Math.random() * 350,
+        dashOffsetStart:  Math.random() > 0.5 ? dashOffset : -dashOffset,
+      };
+    });
+    setAnimationConfig({ all: allConfigs });
 
-    // 1. EC emblem scales up
     const t0 = setTimeout(() => setShowEmblem(true), 250);
-    // 2. Divider sweeps in
-    const t1 = setTimeout(() => setShowDivider(true), 1300);
-    // 3. Liquid fill reveal begins at 1600ms
-    const t2 = setTimeout(() => setStartFill(true), 1600);
-    // 4. Full glow bloom on everything at 2400ms
-    const t3 = setTimeout(() => setBloomPhase(true), 2400);
+    const t2 = setTimeout(() => setStartFill(true), 1400);
+    const t3 = setTimeout(() => setBloomPhase(true), 2200);
 
     return () => {
       clearTimeout(t0);
-      clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
     };
@@ -309,168 +300,80 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
             }
           `}</style>
 
-          {/* 1. EVENTS Outline & Fill Row */}
-          <div className="relative overflow-visible w-full h-[130px] flex justify-center items-center">
-            {/* Outline Layer (Bottom) */}
-            <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-              <svg viewBox="0 0 800 130" className="w-full h-full overflow-visible">
-                <g fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.8">
-                  {["E", "V", "E", "N", "T", "S"].map((letter, i) => {
-                    const x = 400 + (i - 2.5) * 88;
-                    const config = animationConfig?.events[i];
-                    return (
+          {/* EVENTS.LK — single line */}
+          {(() => {
+            const LETTERS  = ["E","V","E","N","T","S",".", "L", "K"];
+            const X_POS    = [146, 221, 296, 371, 446, 521, 561, 607, 653];
+            const SIZES    = [100, 100, 100, 100, 100, 100,  62,  62,  62];
+            const DASH_ARR = [450, 450, 450, 450, 450, 450, 150, 150, 150];
+            const STROKE_C = ["rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.45)","rgba(255,255,255,0.45)","rgba(255,255,255,0.45)"];
+            const FILL_C   = ["#fff","#fff","#fff","#fff","#fff","#fff","rgba(255,255,255,0.6)","rgba(255,255,255,0.6)","rgba(255,255,255,0.6)"];
+            const SW       = [1.8,1.8,1.8,1.8,1.8,1.8,1.2,1.2,1.2];
+            return (
+              <div className="relative overflow-visible w-full h-[130px] flex justify-center items-center">
+                {/* Outline layer */}
+                <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
+                  <svg viewBox="0 0 800 130" className="w-full h-full overflow-visible">
+                    {LETTERS.map((letter, i) => {
+                      const config = animationConfig?.all[i];
+                      const anim = DASH_ARR[i] === 450
+                        ? (config?.dashOffsetStart ?? 0) > 0 ? "draw-forward" : "draw-backward"
+                        : (config?.dashOffsetStart ?? 0) > 0 ? "draw-forward-small" : "draw-backward-small";
+                      return (
+                        <text
+                          key={`outline-${i}`}
+                          x={X_POS[i]} y="95"
+                          textAnchor="middle"
+                          fontSize={SIZES[i]}
+                          fontWeight="100"
+                          fontFamily="'Century Gothic', sans-serif"
+                          fill="none"
+                          stroke={STROKE_C[i]}
+                          strokeWidth={SW[i]}
+                          style={config ? {
+                            strokeDasharray: DASH_ARR[i],
+                            strokeDashoffset: config.dashOffsetStart,
+                            animationName: anim,
+                            animationDuration: `${config.duration}ms`,
+                            animationDelay: `${config.delay}ms`,
+                            animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                            animationFillMode: "forwards",
+                          } : {}}
+                        >{letter}</text>
+                      );
+                    })}
+                  </svg>
+                </div>
+                {/* Fill layer */}
+                <div
+                  className="absolute inset-0 flex justify-center items-center pointer-events-none"
+                  style={{
+                    clipPath: startFill ? "inset(0 0 0 0)" : "inset(100% 0 0 0)",
+                    transition: "clip-path 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
+                >
+                  <svg viewBox="0 0 800 130" className="w-full h-full overflow-visible">
+                    {LETTERS.map((letter, i) => (
                       <text
-                        key={`outline-ev-${i}`}
-                        x={x}
-                        y="95"
+                        key={`fill-${i}`}
+                        x={X_POS[i]} y="95"
                         textAnchor="middle"
-                        fontSize="110"
+                        fontSize={SIZES[i]}
                         fontWeight="100"
                         fontFamily="'Century Gothic', sans-serif"
-                        letterSpacing="0.08em"
-                        style={config ? {
-                          strokeDasharray: 450,
-                          strokeDashoffset: config.dashOffsetStart,
-                          animationName: config.dashOffsetStart > 0 ? "draw-forward" : "draw-backward",
-                          animationDuration: `${config.duration}ms`,
-                          animationDelay: `${config.delay}ms`,
-                          animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-                          animationFillMode: "forwards",
-                        } : {}}
-                      >
-                        {letter}
-                      </text>
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
-
-            {/* Filled Layer — bottom-to-top water fill */}
-            <div
-              className="absolute inset-0 flex justify-center items-center pointer-events-none"
-              style={{
-                clipPath: startFill ? "inset(0 0 0 0)" : "inset(100% 0 0 0)",
-                transition: "clip-path 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
-              }}
-            >
-              <svg viewBox="0 0 800 130" className="w-full h-full overflow-visible">
-                <g fill="#ffffff" stroke="none">
-                  {["E", "V", "E", "N", "T", "S"].map((letter, i) => {
-                    const x = 400 + (i - 2.5) * 88;
-                    return (
-                      <text
-                        key={`filled-ev-${i}`}
-                        x={x}
-                        y="95"
-                        textAnchor="middle"
-                        fontSize="110"
-                        fontWeight="100"
-                        fontFamily="'Century Gothic', sans-serif"
-                        letterSpacing="0.08em"
+                        fill={FILL_C[i]}
+                        stroke="none"
                         style={{
-                          textShadow: bloomPhase
-                            ? "0 0 30px rgba(255,255,255,0.25), 0 0 80px rgba(255,255,255,0.12)"
-                            : "none",
-                          transition: "text-shadow 1s ease",
+                          filter: bloomPhase ? "drop-shadow(0 0 12px rgba(255,255,255,0.2))" : "none",
+                          transition: "filter 1s ease",
                         }}
-                      >
-                        {letter}
-                      </text>
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
-          </div>
-
-          {/* ── Divider ────────────────────────────────────────────────── */}
-          <div style={{ height: 2, overflow: "hidden", marginTop: 14, marginBottom: 14, width: "100%" }}>
-            <div
-              style={{
-                width: showDivider ? 240 : 0,
-                height: 2,
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)",
-                transition: "width 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-                margin: "0 auto",
-              }}
-            />
-          </div>
-
-          {/* 2. COMPANY Outline & Fill Row */}
-          <div className="relative overflow-visible w-full h-[45px] flex justify-center items-center">
-            {/* Outline Layer (Bottom) */}
-            <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-              <svg viewBox="0 0 800 45" className="w-full h-full overflow-visible">
-                <g fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.2">
-                  {["C", "O", "M", "P", "A", "N", "Y"].map((letter, i) => {
-                    const x = 400 + (i - 3) * 64;
-                    const config = animationConfig?.company[i];
-                    return (
-                      <text
-                        key={`outline-co-${i}`}
-                        x={x}
-                        y="32"
-                        textAnchor="middle"
-                        fontSize="30"
-                        fontWeight="100"
-                        fontFamily="'Century Gothic', sans-serif"
-                        letterSpacing="0.35em"
-                        style={config ? {
-                          strokeDasharray: 150,
-                          strokeDashoffset: config.dashOffsetStart,
-                          animationName: config.dashOffsetStart > 0 ? "draw-forward-small" : "draw-backward-small",
-                          animationDuration: `${config.duration}ms`,
-                          animationDelay: `${config.delay}ms`,
-                          animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-                          animationFillMode: "forwards",
-                        } : {}}
-                      >
-                        {letter}
-                      </text>
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
-
-            {/* Filled Layer — bottom-to-top water fill */}
-            <div
-              className="absolute inset-0 flex justify-center items-center pointer-events-none"
-              style={{
-                clipPath: startFill ? "inset(0 0 0 0)" : "inset(100% 0 0 0)",
-                transition: "clip-path 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.15s",
-              }}
-            >
-              <svg viewBox="0 0 800 45" className="w-full h-full overflow-visible">
-                <g fill="rgba(255,255,255,0.55)" stroke="none">
-                  {["C", "O", "M", "P", "A", "N", "Y"].map((letter, i) => {
-                    const x = 400 + (i - 3) * 64;
-                    return (
-                      <text
-                        key={`filled-co-${i}`}
-                        x={x}
-                        y="32"
-                        textAnchor="middle"
-                        fontSize="30"
-                        fontWeight="100"
-                        fontFamily="'Century Gothic', sans-serif"
-                        letterSpacing="0.35em"
-                        style={{
-                          textShadow: bloomPhase
-                            ? "0 0 16px rgba(255,255,255,0.15)"
-                            : "none",
-                          transition: "text-shadow 1s ease",
-                        }}
-                      >
-                        {letter}
-                      </text>
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
-          </div>
+                      >{letter}</text>
+                    ))}
+                  </svg>
+                </div>
+              </div>
+            );
+          })()}
 
         </div>
       </div>

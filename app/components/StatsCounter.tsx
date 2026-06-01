@@ -85,7 +85,7 @@ function StatItem({ label, value, suffix, trigger, delay }: {
       />
 
       {/* Label */}
-      <p className="text-white/40 text-xs font-semibold tracking-[0.2em] uppercase">
+      <p className="text-white/40 text-sm font-semibold tracking-[0.2em] uppercase">
         {label}
       </p>
     </div>

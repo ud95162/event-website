@@ -1,56 +1,20 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
+import { events } from "../data/events";
 
-const events = [
-  {
-    id: 1, tag: "MUSIC FESTIVAL", title: "New Single Urban Music",
-    date: "27 August 2025", location: "Colombo", price: "Starting from LKR 4,500",
-    image: "/events/event1.png", badge: null,
-    lat:  6.9271, lon:  79.8612,
-  },
-  {
-    id: 2, tag: "MUSIC PARTY", title: "Urban Music Party",
-    date: "27 August 2025", location: "Colombo", price: "Starting from LKR 4,500",
-    image: "/events/event2.png", badge: "HOT",
-    lat:  6.9271, lon:  79.8612,
-  },
-  {
-    id: 3, tag: "MUSIC CONCERT", title: "Lovers Night 2027",
-    date: "12 February 2027", location: "Brisbane", price: "Starting from LKR 4,500",
-    image: "/events/event3.png", badge: null,
-    lat: -27.4698, lon: 153.0251,
-  },
-  {
-    id: 4, tag: "DJ NIGHT", title: "Tharle DJ Night",
-    date: "27 August 2026", location: "Colombo", price: "Starting from LKR 4,500",
-    image: "/events/event4.png", badge: "COMING SOON",
-    lat:  6.9271, lon:  79.8612,
-  },
-  {
-    id: 5, tag: "LIVE CONCERT", title: "Neon Beats Live",
-    date: "05 March 2027", location: "Galle", price: "Starting from LKR 3,500",
-    image: "/events/event1.png", badge: "NEW",
-    lat:  6.0329, lon:  80.2168,
-  },
-  {
-    id: 6, tag: "CULTURAL NIGHT", title: "Rhythm & Soul",
-    date: "18 November 2026", location: "Kandy", price: "Starting from LKR 5,000",
-    image: "/events/event2.png", badge: null,
-    lat:  7.2906, lon:  80.6337,
-  },
-];
-
-const CARD_W     = 280;
-const CARD_H     = 370;
+const CARD_W     = 340;
+const CARD_H     = 440;
 const RADIUS_X   = 420;
 const N          = events.length;
 const ANGLE_STEP = (Math.PI * 2) / N;
 
 export default function FeaturedEvents() {
   const { userLocation } = useUserLocation();
+  const router = useRouter();
 
   /* ── Angle state: current (animated) vs target (snaps on click) ─────── */
   const currentAngle = useRef(0);
@@ -142,10 +106,10 @@ export default function FeaturedEvents() {
 
         {/* ── Header ───────────────────────────────────────────────── */}
         <div className="text-center mb-8 relative z-[200] select-none">
-          <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase mb-3">
+          <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase mb-3">
             YOUR BEST FAVORITE EVENTS START HERE
           </p>
-          <h2 className="text-white font-black text-5xl uppercase mb-4 tracking-tight">
+          <h2 className="text-white font-black text-3xl uppercase mb-4 tracking-tight">
             Featured Events
           </h2>
         </div>
@@ -170,6 +134,7 @@ export default function FeaturedEvents() {
               <div
                 key={card.id}
                 className="absolute rounded-2xl overflow-hidden cursor-pointer"
+                onClick={() => router.push(`/events/${card.id}`)}
                 style={{
                   width: CARD_W,
                   height: CARD_H,
@@ -190,7 +155,7 @@ export default function FeaturedEvents() {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a2e] via-transparent to-transparent" />
                   {card.badge && (
                     <div className="absolute top-3 left-3 z-10">
-                      <span className="bg-white text-black text-[8px] font-black px-2.5 py-1 rounded-full tracking-[0.18em] uppercase">
+                      <span className="bg-white text-black text-[10px] font-black px-2.5 py-1 rounded-full tracking-[0.18em] uppercase">
                         {card.badge}
                       </span>
                     </div>
@@ -235,14 +200,14 @@ export default function FeaturedEvents() {
                 {/* Info */}
                 <div className="px-4 pb-3 pt-1 text-center flex flex-col justify-between" style={{ height: "42%" }}>
                   <div>
-                    <p className="text-white/40 text-[9px] font-bold tracking-[0.25em] uppercase mb-1.5">{card.tag}</p>
-                    <h3 className="text-white font-black text-sm uppercase mb-2 tracking-wide leading-tight">{card.title}</h3>
-                    <p className="text-white/40 text-[11px] leading-relaxed">Date: {card.date} | Location: {card.location}</p>
-                    <p className="text-white/40 text-[11px]">Price: {card.price.replace("Starting from ", "")}</p>
+                    <p className="text-white/40 text-[11px] font-bold tracking-[0.25em] uppercase mb-1.5">{card.tag}</p>
+                    <h3 className="text-white font-black text-base uppercase mb-2 tracking-wide leading-tight">{card.title}</h3>
+                    <p className="text-white/40 text-[13px] leading-relaxed">Date: {card.date} | Location: {card.location}</p>
+                    <p className="text-white/40 text-[13px]">Price: {card.price.replace("Starting from ", "")}</p>
                     {userLocation && (
                       <div className="flex items-center justify-center gap-1 mt-1.5">
                         <MapPin size={9} className="text-[#39BD69]" />
-                        <span className="text-[10px] font-semibold" style={{ color: "#39BD69" }}>
+                        <span className="text-[12px] font-semibold" style={{ color: "#39BD69" }}>
                           {formatDistance(haversineKm(userLocation.lat, userLocation.lon, card.lat, card.lon))}
                         </span>
                       </div>
@@ -288,6 +253,16 @@ export default function FeaturedEvents() {
               }}
             />
           ))}
+        </div>
+
+        {/* ── Explore button ────────────────────────────────────────── */}
+        <div className="text-center mt-6 relative z-[200]">
+          <button
+            className="btn-outline text-sm px-10 py-3.5 rounded-full"
+            onClick={() => router.push("/events")}
+          >
+            EXPLORE MORE
+          </button>
         </div>
 
       </div>

@@ -3,7 +3,7 @@ import "./globals.css";
 import { LocationProvider } from "./context/LocationContext";
 
 export const metadata: Metadata = {
-  title: "Events Company — Experience the Biggest Music Festivals",
+  title: "Events.lk — Experience the Biggest Music Festivals",
   description:
     "Discover the best concerts, festivals, DJ nights, and live events in Sri Lanka. Browse featured events, artists, and upcoming experiences.",
 };

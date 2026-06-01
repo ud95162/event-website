@@ -1,29 +1,23 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X, User, Music2, MapPin, Navigation, Search, ChevronDown } from "lucide-react";
 import { useUserLocation, type UserLocation } from "../context/LocationContext";
 
 const navLinks = [
-  { label: "Home",     href: "#",        active: true  },
-  { label: "Events",   href: "#events",  active: false },
-  { label: "Artists",  href: "#artists", active: false },
-  { label: "About Us", href: "#about",   active: false },
+  { label: "Home",     href: "/"          },
+  { label: "Events",   href: "/events"    },
+  { label: "Artists",  href: "/artists"   },
+  { label: "About Us", href: "/#about"    },
 ];
 
 const POPULAR_CITIES: UserLocation[] = [
-  { city: "Colombo",   country: "Sri Lanka",  lat:  6.9271,   lon:  79.8612 },
-  { city: "Kandy",     country: "Sri Lanka",  lat:  7.2906,   lon:  80.6337 },
-  { city: "Galle",     country: "Sri Lanka",  lat:  6.0329,   lon:  80.2168 },
-  { city: "Negombo",   country: "Sri Lanka",  lat:  7.2094,   lon:  79.8385 },
-  { city: "Jaffna",    country: "Sri Lanka",  lat:  9.6615,   lon:  80.0255 },
-  { city: "Matara",    country: "Sri Lanka",  lat:  5.9485,   lon:  80.5353 },
-  { city: "Dubai",     country: "UAE",        lat: 25.2048,   lon:  55.2708 },
-  { city: "London",    country: "UK",         lat: 51.5074,   lon:  -0.1278 },
-  { city: "Sydney",    country: "Australia",  lat:-33.8688,   lon: 151.2093 },
-  { city: "Singapore", country: "Singapore",  lat:  1.3521,   lon: 103.8198 },
-  { city: "Toronto",   country: "Canada",     lat: 43.6532,   lon: -79.3832 },
-  { city: "Mumbai",    country: "India",      lat: 19.0760,   lon:  72.8777 },
+  { city: "Nugegoda",   country: "Sri Lanka", lat:  6.8728, lon:  79.8878 },
+  { city: "Colombo",    country: "Sri Lanka", lat:  6.9271, lon:  79.8612 },
+  { city: "Maharagama", country: "Sri Lanka", lat:  6.8478, lon:  79.9256 },
+  { city: "Kandy",      country: "Sri Lanka", lat:  7.2906, lon:  80.6337 },
+  { city: "Galle",      country: "Sri Lanka", lat:  6.0329, lon:  80.2168 },
 ];
 
 /* ── Location Pill ─────────────────────────────────────────────────── */
@@ -89,7 +83,7 @@ function LocationPill() {
       {/* ── Pill button ── */}
       <button
         onClick={() => { setOpen(o => !o); setSearch(""); setError(null); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-widest uppercase transition-all duration-300"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold tracking-widest uppercase transition-all duration-300"
         style={{
           border: isSet
             ? "1px solid rgba(57,189,105,0.6)"
@@ -143,15 +137,15 @@ function LocationPill() {
               <Navigation size={12} className="text-[#39BD69]" />
             </div>
             <div className="text-left">
-              <p className="text-white text-xs font-semibold tracking-wide">
+              <p className="text-white text-sm font-semibold tracking-wide">
                 {detecting ? "Detecting your location…" : "Use my current location"}
               </p>
-              <p className="text-white/35 text-[10px] mt-0.5">Via browser GPS</p>
+              <p className="text-white/35 text-[12px] mt-0.5">Via browser GPS</p>
             </div>
           </button>
 
           {error && (
-            <p className="px-4 py-2 text-[10px] text-red-400">{error}</p>
+            <p className="px-4 py-2 text-[12px] text-red-400">{error}</p>
           )}
 
           {/* Search */}
@@ -163,14 +157,14 @@ function LocationPill() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search city…"
-                className="bg-transparent text-white text-xs w-full outline-none placeholder:text-white/25 tracking-wide"
+                className="bg-transparent text-white text-sm w-full outline-none placeholder:text-white/25 tracking-wide"
               />
             </div>
           </div>
 
           {/* City chips */}
           <div className="px-3 pb-3">
-            <p className="text-white/25 text-[9px] font-bold tracking-[0.3em] uppercase mb-2 px-1">
+            <p className="text-white/25 text-[11px] font-bold tracking-[0.3em] uppercase mb-2 px-1">
               Popular Cities
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -187,19 +181,19 @@ function LocationPill() {
                     }}
                   >
                     <span
-                      className="text-[10px] font-semibold leading-tight"
+                      className="text-[12px] font-semibold leading-tight"
                       style={{ color: isActive ? "#39BD69" : "rgba(255,255,255,0.8)" }}
                     >
                       {city}
                     </span>
-                    <span className="text-[9px] leading-tight" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <span className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.3)" }}>
                       {country}
                     </span>
                   </button>
                 );
               })}
               {filtered.length === 0 && (
-                <p className="text-white/25 text-[10px] px-1">No cities found</p>
+                <p className="text-white/25 text-[12px] px-1">No cities found</p>
               )}
             </div>
           </div>
@@ -212,6 +206,14 @@ function LocationPill() {
 /* ── Navbar ─────────────────────────────────────────────────────────── */
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/events")  return pathname === "/events"  || pathname.startsWith("/events/");
+    if (href === "/artists") return pathname === "/artists" || pathname.startsWith("/artists/");
+    if (href === "/")        return pathname === "/";
+    return false;
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[300] bg-black/80 backdrop-blur-md border-b border-white/10">
@@ -219,14 +221,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5">
+          <a href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center">
               <Music2 size={15} className="text-white" />
             </div>
-            <div className="leading-none">
-              <span className="text-white font-black text-sm tracking-[0.2em] uppercase">EVENTS</span>
-              <br />
-              <span className="text-white/40 text-[9px] tracking-[0.3em] uppercase">COMPANY</span>
+            <div className="leading-none flex items-baseline gap-0.5">
+              <span className="text-white font-black text-xl tracking-[0.2em] uppercase">EVENTS</span>
+              <span className="text-white/40 text-[13px] tracking-[0.15em] uppercase">.LK</span>
             </div>
           </a>
 
@@ -234,9 +235,9 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-7">
             {navLinks.map((l) => (
               <a key={l.label} href={l.href}
-                className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 relative pb-1 ${
-                  l.active
-                    ? "text-white/55 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#e91e8c]"
+                className={`text-base tracking-widest uppercase font-bold transition-colors duration-300 relative pb-1 ${
+                  isActive(l.href)
+                    ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#e91e8c]"
                     : "text-white/55 hover:text-[#e91e8c]"
                 }`}>
                 {l.label}
@@ -250,7 +251,7 @@ export default function Navbar() {
             <button className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors">
               <User size={15} className="text-white/60" />
             </button>
-            <button className="btn-outline text-xs px-6 py-2.5 rounded-full">
+            <button className="btn-outline text-sm px-6 py-2.5 rounded-full">
               GET UPDATES
             </button>
           </div>
@@ -268,7 +269,7 @@ export default function Navbar() {
           <div className="flex flex-col gap-3">
             {navLinks.map((l) => (
               <a key={l.label} href={l.href}
-                className="text-white/60 hover:text-white py-2 border-b border-white/5 text-sm tracking-widest uppercase transition-colors"
+                className="text-white/60 hover:text-white py-2 border-b border-white/5 text-base tracking-widest uppercase transition-colors"
                 onClick={() => setMobileOpen(false)}>
                 {l.label}
               </a>
@@ -276,7 +277,7 @@ export default function Navbar() {
             <div className="pt-1">
               <LocationPill />
             </div>
-            <button className="btn-primary text-xs px-6 py-2.5 rounded-full mt-2 w-full">
+            <button className="btn-primary text-sm px-6 py-2.5 rounded-full mt-2 w-full">
               GET UPDATES
             </button>
           </div>

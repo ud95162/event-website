@@ -1,30 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import FeaturedEvents from "./components/FeaturedEvents";
 import FeaturedArtists from "./components/FeaturedArtists";
 import Footer from "./components/Footer";
+import NewsletterSection from "./components/NewsletterSection";
 import ParticleField from "./components/ParticleField";
+import WaveBackground from "./components/WaveBackground";
 import GradientOrbs from "./components/GradientOrbs";
 // import FloatingMusicians from "./components/FloatingMusicians";
 import Preloader from "./components/Preloader";
 import StickySearchFilters from "./components/StickySearchFilters";
 import StatsCounter from "./components/StatsCounter";
 import BrandMarquee from "./components/BrandMarquee";
+import { hasPreloaderShown, markPreloaderShown } from "./preloaderState";
+
+// useLayoutEffect is skipped during SSR; useEffect is the server-safe fallback.
+// On the client it runs synchronously before the browser paints — no flash.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export default function Home() {
-  const [preloaderPhase, setPreloaderPhase] = useState<"idle" | "exit" | "gone">("idle");
+  // "checking" = haven't read localStorage yet (Preloader not rendered at all)
+  // "idle"     = first visit confirmed, show preloader
+  // "exit"     = preloader animating out
+  // "gone"     = preloader done / returning visitor
+  const [preloaderPhase, setPreloaderPhase] = useState<"checking" | "idle" | "exit" | "gone">("checking");
+
+  // Runs synchronously before the browser paints (skipped during SSR).
+  // We only mount the Preloader AFTER we know this is a first-time visit,
+  // which prevents its useEffect from ever touching body.overflow on repeat visits.
+  useIsomorphicLayoutEffect(() => {
+    if (hasPreloaderShown()) {
+      setPreloaderPhase("gone");
+    } else {
+      setPreloaderPhase("idle");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (preloaderPhase === "gone") {
+      markPreloaderShown();
+    }
+  }, [preloaderPhase]);
 
   return (
     <main className="min-h-screen relative overflow-x-clip">
-      {/* Preloader — sits above everything, exit is scroll-driven */}
-      {preloaderPhase !== "gone" && (
+      {/* Preloader — only mounted once we know it's a first-time visit */}
+      {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
       )}
 
-      {/* Layer 0 – subtle white orbs */}
+      {/* Layer 0a – dark gradient wave animation */}
+      <WaveBackground />
+
+      {/* Layer 0b – subtle white orbs */}
       <GradientOrbs />
 
       {/* Layer 1 – white particle network */}
@@ -37,19 +69,19 @@ export default function Home() {
         className="relative min-h-screen flex flex-col justify-between" 
         style={{ 
           zIndex: 10,
-          opacity: preloaderPhase === "idle" ? 0 : 1,
-          transform: preloaderPhase === "idle" 
-            ? "translateY(80px) scale(0.98)" 
-            : preloaderPhase === "exit" 
-              ? "translateY(0) scale(1)" 
-              : undefined, // Clear transform when preloader is gone to restore standard viewport coordinates for position: sticky!
-          filter: preloaderPhase === "idle" 
-            ? "blur(12px)" 
-            : preloaderPhase === "exit" 
-              ? "blur(0)" 
-              : undefined, // Clear filter when preloader is gone to restore standard viewport coordinates for position: sticky!
+          opacity: (preloaderPhase === "checking" || preloaderPhase === "idle") ? 0 : 1,
+          transform: (preloaderPhase === "checking" || preloaderPhase === "idle")
+            ? "translateY(80px) scale(0.98)"
+            : preloaderPhase === "exit"
+              ? "translateY(0) scale(1)"
+              : undefined, // Clear when gone — restores sticky positioning
+          filter: (preloaderPhase === "checking" || preloaderPhase === "idle")
+            ? "blur(12px)"
+            : preloaderPhase === "exit"
+              ? "blur(0)"
+              : undefined, // Clear when gone — restores sticky positioning
           transition: preloaderPhase === "gone"
-            ? undefined // Clear transition completely when preloader is gone to release GPU compositing layout context for sticky scrolling!
+            ? undefined // No transition when gone — releases GPU compositing context for sticky scroll
             : "opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1.8s cubic-bezier(0.16, 1, 0.3, 1), filter 1.8s cubic-bezier(0.16, 1, 0.3, 1)"
         }}
       >
@@ -65,6 +97,7 @@ export default function Home() {
           <BrandMarquee />
         </div>
 
+        <NewsletterSection />
         <Footer />
       </div>
     </main>
