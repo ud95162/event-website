@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useLayoutEffect } from "react";
+import { Suspense, useState, useLayoutEffect, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, X } from "lucide-react";
 import { events } from "../data/events";

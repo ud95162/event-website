@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useLayoutEffect } from "react";
+import { Suspense, useState, useLayoutEffect, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Heart, Music2, X } from "lucide-react";
 import { artists } from "../data/artists";
