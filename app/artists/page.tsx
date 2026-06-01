@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useLayoutEffect } from "react";
+import { Suspense, useState, useLayoutEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Heart, Music2, X } from "lucide-react";
 import { artists } from "../data/artists";
@@ -237,15 +237,10 @@ export default function ArtistsPage() {
     if (hasPreloaderShown()) {
       setPreloaderPhase("gone");
     } else {
+      markPreloaderShown();
       setPreloaderPhase("idle");
     }
   }, []);
-
-  useEffect(() => {
-    if (preloaderPhase === "gone") {
-      markPreloaderShown();
-    }
-  }, [preloaderPhase]);
 
   return (
     <main className="min-h-screen bg-[#080808] relative">
@@ -253,6 +248,12 @@ export default function ArtistsPage() {
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
       )}
       <ParticleField />
+      <div
+        style={{
+          opacity: (preloaderPhase === "checking" || preloaderPhase === "idle") ? 0 : 1,
+          transition: preloaderPhase === "gone" ? undefined : "opacity 1.2s ease",
+        }}
+      >
       <Navbar />
       <div className="pt-16 relative z-10">
         <StickySearchFilters />
@@ -268,6 +269,7 @@ export default function ArtistsPage() {
         }>
           <ArtistsContent />
         </Suspense>
+      </div>
       </div>
     </main>
   );

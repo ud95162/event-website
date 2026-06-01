@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Menu, X, User, Music2, MapPin, Navigation, Search, ChevronDown } from "lucide-react";
 import { useUserLocation, type UserLocation } from "../context/LocationContext";
 
@@ -221,7 +222,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center">
               <Music2 size={15} className="text-white" />
             </div>
@@ -229,19 +230,19 @@ export default function Navbar() {
               <span className="text-white font-black text-xl tracking-[0.2em] uppercase">EVENTS</span>
               <span className="text-white/40 text-[13px] tracking-[0.15em] uppercase">.LK</span>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop links */}
           <div className="hidden lg:flex items-center gap-7">
             {navLinks.map((l) => (
-              <a key={l.label} href={l.href}
+              <Link key={l.label} href={l.href}
                 className={`text-base tracking-widest uppercase font-bold transition-colors duration-300 relative pb-1 ${
                   isActive(l.href)
                     ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#e91e8c]"
                     : "text-white/55 hover:text-[#e91e8c]"
                 }`}>
                 {l.label}
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -268,11 +269,11 @@ export default function Navbar() {
         <div className="lg:hidden bg-black/95 border-t border-white/10 px-4 py-4">
           <div className="flex flex-col gap-3">
             {navLinks.map((l) => (
-              <a key={l.label} href={l.href}
+              <Link key={l.label} href={l.href}
                 className="text-white/60 hover:text-white py-2 border-b border-white/5 text-base tracking-widest uppercase transition-colors"
                 onClick={() => setMobileOpen(false)}>
                 {l.label}
-              </a>
+              </Link>
             ))}
             <div className="pt-1">
               <LocationPill />

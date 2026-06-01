@@ -36,15 +36,10 @@ export default function Home() {
     if (hasPreloaderShown()) {
       setPreloaderPhase("gone");
     } else {
+      markPreloaderShown(); // mark immediately so any navigation away skips preloader
       setPreloaderPhase("idle");
     }
   }, []);
-
-  useEffect(() => {
-    if (preloaderPhase === "gone") {
-      markPreloaderShown();
-    }
-  }, [preloaderPhase]);
 
   return (
     <main className="min-h-screen relative overflow-x-clip">
