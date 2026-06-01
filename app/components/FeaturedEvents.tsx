@@ -8,6 +8,8 @@ import { events } from "../data/events";
 
 const CARD_W     = 340;
 const CARD_H     = 440;
+const IMG_H      = 255;   // fixed pixel height for image section (58% of 440)
+const INFO_H     = 185;   // fixed pixel height for info section (42% of 440)
 const RADIUS_X   = 420;
 const N          = events.length;
 const ANGLE_STEP = (Math.PI * 2) / N;
@@ -25,6 +27,7 @@ export default function FeaturedEvents() {
   const [baseAngle,  setBaseAngle]  = useState(0);
   const [liked,      setLiked]      = useState<Set<number>>(new Set());
   const [shared,     setShared]     = useState<Set<number>>(new Set());
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   const toggleLike = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -90,7 +93,7 @@ export default function FeaturedEvents() {
     const x       = Math.sin(angle) * RADIUS_X;
     const z       = Math.cos(angle);
     const depth   = (z + 1) / 2;
-    const scale   = 0.55 + depth * 0.45;
+    const scale   = 1;
     const opacity = 0.25 + depth * 0.75;
     const y       = Math.sin(angle * 0.5) * 30;
     const zIndex  = Math.round(depth * 100);
@@ -131,28 +134,51 @@ export default function FeaturedEvents() {
           {/* Card stage */}
           <div className="relative" style={{ width: "100%", height: CARD_H + 40 }}>
             {sorted.map(card => (
+              /* Outer: handles position only (RAF-driven, no CSS transition) */
               <div
                 key={card.id}
-                className="absolute rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() => router.push(`/events/${card.id}`)}
+                className="absolute"
                 style={{
                   width: CARD_W,
                   height: CARD_H,
                   left: "50%",
                   top: "50%",
-                  background: "#0a0a2e",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  transform: `translate(-50%,-50%) translateX(${card.x}px) translateY(${card.y}px) scale(${card.scale})`,
+                  transform: `translate(-50%,-50%) translateX(${card.x}px) translateY(${card.y}px)`,
                   opacity: card.opacity,
-                  filter: card.isFront ? "brightness(1.1)" : `brightness(${0.4 + card.depth * 0.5})`,
                   zIndex: card.zIndex,
                   willChange: "transform",
                 }}
               >
+              {/* Inner: handles scale + visuals (CSS transition) */}
+              <div
+                className="absolute rounded-2xl overflow-hidden cursor-pointer"
+                onClick={() => router.push(`/events/${card.id}`)}
+                onMouseEnter={() => setHoveredCard(card.id)}
+                onMouseLeave={() => setHoveredCard(null)}
+                style={{
+                  width: CARD_W,
+                  height: CARD_H,
+                  minHeight: CARD_H,
+                  maxHeight: CARD_H,
+                  top: "50%",
+                  left: "50%",
+                  overflow: "hidden",
+                  background: hoveredCard === card.id ? "#0d2318" : "#080808",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: hoveredCard === card.id ? "0 0 40px rgba(57,189,105,0.15)" : "none",
+                  transform: `translate(-50%,-50%)`,
+                  filter: card.isFront ? "brightness(1.1)" : `brightness(${0.4 + card.depth * 0.5})`,
+                  transition: "background 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease",
+                }}
+              >
                 {/* Image */}
-                <div className="relative w-full" style={{ height: "58%" }}>
-                  <img src={card.image} alt={card.title} className="w-full h-full object-cover object-top" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a2e] via-transparent to-transparent" />
+                <div className="relative w-full overflow-hidden flex-shrink-0" style={{ height: IMG_H }}>
+                  <img src={card.image} alt={card.title} className="w-full h-full object-cover object-top"
+                    style={{
+                      transform: hoveredCard === card.id ? "scale(1.08)" : "scale(1)",
+                      transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                    }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent" />
                   {card.badge && (
                     <div className="absolute top-3 left-3 z-10">
                       <span className="bg-white text-black text-[10px] font-black px-2.5 py-1 rounded-full tracking-[0.18em] uppercase">
@@ -198,12 +224,27 @@ export default function FeaturedEvents() {
                 </div>
 
                 {/* Info */}
-                <div className="px-4 pb-3 pt-1 text-center flex flex-col justify-between" style={{ height: "42%" }}>
+                <div className="px-4 pb-3 pt-1 text-center flex flex-col justify-between overflow-hidden" style={{ height: INFO_H }}>
                   <div>
-                    <p className="text-white/40 text-[11px] font-bold tracking-[0.25em] uppercase mb-1.5">{card.tag}</p>
-                    <h3 className="text-white font-black text-base uppercase mb-2 tracking-wide leading-tight">{card.title}</h3>
-                    <p className="text-white/40 text-[13px] leading-relaxed">Date: {card.date} | Location: {card.location}</p>
-                    <p className="text-white/40 text-[13px]">Price: {card.price.replace("Starting from ", "")}</p>
+                    <p className="font-bold tracking-[0.25em] uppercase mb-1.5 transition-all duration-300"
+                      style={{
+                        color: hoveredCard === card.id ? "#39BD69" : "rgba(255,255,255,0.4)",
+                        fontSize: hoveredCard === card.id ? "12px" : "11px",
+                      }}>{card.tag}</p>
+                    <h3 className="text-white font-black uppercase tracking-wide leading-tight mb-2 transition-all duration-300"
+                      style={{ fontSize: hoveredCard === card.id ? "17px" : "16px" }}>{card.title}</h3>
+                    <p className="leading-relaxed transition-all duration-300"
+                      style={{
+                        color: hoveredCard === card.id ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+                        fontSize: hoveredCard === card.id ? "14px" : "13px",
+                        fontWeight: hoveredCard === card.id ? 500 : 400,
+                      }}>Date: {card.date} | Location: {card.location}</p>
+                    <p className="transition-all duration-300"
+                      style={{
+                        color: hoveredCard === card.id ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+                        fontSize: hoveredCard === card.id ? "14px" : "13px",
+                        fontWeight: hoveredCard === card.id ? 500 : 400,
+                      }}>Price: {card.price.replace("Starting from ", "")}</p>
                     {userLocation && (
                       <div className="flex items-center justify-center gap-1 mt-1.5">
                         <MapPin size={9} className="text-[#39BD69]" />
@@ -224,6 +265,7 @@ export default function FeaturedEvents() {
                     />
                   </div>
                 </div>
+              </div>
               </div>
             ))}
           </div>

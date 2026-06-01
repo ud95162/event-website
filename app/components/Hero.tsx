@@ -59,43 +59,55 @@ const panels = [
 ];
 
 export default function Hero() {
-  const [current,      setCurrent]      = useState(0);
-  const [prev,         setPrev]         = useState<number | null>(null);
-  const [direction,    setDirection]    = useState<"left" | "right">("left");
+  const [current,       setCurrent]       = useState(0);
+  const [prevIdx,       setPrevIdx]       = useState<number | null>(null);
+  const [direction,     setDirection]     = useState<"left" | "right">("left");
+  // "ready" = new slide sits offscreen (no transition), "animating" = slides move
+  const [phase,         setPhase]         = useState<"ready" | "animating">("animating");
   const [activeByGroup, setActiveByGroup] = useState<Record<string, string>>({ green: "Music" });
 
-  const animatingRef = useRef(false);
-  const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentRef = useRef(0);
   const ease = `${ANIM_MS}ms cubic-bezier(0.87, 0, 0.13, 1)`;
 
-  const doSwitch = () => {
-    if (animatingRef.current) return;
-    animatingRef.current = true;
-    setDirection("left");
-    setCurrent((c) => {
-      const next = (c + 1) % panels.length;
-      setPrev(c);
-      return next;
+  const goTo = (dir: "left" | "right") => {
+    const next = dir === "left"
+      ? (currentRef.current + 1) % panels.length
+      : (currentRef.current - 1 + panels.length) % panels.length;
+
+    // Step 1: place new slide offscreen instantly (no transition)
+    setDirection(dir);
+    setPrevIdx(currentRef.current);
+    setPhase("ready");
+    setCurrent(next);
+    currentRef.current = next;
+
+    // Step 2: next frame — trigger the slide transition
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setPhase("animating");
+      });
     });
-    setTimeout(() => {
-      setPrev(null);
-      animatingRef.current = false;
-    }, ANIM_MS + 50);
+
+    // Step 3: cleanup prev after animation
+    setTimeout(() => setPrevIdx(null), ANIM_MS + 100);
   };
 
-  const manualSwitch = () => {
-    doSwitch();
+  const resetTimer = (dir: "left" | "right" = "left") => {
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(doSwitch, SLIDE_INTERVAL);
+    timerRef.current = setInterval(() => goTo("left"), SLIDE_INTERVAL);
   };
+
+  const goNext = () => { goTo("left");  resetTimer(); };
+  const goPrev = () => { goTo("right"); resetTimer(); };
 
   useEffect(() => {
-    timerRef.current = setInterval(doSwitch, SLIDE_INTERVAL);
+    resetTimer();
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const bigIdx = current;
+  const bigIdx  = current;
 
   return (
     <section className="pt-4 flex flex-col">
@@ -108,23 +120,41 @@ export default function Hero() {
         >
           {panels.map((p, i) => {
             const isCurrent = i === current;
-            const isPrev    = i === prev;
+            const isPrev    = i === prevIdx;
             const isBig     = isCurrent;
+
             if (!isCurrent && !isPrev) return null;
+
+            // Current slide: enters from offscreen, then animates to 0
+            // Prev slide: exits to offscreen with transition
+            let translateX = "0%";
+            let transition = `transform ${ease}`;
+
+            if (isCurrent) {
+              if (phase === "ready") {
+                // Place offscreen instantly — no transition yet
+                translateX = direction === "left" ? "100%" : "-100%";
+                transition = "none";
+              } else {
+                translateX = "0%";
+              }
+            } else if (isPrev) {
+              translateX = direction === "left" ? "-100%" : "100%";
+            }
 
             return (
               <div
                 key={i}
                 style={{
-                  position:   "absolute",
-                  top:        0,
-                  height:     "100%",
-                  left:       isCurrent ? "0%" : "-100%",
-                  width:      "100%",
-                  opacity: 1,
-                  overflow:   "hidden",
-                  transition: `left ${ease}`,
-                  zIndex:     isCurrent ? 2 : 1,
+                  position:  "absolute",
+                  top:       0,
+                  height:    "100%",
+                  left:      0,
+                  width:     "100%",
+                  overflow:  "hidden",
+                  transform: `translateX(${translateX})`,
+                  transition,
+                  zIndex:    isCurrent ? 2 : 1,
                 }}
               >
                 <img
@@ -137,9 +167,7 @@ export default function Hero() {
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: isBig
-                      ? "linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.45) 50%,rgba(0,0,0,.10) 100%)"
-                      : "linear-gradient(to top,rgba(0,0,0,.65) 0%,rgba(0,0,0,.18) 70%,transparent 100%)",
+                    background: "linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.45) 50%,rgba(0,0,0,.10) 100%)",
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
@@ -258,7 +286,7 @@ export default function Hero() {
             {panels.map((_, i) => (
               <button
                 key={i}
-                onClick={manualSwitch}
+                onClick={goNext}
                 className="rounded-full"
                 style={{
                   width:      i === bigIdx ? 20 : 6,
@@ -277,13 +305,13 @@ export default function Hero() {
           >
             <div className="flex items-center gap-2">
               <button
-                onClick={manualSwitch}
+                onClick={goPrev}
                 className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/a"
               >
                 <ArrowRight size={14} className="text-white group-hover/a:text-black transition-colors rotate-180" />
               </button>
               <button
-                onClick={manualSwitch}
+                onClick={goNext}
                 className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/b"
               >
                 <ArrowRight size={14} className="text-white group-hover/b:text-black transition-colors" />
