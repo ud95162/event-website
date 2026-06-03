@@ -88,7 +88,7 @@ export default function FeaturedArtists() {
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section id="artists" className="py-20 overflow-hidden">
+    <section id="artists" className="py-20 overflow-hidden h-screen flex flex-col justify-center">
       <div className="flex flex-col items-center justify-center">
 
         {/* Header */}

@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function NewsletterSection() {
   return (
-    <section className="relative py-24 px-4 text-center overflow-hidden" style={{ background: "#080808" }}>
+    <section className="relative py-24 px-4 text-center overflow-hidden h-screen flex flex-col justify-center" style={{ background: "#080808" }}>
 
       {/* Keyframe styles */}
       <style>{`

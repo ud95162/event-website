@@ -104,7 +104,7 @@ export default function FeaturedEvents() {
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section id="events" className="py-20 overflow-hidden">
+    <section id="events" className="py-20 overflow-hidden h-screen flex flex-col justify-center">
       <div className="flex flex-col items-center justify-center">
 
         {/* ── Header ───────────────────────────────────────────────── */}

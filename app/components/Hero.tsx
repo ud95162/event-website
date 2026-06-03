@@ -110,12 +110,12 @@ export default function Hero() {
   const bigIdx  = current;
 
   return (
-    <section className="pt-4 flex flex-col">
+    <section className="flex flex-col h-screen pt-4 pb-6">
 
       {/* ── Hero — all 3 panels absolutely positioned, slots animate ──── */}
-      <div className="flex-1 w-full pb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 w-full min-h-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className="h-[480px] lg:h-[560px] rounded-2xl"
+          className="h-full rounded-2xl"
           style={{ position: "relative", overflow: "hidden" }}
         >
           {panels.map((p, i) => {

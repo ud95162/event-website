@@ -109,9 +109,9 @@ export default function StatsCounter() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-10">
+    <section ref={sectionRef} className="h-screen flex flex-col justify-center py-10">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-center">
+        <div className="flex flex-row items-center justify-center flex-wrap">
           {stats.map((stat, i) => (
             <StatItem
               key={stat.label}
