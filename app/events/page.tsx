@@ -98,11 +98,11 @@ function EventsContent() {
       const searchable = [
         ev.title, ev.tag, ev.location,
         ...(ev.genres ?? []),
-        ...(ev.artists ?? []),
+        ...(ev.lineup ?? []),
       ].join(" ").toLowerCase();
       if (!searchable.includes(q)) return false;
-      // If category is artists, also check artists specifically
-      if (categoryParam === "artists" && !(ev.artists ?? []).some((a: string) => a.toLowerCase().includes(q))) return false;
+      // If category is artists, check lineup specifically
+      if (categoryParam === "artists" && !(ev.lineup ?? []).some((a: string) => a.toLowerCase().includes(q))) return false;
       // If category is genres, check genres specifically
       if (categoryParam === "genres" && !(ev.genres ?? []).some((g: string) => g.toLowerCase().includes(q))) return false;
     }
