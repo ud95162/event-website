@@ -110,7 +110,20 @@ export default function Hero() {
   const bigIdx  = current;
 
   return (
-    <section className="flex flex-col h-screen pt-4 pb-6">
+    <section className="flex flex-col flex-1 min-h-0 pt-4 pb-6 relative">
+
+      {/* Background overlay */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(57,189,105,0.015) 0%, transparent 70%)",
+        }} />
+        <div className="absolute inset-0" style={{
+          backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px),
+                            repeating-linear-gradient(90deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px)`,
+        }} />
+        <div className="absolute top-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to bottom, #080808, transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #080808, transparent)" }} />
+      </div>
 
       {/* ── Hero — all 3 panels absolutely positioned, slots animate ──── */}
       <div className="flex-1 w-full min-h-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

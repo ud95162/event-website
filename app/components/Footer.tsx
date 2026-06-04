@@ -33,11 +33,11 @@ const navLinks = [
 
 export default function Footer() {
   return (
-    <footer id="contact" className="bg-black border-t border-white/10">
+    <footer id="contact" className="bg-black flex-1 flex flex-col justify-center py-6">
 
       {/* ── Main grid ─────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-16">
 
           {/* Logo */}
           <div className="md:col-span-1 flex flex-col gap-4">
@@ -59,7 +59,8 @@ export default function Footer() {
 
           {/* Nav links */}
           <div className="md:col-span-1">
-            <ul className="flex flex-col gap-3">
+            <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Navigation</p>
+            <ul className="flex flex-col gap-5">
               {navLinks.map((l) => (
                 <li key={l.label}>
                   <a
@@ -74,7 +75,8 @@ export default function Footer() {
           </div>
 
           {/* Contact info */}
-          <div className="md:col-span-1 flex flex-col gap-3 text-white/55 text-base leading-relaxed">
+          <div className="md:col-span-1 flex flex-col gap-5 text-white/55 text-base leading-relaxed">
+            <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase">Contact</p>
             <p>
               Event Company (Pvt) Ltd.<br />
               Colombo, Sri Lanka
@@ -92,8 +94,9 @@ export default function Footer() {
           </div>
 
           {/* Legal + socials */}
-          <div className="md:col-span-1 flex flex-col gap-4">
-            <ul className="flex flex-col gap-2">
+          <div className="md:col-span-1 flex flex-col gap-5">
+            <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase">Legal</p>
+            <ul className="flex flex-col gap-5 -mt-1">
               {["Privacy Policy", "Terms and Conditions", "Site Map"].map((item) => (
                 <li key={item}>
                   <a href="#" className="text-white font-semibold text-base hover:text-white/70 transition-colors">
@@ -102,7 +105,7 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-            <div className="flex items-center gap-2.5 mt-2">
+            <div className="flex items-center gap-4 mt-2">
               {socials.map(({ Icon }, i) => (
                 <a
                   key={i}
@@ -120,12 +123,12 @@ export default function Footer() {
 
       {/* ── Bottom bar ────────────────────────────────────────────── */}
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-0 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-white/35 text-sm">
             &copy; 2026 Event Company (Pvt) Ltd. All Rights Reserved.
           </p>
           <p className="text-white/35 text-sm">
-            Design and Development by <span className="text-white/60 font-semibold">Codexium</span>
+            Designed and Developed by <span className="text-white/60 font-semibold">HWC</span>
           </p>
         </div>
       </div>

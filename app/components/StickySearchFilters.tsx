@@ -312,41 +312,198 @@ function FilterRow() {
   );
 }
 
+const CAT_OPTIONS = [
+  { label: "Artists", color: "#e879f9", key: "artists" },
+  { label: "Genres",  color: "#39BD69", key: "genres"  },
+];
+
+const EXAMPLES: Record<string, string> = {
+  artists: "e.g. DJ Nova, Randhir Witana…",
+  genres:  "e.g. Electronic, Rock & Indie…",
+  default: "e.g. Music Festival, Concert…",
+};
+
 /* ── Main component ───────────────────────────────────────────────────── */
 export default function StickySearchFilters() {
+  const router = useRouter();
+  const [catOpen,      setCatOpen]      = useState(false);
+  const [selectedCat,  setSelectedCat]  = useState<typeof CAT_OPTIONS[0] | null>(null);
+  const [searchQuery,  setSearchQuery]  = useState("");
+  const [resultsOpen,  setResultsOpen]  = useState(false);
+  const catRef     = useRef<HTMLDivElement>(null);
+  const searchRef  = useRef<HTMLDivElement>(null);
+
+  // Close category dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) { setResultsOpen(false); setSearchQuery(""); }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Compute matching results based on category + query
+  const matchedResults: { label: string; color: string; type: string }[] = (() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    if (selectedCat?.key === "artists" || !selectedCat) {
+      const artists = ARTISTS
+        .filter(a => a.toLowerCase().includes(q))
+        .map(a => ({ label: a, color: "#e879f9", type: "Artist" }));
+      if (selectedCat?.key === "artists") return artists;
+      const genres = GENRES
+        .filter(g => g.label.toLowerCase().includes(q))
+        .map(g => ({ label: g.label, color: g.color, type: "Genre" }));
+      return [...artists, ...genres];
+    }
+    if (selectedCat?.key === "genres") {
+      return GENRES
+        .filter(g => g.label.toLowerCase().includes(q))
+        .map(g => ({ label: g.label, color: g.color, type: "Genre" }));
+    }
+    return [];
+  })();
+
+  const handleSearch = (override?: string) => {
+    const q = override ?? searchQuery.trim();
+    if (!q && !selectedCat) return;
+    const params = new URLSearchParams();
+    if (selectedCat) params.set("category", selectedCat.key);
+    if (q) params.set("q", q);
+    router.push(`/events?${params.toString()}`);
+    setResultsOpen(false);
+    setSearchQuery(override ?? searchQuery);
+  };
+
   return (
     <div className="relative z-[290] bg-[#080808]/95 backdrop-blur-md border-b border-white/10 py-4 shadow-lg">
 
       {/* Search bar */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-3">
-        <div className="bg-black/60 backdrop-blur-md rounded-full flex items-center px-2 py-1.5 border border-white/12">
-          <button className="flex items-center gap-2 text-white/55 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap flex-shrink-0">
-            ALL CATEGORIES <ChevronDown size={12} />
-          </button>
-          <div className="flex-1 flex items-center px-5">
-            <input type="text" placeholder="I AM SEARCHING FOR"
-              className="bg-transparent text-white/60 text-sm w-full outline-none placeholder:text-white/25 placeholder:tracking-[0.3em] placeholder:uppercase" />
+        <div className="bg-black/60 backdrop-blur-md rounded-full flex items-center px-2 py-1.5 border border-white/12 relative">
+
+          {/* Category button + dropdown */}
+          <div ref={catRef} className="relative flex-shrink-0">
+            <button
+              onClick={() => setCatOpen(o => !o)}
+              className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap transition-colors"
+              style={{ color: selectedCat ? selectedCat.color : "rgba(255,255,255,0.55)" }}
+            >
+              {selectedCat ? (
+                <>
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: selectedCat.color }} />
+                  {selectedCat.label}
+                  <button
+                    onClick={e => { e.stopPropagation(); setSelectedCat(null); setSearchQuery(""); setResultsOpen(false); }}
+                    className="ml-1 text-white/30 hover:text-white/70 transition-colors"
+                  >
+                    <X size={10} />
+                  </button>
+                </>
+              ) : (
+                <>ALL CATEGORIES <ChevronDown size={12} style={{ transform: catOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} /></>
+              )}
+            </button>
+
+            {catOpen && (
+              <div
+                className="absolute top-full mt-2 left-0 rounded-2xl border border-white/10 overflow-hidden"
+                style={{
+                  width: 200,
+                  background: "rgba(10,10,20,0.97)",
+                  backdropFilter: "blur(20px)",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+                  zIndex: 400,
+                }}
+              >
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase">Browse By</p>
+                </div>
+                {CAT_OPTIONS.map(opt => {
+                  const active = selectedCat?.key === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => { setSelectedCat(opt); setCatOpen(false); setSearchQuery(""); setResultsOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/05 transition-colors text-left"
+                      style={{ borderLeft: active ? `3px solid ${opt.color}` : "3px solid transparent" }}
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: opt.color }} />
+                      <span className="text-sm font-semibold tracking-wide" style={{ color: active ? opt.color : "rgba(255,255,255,0.8)" }}>
+                        {opt.label}
+                      </span>
+                      {active && <Check size={12} className="ml-auto flex-shrink-0" style={{ color: opt.color }} />}
+                    </button>
+                  );
+                })}
+                <div className="h-2" />
+              </div>
+            )}
           </div>
+
+          {/* Search input + results */}
+          <div ref={searchRef} className="flex-1 flex items-center px-5 relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setResultsOpen(true); }}
+              onFocus={() => setResultsOpen(true)}
+              onKeyDown={e => e.key === "Enter" && handleSearch()}
+              placeholder={EXAMPLES[selectedCat?.key ?? "default"]}
+              className="bg-transparent text-white/60 text-sm w-full outline-none placeholder:text-white/30 placeholder:italic"
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setResultsOpen(false); }} className="text-white/25 hover:text-white/60 transition-colors flex-shrink-0">
+                <X size={12} />
+              </button>
+            )}
+
+            {/* Live results dropdown */}
+            {resultsOpen && matchedResults.length > 0 && (
+              <div
+                className="absolute top-full left-0 right-0 mt-3 rounded-2xl border border-white/10 overflow-hidden"
+                style={{
+                  background: "rgba(10,10,20,0.97)",
+                  backdropFilter: "blur(20px)",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+                  zIndex: 400,
+                }}
+              >
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase">
+                    {matchedResults.length} result{matchedResults.length !== 1 ? "s" : ""} found
+                  </p>
+                </div>
+                {matchedResults.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSearch(r.label)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/06 transition-colors text-left group"
+                  >
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.color }} />
+                    <span className="flex-1 text-sm font-medium text-white/80 group-hover:text-white transition-colors">{r.label}</span>
+                    <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: r.color + "22", color: r.color }}>
+                      {r.type}
+                    </span>
+                  </button>
+                ))}
+                <div className="h-2" />
+              </div>
+            )}
+          </div>
+
           <button
+            onClick={() => handleSearch()}
             className="text-[13px] font-bold tracking-[0.12em] uppercase px-6 py-2.5 rounded-r-full rounded-l-none whitespace-nowrap flex items-center gap-2 flex-shrink-0 transition-all hover:-translate-y-px active:scale-95 hover:brightness-110"
             style={{ background: "rgba(233,24,79,1)", color: "#fff" }}>
-            SEARCH CATEGORY <Search size={11} />
+            SEARCH <Search size={11} />
           </button>
         </div>
       </div>
 
-      {/* Filter row */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-        <Suspense fallback={
-          <div className="flex items-center gap-2 pb-1">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-6 w-20 rounded-full flex-shrink-0" style={{ background: "rgba(255,255,255,0.04)" }} />
-            ))}
-          </div>
-        }>
-          <FilterRow />
-        </Suspense>
-      </div>
+      {/* Filter row — hidden */}
 
     </div>
   );

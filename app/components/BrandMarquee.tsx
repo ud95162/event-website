@@ -41,7 +41,7 @@ function BrandCard({ brand }: { brand: Brand }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 cursor-default rounded-xl px-6 py-4 flex items-center justify-center gap-3 backdrop-blur-md"
+      className="flex-shrink-0 cursor-default rounded-xl px-6 py-4 flex flex-col items-center justify-center gap-2 backdrop-blur-md"
       style={{
         minWidth: 140,
         background: hovered
@@ -52,30 +52,24 @@ function BrandCard({ brand }: { brand: Brand }) {
           ? `inset 0 1px 0 ${color}22, 0 4px 24px rgba(0,0,0,0.3), 0 0 24px ${color}28`
           : "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.2)",
         transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease",
-        filter: hovered ? "brightness(1.15)" : "brightness(0.6) grayscale(0.3)",
+        filter: hovered ? "brightness(1.3)" : "brightness(1)",
       }}
     >
       {!imgError ? (
         <img
           src={`https://cdn.simpleicons.org/${brand.slug}`}
           alt={brand.name}
-          width={28}
-          height={28}
+          width={56}
+          height={56}
           style={{ flexShrink: 0 }}
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black"
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[13px] font-black"
           style={{ background: color + "33", color }} >
           {brand.name[0]}
         </div>
       )}
-      <span
-        className="text-sm font-bold tracking-wide whitespace-nowrap"
-        style={{ color: hovered ? "#fff" : "rgba(255,255,255,0.55)" }}
-      >
-        {brand.name}
-      </span>
     </div>
   );
 }
@@ -107,7 +101,7 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
     <div className="relative overflow-hidden py-4">
       <div className="absolute left-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to right, #080808, transparent)" }} />
       <div className="absolute right-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to left, #080808, transparent)" }} />
-      <div ref={trackRef} className="flex items-center gap-4 whitespace-nowrap w-max will-change-transform">
+      <div ref={trackRef} className="flex items-center gap-16 whitespace-nowrap w-max will-change-transform">
         {items.map((brand, i) => (
           <BrandCard key={`${brand.id}-${i}`} brand={brand} />
         ))}
@@ -120,7 +114,7 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
 export default function BrandMarquee() {
   return (
     <section className="py-16 overflow-hidden h-screen flex flex-col justify-center">
-      <div className="text-center mb-10 select-none">
+      <div className="text-center mb-24 select-none">
         <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase mb-3">
           TRUSTED BY THE BEST
         </p>
@@ -130,6 +124,7 @@ export default function BrandMarquee() {
       </div>
 
       <MarqueeRow brands={row1Brands} direction="left" />
+      <div className="h-8" />
       <MarqueeRow brands={row2Brands} direction="right" />
     </section>
   );

@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function NewsletterSection() {
   return (
-    <section className="relative py-24 px-4 text-center overflow-hidden h-screen flex flex-col justify-center" style={{ background: "#080808" }}>
+    <section className="relative py-6 px-4 text-center overflow-hidden flex-1 flex flex-col justify-center" style={{ background: "#080808" }}>
 
       {/* Keyframe styles */}
       <style>{`
@@ -57,34 +57,45 @@ export default function NewsletterSection() {
         background: "radial-gradient(ellipse 110% 100% at 50% 50%, transparent 35%, #080808 80%)",
       }} />
 
-      <div className="relative z-10">
-        <p className="text-white/50 text-[12px] font-semibold tracking-[0.4em] uppercase mb-4">
+      <div className="relative z-10 max-w-2xl mx-auto">
+        <p className="text-white/50 text-[12px] font-semibold tracking-[0.4em] uppercase mb-2">
           NEWSLETTER SUBSCRIPTION
         </p>
-        <h2 className="text-white font-black text-4xl sm:text-5xl uppercase tracking-tight mb-5">
+        <h2 className="text-white font-black text-3xl sm:text-4xl uppercase tracking-tight mb-2">
           Never Miss An Event
         </h2>
-        <p className="text-white/55 text-base max-w-lg mx-auto leading-relaxed mb-8">
+        <p className="text-white/40 text-sm font-medium tracking-widest uppercase mb-3">
+          Stay in the loop — concerts, festivals & more
+        </p>
+
+        {/* Divider */}
+        <div className="w-12 h-0.5 mx-auto mb-4" style={{ background: "#39BD69" }} />
+
+        <p className="text-white/55 text-base max-w-lg mx-auto leading-relaxed mb-5">
           Get weekly updates about concerts, festivals, workshops, nightlife events,
           and exclusive early-bird ticket offers directly to your inbox.
         </p>
 
-        <p className="text-white/40 text-[12px] font-semibold tracking-[0.3em] uppercase mb-3">
+        <p className="text-white/40 text-[11px] font-semibold tracking-[0.4em] uppercase mb-2">
           YOUR EMAIL
         </p>
-        <div className="flex max-w-md mx-auto">
+        <div className="flex max-w-md mx-auto mb-3">
           <input
             type="email"
             placeholder="ENTER YOUR EMAIL HERE"
-            className="flex-1 bg-white/10 border border-white/20 border-r-0 rounded-l-lg px-5 py-3.5 text-white text-sm outline-none focus:border-white/40 transition-colors placeholder:text-white/25 placeholder:tracking-[0.12em]"
+            className="flex-1 bg-white/10 border border-white/20 border-r-0 rounded-l-lg px-5 py-4 text-white text-sm outline-none focus:border-white/40 transition-colors placeholder:text-white/25 placeholder:tracking-[0.12em]"
           />
           <button
-            className="flex items-center gap-2 text-[13px] font-bold tracking-[0.15em] uppercase px-6 py-3.5 rounded-r-lg whitespace-nowrap transition-all hover:brightness-110"
+            className="flex items-center gap-2 text-[13px] font-bold tracking-[0.15em] uppercase px-6 py-4 rounded-r-lg whitespace-nowrap transition-all hover:brightness-110"
             style={{ background: "#39BD69", color: "#fff" }}
           >
             SUBMIT <ArrowRight size={13} />
           </button>
         </div>
+
+        <p className="text-white/25 text-[11px] tracking-[0.2em] uppercase">
+          No spam. Unsubscribe anytime.
+        </p>
       </div>
     </section>
   );

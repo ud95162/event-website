@@ -105,6 +105,7 @@ export default function FeaturedEvents() {
 
   return (
     <section id="events" className="py-20 overflow-hidden h-screen flex flex-col justify-center">
+
       <div className="flex flex-col items-center justify-center">
 
         {/* ── Header ───────────────────────────────────────────────── */}

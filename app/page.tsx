@@ -83,17 +83,22 @@ export default function Home() {
         {/* Everything except the footer sits in this layout block so sticky filters scroll out when footer appears */}
         <div className="flex-1 pt-16">
           <Navbar />
-          <StickySearchFilters />
 
-          <Hero />
+          {/* Hero + search bar fill exactly one screen */}
+          <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
+            <StickySearchFilters />
+            <Hero />
+          </div>
           <StatsCounter />
           <FeaturedEvents />
           <FeaturedArtists />
           <BrandMarquee />
         </div>
 
-        <NewsletterSection />
-        <Footer />
+        <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
+          <NewsletterSection />
+          <Footer />
+        </div>
       </div>
     </main>
   );

@@ -46,8 +46,16 @@ function matchesDate(dateStr: string, filter: string): boolean {
     case "this-month":
       return eventDate.getMonth() === today.getMonth() &&
              eventDate.getFullYear() === today.getFullYear();
-    default:
+    default: {
+      // Exact date from calendar picker e.g. "2026-06-15"
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filter)) {
+        const pick = new Date(filter);
+        return eventDate.getFullYear() === pick.getFullYear() &&
+               eventDate.getMonth()    === pick.getMonth()    &&
+               eventDate.getDate()     === pick.getDate();
+      }
       return true;
+    }
   }
 }
 
@@ -62,8 +70,10 @@ function EventsContent() {
   const [liked,  setLiked]  = useState<Set<number>>(new Set());
   const [shared, setShared] = useState<Set<number>>(new Set());
 
-  const genreParam = searchParams.get("genre") ?? "";
-  const dateParam  = searchParams.get("date")  ?? "";
+  const genreParam    = searchParams.get("genre")    ?? "";
+  const dateParam     = searchParams.get("date")     ?? "";
+  const queryParam    = searchParams.get("q")        ?? "";
+  const categoryParam = searchParams.get("category") ?? "";
 
   const toggleLike = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,14 +92,31 @@ function EventsContent() {
   const filtered = events.filter(ev => {
     if (genreParam && !ev.genres.includes(genreParam)) return false;
     if (dateParam  && !matchesDate(ev.date, dateParam)) return false;
+    if (queryParam) {
+      const q = queryParam.toLowerCase();
+      // Match against title, tag, location, genres, artists
+      const searchable = [
+        ev.title, ev.tag, ev.location,
+        ...(ev.genres ?? []),
+        ...(ev.artists ?? []),
+      ].join(" ").toLowerCase();
+      if (!searchable.includes(q)) return false;
+      // If category is artists, also check artists specifically
+      if (categoryParam === "artists" && !(ev.artists ?? []).some((a: string) => a.toLowerCase().includes(q))) return false;
+      // If category is genres, check genres specifically
+      if (categoryParam === "genres" && !(ev.genres ?? []).some((g: string) => g.toLowerCase().includes(q))) return false;
+    }
     return true;
   });
 
   const activeLabel =
-    genreParam ? GENRE_LABELS[genreParam] :
-    dateParam  ? DATE_LABELS[dateParam]   : "";
+    queryParam    ? `"${queryParam}"` :
+    genreParam    ? GENRE_LABELS[genreParam] :
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+      ? `Events on ${new Date(dateParam).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}`
+      : dateParam ? DATE_LABELS[dateParam] : "";
 
-  const isFiltered = !!genreParam || !!dateParam;
+  const isFiltered = !!genreParam || !!dateParam || !!queryParam;
 
   /* Split featured + grid only when unfiltered and there are events */
   const featured = !isFiltered && filtered.length > 0 ? filtered[0] : null;
