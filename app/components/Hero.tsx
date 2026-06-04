@@ -330,8 +330,10 @@ export default function Hero() {
                 <ArrowRight size={14} className="text-white group-hover/b:text-black transition-colors" />
               </button>
             </div>
-            <p className="text-white/30 text-[11px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
-            <ChevronDown size={13} className="text-white/30" />
+            <div className="flex items-center gap-1.5">
+              <p className="text-white/30 text-[11px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
+              <ChevronDown size={13} className="text-white/30" />
+            </div>
           </div>
 
         </div>
