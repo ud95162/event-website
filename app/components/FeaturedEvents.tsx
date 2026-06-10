@@ -4,19 +4,39 @@ import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
-import { events } from "../data/events";
+import { events as allEvents } from "../data/events";
 
+const events     = allEvents.slice(0, 6);   // show only first 6 featured events
 const CARD_W     = 340;
-const CARD_H     = 440;
-const IMG_H      = 255;   // fixed pixel height for image section (58% of 440)
-const INFO_H     = 185;   // fixed pixel height for info section (42% of 440)
 const RADIUS_X   = 420;
 const N          = events.length;
 const ANGLE_STEP = (Math.PI * 2) / N;
 
+function useCardSizes() {
+  const calc = () => {
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    // section = 100dvh, padding = 10vh, header ≈ 70px → remaining ≈ 90vh - 70px
+    const availH = vh - 64; // snap container = 100dvh - 64px
+    // More aggressive reduction on short screens
+    const multiplier = availH < 600 ? 0.50 : availH < 700 ? 0.55 : 0.62;
+    const CARD_H = Math.round(Math.min(440, Math.max(180, availH * multiplier - 20)));
+    const IMG_H  = Math.round(CARD_H * 0.58);
+    const INFO_H = CARD_H - IMG_H;
+    return { CARD_H, IMG_H, INFO_H };
+  };
+  const [sizes, setSizes] = useState(calc);
+  useEffect(() => {
+    const handler = () => setSizes(calc());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return sizes;
+}
+
 export default function FeaturedEvents() {
   const { userLocation } = useUserLocation();
   const router = useRouter();
+  const { CARD_H, IMG_H, INFO_H } = useCardSizes();
 
   /* ── Angle state: current (animated) vs target (snaps on click) ─────── */
   const currentAngle = useRef(0);
@@ -104,16 +124,16 @@ export default function FeaturedEvents() {
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section id="events" className="py-20 overflow-hidden h-screen flex flex-col justify-center">
+    <section id="events" className="snap-section overflow-hidden flex flex-col justify-center" style={{ padding: "5vh 0" }}>
 
       <div className="flex flex-col items-center justify-center">
 
         {/* ── Header ───────────────────────────────────────────────── */}
-        <div className="text-center mb-8 relative z-[200] select-none">
-          <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase mb-3">
+        <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
+          <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
             YOUR BEST FAVORITE EVENTS START HERE
           </p>
-          <h2 className="text-white font-black text-3xl uppercase mb-4 tracking-tight">
+          <h2 className="text-white font-black uppercase tracking-tight" style={{ fontSize: "clamp(1.2rem, 3vw + 1vh, 2rem)", marginBottom: "clamp(4px, 1vh, 16px)" }}>
             Featured Events
           </h2>
         </div>
@@ -174,7 +194,7 @@ export default function FeaturedEvents() {
               >
                 {/* Image */}
                 <div className="relative w-full overflow-hidden flex-shrink-0" style={{ height: IMG_H }}>
-                  <img src={card.image} alt={card.title} className="w-full h-full object-cover object-top"
+                  <img src={card.image} alt={card.title} loading="eager" decoding="async" className="w-full h-full object-cover object-top"
                     style={{
                       transform: hoveredCard === card.id ? "scale(1.08)" : "scale(1)",
                       transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",

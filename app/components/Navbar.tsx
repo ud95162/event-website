@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Menu, X, User, Music2, MapPin, Navigation, Search, ChevronDown, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Menu, X, User, Music2, MapPin, Navigation, Search, ChevronDown } from "lucide-react";
 import { useUserLocation, type UserLocation } from "../context/LocationContext";
 
 const navLinks = [
   { label: "Home",     href: "/"          },
   { label: "Events",   href: "/events"    },
   { label: "Artists",  href: "/artists"   },
-  { label: "About Us", href: "/#about"    },
+  { label: "About Us", href: "/about"     },
 ];
 
 const POPULAR_CITIES: UserLocation[] = [
@@ -33,10 +34,10 @@ function LocationPill() {
   /* Close on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setSearch("");
-      }
+      const target = e.target as Node;
+      const inPill = dropRef.current?.contains(target);
+      const inPortal = (target as Element)?.closest?.('[data-city-dropdown]');
+      if (!inPill && !inPortal) { setOpen(false); setSearch(""); }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -79,65 +80,78 @@ function LocationPill() {
   const isSet = !!userLocation && !detecting;
   const label = userLocation ? `${userLocation.city}, ${userLocation.country}` : "Select City";
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const pillRef  = useRef<HTMLDivElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (open && pillRef.current) {
+      const r = pillRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 8, left: r.left, width: Math.max(r.width, 288) });
+    }
+  }, [open]);
+
   return (
     <div ref={dropRef} className="relative">
-      {/* ── Pill button ── */}
-      <button
-        onClick={() => { setOpen(o => !o); setSearch(""); setError(null); }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold tracking-widest uppercase transition-all duration-300"
+      {/* ── Inline search pill ── */}
+      <div
+        ref={pillRef}
+        className="flex items-center gap-2 px-4 py-1.5 rounded-full transition-all duration-300"
         style={{
-          border: isSet
-            ? "1px solid rgba(57,189,105,0.6)"
-            : "1px solid rgba(255,255,255,0.18)",
-          background: isSet
-            ? "rgba(57,189,105,0.08)"
-            : "rgba(255,255,255,0.04)",
-          color: isSet ? "#39BD69" : "rgba(255,255,255,0.6)",
+          border: isSet ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.18)",
+          background: isSet ? "rgba(57,189,105,0.08)" : "rgba(255,255,255,0.04)",
           boxShadow: isSet ? "0 0 14px rgba(57,189,105,0.25)" : "none",
+          minWidth: 200,
         }}
       >
         {detecting ? (
-          <span className="relative flex h-2 w-2">
+          <span className="relative flex h-2 w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39BD69] opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#39BD69]" />
           </span>
         ) : (
-          <MapPin size={11} strokeWidth={2.5} />
+          <MapPin size={13} strokeWidth={2.5} className="flex-shrink-0" style={{ color: isSet ? "#39BD69" : "rgba(255,255,255,0.4)" }} />
         )}
-        <span>{detecting ? "Detecting…" : label}</span>
-        {isSet ? (
-          <span
-            onClick={e => { e.stopPropagation(); setUserLocation(null); setOpen(false); }}
-            className="ml-1 text-white/30 hover:text-white/70 transition-colors"
+        <input
+          ref={inputRef}
+          value={isSet && !open ? label : search}
+          onChange={e => { setSearch(e.target.value); setOpen(true); }}
+          onFocus={() => { setOpen(true); if (isSet) setSearch(""); }}
+          placeholder="SELECT CITY..."
+          className="bg-transparent text-base font-bold tracking-widest uppercase w-full outline-none placeholder:text-white/35"
+          style={{ color: isSet ? "#39BD69" : "rgba(255,255,255,0.7)" }}
+        />
+        {isSet && (
+          <button
+            onClick={e => { e.stopPropagation(); setUserLocation(null); setSearch(""); setOpen(false); }}
+            className="flex-shrink-0 text-white/30 hover:text-white/70 transition-colors"
           >
-            <X size={10} strokeWidth={2.5} />
-          </span>
-        ) : (
-          <ChevronDown
-            size={11}
-            strokeWidth={2.5}
-            className="transition-transform duration-200"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          />
+            <X size={12} strokeWidth={2.5} />
+          </button>
         )}
-      </button>
+      </div>
 
-      {/* ── Dropdown ── */}
-      {open && (
+      {/* ── Dropdown suggestions — portalled to body ── */}
+      {open && dropPos && typeof document !== "undefined" && createPortal(
         <div
-          className="absolute top-full mt-2 right-0 w-72 rounded-2xl border border-white/10 overflow-hidden"
+          data-city-dropdown=""
+          className="rounded-2xl border border-white/10 overflow-hidden"
           style={{
+            position: "fixed",
+            top: dropPos.top,
+            left: dropPos.left,
+            width: dropPos.width,
             background: "rgba(10,10,20,0.97)",
             backdropFilter: "blur(20px)",
             boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
-            zIndex: 400,
+            zIndex: 9999,
           }}
         >
           {/* Auto-detect */}
           <button
             onClick={detect}
             disabled={detecting}
-            className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-white/08 hover:bg-white/05 transition-colors group"
+            className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-white/08 hover:bg-white/05 transition-colors"
           >
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
@@ -153,29 +167,11 @@ function LocationPill() {
             </div>
           </button>
 
-          {error && (
-            <p className="px-4 py-2 text-[12px] text-red-400">{error}</p>
-          )}
-
-          {/* Search */}
-          <div className="px-3 pt-3 pb-2">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <Search size={12} className="text-white/30 flex-shrink-0" />
-              <input
-                autoFocus
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search city…"
-                className="bg-transparent text-white text-sm w-full outline-none placeholder:text-white/25 tracking-wide"
-              />
-            </div>
-          </div>
+          {error && <p className="px-4 py-2 text-[12px] text-red-400">{error}</p>}
 
           {/* City chips */}
-          <div className="px-3 pb-3">
-            <p className="text-white/25 text-[11px] font-bold tracking-[0.3em] uppercase mb-2 px-1">
-              Popular Cities
-            </p>
+          <div className="px-3 py-3">
+            <p className="text-white/25 text-[11px] font-bold tracking-[0.3em] uppercase mb-2 px-1">Popular Cities</p>
             <div className="flex flex-wrap gap-1.5">
               {filtered.map(({ city, country, lat, lon }) => {
                 const isActive = userLocation?.city === city && userLocation?.country === country;
@@ -189,165 +185,38 @@ function LocationPill() {
                       border: isActive ? "1px solid rgba(57,189,105,0.45)" : "1px solid rgba(255,255,255,0.08)",
                     }}
                   >
-                    <span
-                      className="text-[12px] font-semibold leading-tight"
-                      style={{ color: isActive ? "#39BD69" : "rgba(255,255,255,0.8)" }}
-                    >
+                    <span className="text-[12px] font-semibold leading-tight" style={{ color: isActive ? "#39BD69" : "rgba(255,255,255,0.8)" }}>
                       {city}
                     </span>
-                    <span className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.3)" }}>
-                      {country}
-                    </span>
+                    <span className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.3)" }}>{country}</span>
                   </button>
                 );
               })}
-              {filtered.length === 0 && (
-                <p className="text-white/25 text-[12px] px-1">No cities found</p>
-              )}
+              {filtered.length === 0 && <p className="text-white/25 text-[12px] px-1">No cities found</p>}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
 }
 
 /* ── Calendar Picker ────────────────────────────────────────────────── */
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const DAYS   = ["Su","Mo","Tu","We","Th","Fr","Sa"];
-
 function CalendarPicker() {
-  const router = useRouter();
-  const [open,      setOpen]      = useState(false);
-  const [selected,  setSelected]  = useState<Date | null>(null);
-  const [viewDate,  setViewDate]  = useState(() => new Date());
-  const dropRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const year  = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-
-  const firstDay  = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const cells: (number | null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const today = new Date();
-  const isToday  = (d: number) => d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-  const isPast   = (d: number) => new Date(year, month, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const isSelected = (d: number) => selected ? d === selected.getDate() && month === selected.getMonth() && year === selected.getFullYear() : false;
-
-  const selectDate = (d: number) => {
-    const date = new Date(year, month, d);
-    setSelected(date);
-    const yyyy = date.getFullYear();
-    const mm   = String(date.getMonth() + 1).padStart(2, "0");
-    const dd   = String(date.getDate()).padStart(2, "0");
-    setOpen(false);
-    router.push(`/events?date=${yyyy}-${mm}-${dd}`);
-  };
-
-  const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
-
-  const label = selected
-    ? `${selected.getDate()} ${MONTHS[selected.getMonth()].slice(0,3)} ${selected.getFullYear()}`
-    : "Pick Date";
-
+  const pathname = usePathname();
+  const isActive = pathname === "/calendar";
   return (
-    <div ref={dropRef} className="relative">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-bold tracking-widest uppercase transition-all duration-300"
-        style={{
-          border: selected ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.18)",
-          background: selected ? "rgba(57,189,105,0.08)" : "rgba(255,255,255,0.04)",
-          color: selected ? "#39BD69" : "rgba(255,255,255,0.7)",
-          boxShadow: selected ? "0 0 14px rgba(57,189,105,0.25)" : "none",
-        }}
-      >
-        <Calendar size={13} strokeWidth={2.5} />
-        <span>{label}</span>
-      </button>
-
-      {open && (
-        <div
-          className="absolute top-full mt-2 right-0 rounded-2xl border border-white/10 p-4"
-          style={{
-            width: 280,
-            background: "rgba(10,10,20,0.97)",
-            backdropFilter: "blur(20px)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
-            zIndex: 400,
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={prevMonth} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
-              <ChevronLeft size={14} className="text-white/60" />
-            </button>
-            <span className="text-white text-sm font-bold tracking-wide">{MONTHS[month]} {year}</span>
-            <button onClick={nextMonth} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
-              <ChevronRight size={14} className="text-white/60" />
-            </button>
-          </div>
-
-          {/* Day labels */}
-          <div className="grid grid-cols-7 mb-2">
-            {DAYS.map(d => (
-              <div key={d} className="text-center text-[11px] font-bold text-white/25 tracking-wider py-1">{d}</div>
-            ))}
-          </div>
-
-          {/* Cells */}
-          <div className="grid grid-cols-7 gap-y-1">
-            {cells.map((d, i) => {
-              if (!d) return <div key={i} />;
-              const past = isPast(d);
-              const sel  = isSelected(d);
-              const tod  = isToday(d);
-              return (
-                <button
-                  key={i}
-                  disabled={past}
-                  onClick={() => selectDate(d)}
-                  className="w-full aspect-square flex items-center justify-center rounded-full text-[13px] font-semibold transition-all duration-150"
-                  style={{
-                    background: sel ? "#39BD69" : tod ? "rgba(57,189,105,0.15)" : "transparent",
-                    color: sel ? "#000" : past ? "rgba(255,255,255,0.18)" : tod ? "#39BD69" : "rgba(255,255,255,0.8)",
-                    cursor: past ? "not-allowed" : "pointer",
-                  }}
-                  onMouseEnter={e => { if (!past && !sel) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={e => { if (!past && !sel) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-                >
-                  {d}
-                </button>
-              );
-            })}
-          </div>
-
-          {selected && (
-            <button
-              onClick={() => { setSelected(null); setOpen(false); }}
-              className="mt-3 w-full py-1.5 rounded-xl text-[11px] font-bold tracking-widest uppercase text-white/30 hover:text-white/60 transition-colors border border-white/08 hover:border-white/20"
-            >
-              Clear date
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    <Link
+      href="/calendar"
+      className={`text-base tracking-widest uppercase font-bold transition-colors duration-300 relative pb-1 ${
+        isActive
+          ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#e91e8c]"
+          : "text-white/55 hover:text-[#e91e8c]"
+      }`}
+    >
+      Events Calendar
+    </Link>
   );
 }
 
@@ -359,6 +228,7 @@ export default function Navbar() {
   const isActive = (href: string) => {
     if (href === "/events")  return pathname === "/events"  || pathname.startsWith("/events/");
     if (href === "/artists") return pathname === "/artists" || pathname.startsWith("/artists/");
+    if (href === "/about")   return pathname === "/about";
     if (href === "/")        return pathname === "/";
     return false;
   };
@@ -369,7 +239,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center">
               <Music2 size={15} className="text-white" />
             </div>
@@ -379,8 +249,8 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-16">
+          {/* All nav items — equal gap between every item */}
+          <div className="hidden lg:flex items-center justify-between flex-1 ml-24">
             {navLinks.map((l) => (
               <Link key={l.label} href={l.href}
                 className={`text-base tracking-widest uppercase font-bold transition-colors duration-300 relative pb-1 ${
@@ -391,12 +261,8 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-          </div>
-
-          {/* Right — Location pill + user + CTA */}
-          <div className="hidden lg:flex items-center gap-3">
-            <LocationPill />
             <CalendarPicker />
+            <LocationPill />
             <button className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors">
               <User size={15} className="text-white/60" />
             </button>

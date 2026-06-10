@@ -42,7 +42,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen relative overflow-x-clip">
+    <main className="relative" style={{ width: "100%", height: "100dvh", overflow: "hidden" }}>
       {/* Preloader — only mounted once we know it's a first-time visit */}
       {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
@@ -60,42 +60,41 @@ export default function Home() {
       {/* Layer 2 – floating musician silhouettes removed */}
 
       {/* Layer 3 – page content with slow motion portal entrance reveal */}
-      <div 
-        className="relative min-h-screen flex flex-col justify-between" 
-        style={{ 
+      <div
+        className="snap-container relative"
+        style={{
           zIndex: 10,
+          marginTop: 64,
+          height: "calc(100dvh - 64px)",
           opacity: (preloaderPhase === "checking" || preloaderPhase === "idle") ? 0 : 1,
           transform: (preloaderPhase === "checking" || preloaderPhase === "idle")
             ? "translateY(80px) scale(0.98)"
             : preloaderPhase === "exit"
               ? "translateY(0) scale(1)"
-              : undefined, // Clear when gone — restores sticky positioning
+              : undefined,
           filter: (preloaderPhase === "checking" || preloaderPhase === "idle")
             ? "blur(12px)"
             : preloaderPhase === "exit"
               ? "blur(0)"
-              : undefined, // Clear when gone — restores sticky positioning
+              : undefined,
           transition: preloaderPhase === "gone"
-            ? undefined // No transition when gone — releases GPU compositing context for sticky scroll
+            ? undefined
             : "opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1.8s cubic-bezier(0.16, 1, 0.3, 1), filter 1.8s cubic-bezier(0.16, 1, 0.3, 1)"
         }}
       >
-        {/* Everything except the footer sits in this layout block so sticky filters scroll out when footer appears */}
-        <div className="flex-1 pt-16">
-          <Navbar />
+        <Navbar />
 
-          {/* Hero + search bar fill exactly one screen */}
-          <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
-            <StickySearchFilters />
-            <Hero />
-          </div>
-          <StatsCounter />
-          <FeaturedEvents />
-          <FeaturedArtists />
-          <BrandMarquee />
+        {/* Hero + search bar */}
+        <div className="snap-section flex flex-col">
+          <StickySearchFilters />
+          <Hero />
         </div>
+        <StatsCounter />
+        <FeaturedEvents />
+        <FeaturedArtists />
+        <BrandMarquee />
 
-        <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
+        <div className="snap-section flex flex-col">
           <NewsletterSection />
           <Footer />
         </div>

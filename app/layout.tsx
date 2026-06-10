@@ -14,8 +14,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col antialiased">
+    <html lang="en">
+      <head>
+        {["/events/event1.png", "/events/event2.png", "/events/event3.png", "/events/event4.png",
+          "/artists/1.png", "/artists/2.png", "/artists/3.png", "/artists/4.png"].map(src => (
+          <link key={src} rel="preload" as="image" href={src} />
+        ))}
+      </head>
+      <body className="antialiased">
         <LocationProvider>{children}</LocationProvider>
       </body>
     </html>

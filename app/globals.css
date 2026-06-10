@@ -105,6 +105,8 @@
 
 html {
   font-family: 'Century Gothic', sans-serif;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 * {
@@ -115,7 +117,29 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  overflow-x: hidden;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.snap-container {
+  width: 100%;
+  height: calc(100dvh - 64px);
+  margin-top: 64px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.snap-container::-webkit-scrollbar {
+  display: none;
+}
+
+.snap-section {
+  scroll-snap-align: start;
+  width: 100%;
+  height: calc(100dvh - 64px) !important;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

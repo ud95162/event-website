@@ -110,7 +110,7 @@ export default function Hero() {
   const bigIdx  = current;
 
   return (
-    <section className="flex flex-col flex-1 min-h-0 pt-4 pb-6 relative">
+    <section className="flex flex-col flex-1 min-h-0 relative" style={{ padding: "clamp(4px, 1vh, 16px) 0 clamp(8px, 2vh, 24px)" }}>
 
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">

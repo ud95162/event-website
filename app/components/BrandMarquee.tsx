@@ -113,18 +113,18 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
 /* ── Section ──────────────────────────────────────────────────────────── */
 export default function BrandMarquee() {
   return (
-    <section className="py-16 overflow-hidden h-screen flex flex-col justify-center">
-      <div className="text-center mb-24 select-none">
-        <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase mb-3">
+    <section className="snap-section overflow-hidden flex flex-col justify-center" style={{ padding: "4vh 0" }}>
+      <div className="text-center select-none" style={{ marginBottom: "clamp(12px, 4vh, 64px)" }}>
+        <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
           TRUSTED BY THE BEST
         </p>
-        <h2 className="text-white font-black text-3xl uppercase tracking-tight">
+        <h2 className="text-white font-black uppercase tracking-tight" style={{ fontSize: "clamp(1.2rem, 3vw + 1vh, 2rem)" }}>
           Brands & Companies
         </h2>
       </div>
 
       <MarqueeRow brands={row1Brands} direction="left" />
-      <div className="h-8" />
+      <div style={{ height: "clamp(8px, 2vh, 32px)" }} />
       <MarqueeRow brands={row2Brands} direction="right" />
     </section>
   );

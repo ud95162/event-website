@@ -5,9 +5,23 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Heart } from "lucide-react";
 
 const CARD_W     = 300;
-const CARD_H     = 400;
 const RADIUS_X   = 400;
 const ANGLE_STEP = (Math.PI * 2) / 8;
+
+function useCardHeight() {
+  const calc = () => {
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const availH = vh - 64;
+    return Math.round(Math.min(400, Math.max(200, availH * 0.68 - 20)));
+  };
+  const [h, setH] = useState(calc);
+  useEffect(() => {
+    const handler = () => setH(calc());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return h;
+}
 
 const ACCENT_COLOR = "#39BD69";
 const ACCENT_RGB   = "57,189,105";
@@ -27,6 +41,7 @@ const N = artists.length;
 
 export default function FeaturedArtists() {
   const router = useRouter();
+  const CARD_H = useCardHeight();
 
   const currentAngle = useRef(0);
   const targetAngle  = useRef(0);
@@ -88,7 +103,7 @@ export default function FeaturedArtists() {
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section id="artists" className="py-20 overflow-hidden h-screen flex flex-col justify-center relative">
+    <section id="artists" className="snap-section overflow-hidden flex flex-col justify-center relative" style={{ padding: "5vh 0" }}>
 
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
@@ -106,11 +121,11 @@ export default function FeaturedArtists() {
       <div className="flex flex-col items-center justify-center">
 
         {/* Header */}
-        <div className="text-center mb-8 relative z-[200] select-none">
-          <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase mb-3">
+        <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
+          <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
             PERFORM BEYOND LIMITS
           </p>
-          <h2 className="text-white font-black text-3xl uppercase mb-4 tracking-tight">
+          <h2 className="text-white font-black uppercase tracking-tight" style={{ fontSize: "clamp(1.2rem, 3vw + 1vh, 2rem)", marginBottom: "clamp(4px, 1vh, 16px)" }}>
             Featured Artists
           </h2>
         </div>
@@ -151,6 +166,8 @@ export default function FeaturedArtists() {
                   <img
                     src={card.image}
                     alt={card.name}
+                    loading="eager"
+                    decoding="async"
                     className="w-full h-full object-cover object-top"
                     style={{
                       filter: card.isFront ? "grayscale(0%)" : "grayscale(60%)",

@@ -17,7 +17,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
 
   /* ── Progress bar ────────────────────────────────────────────────────── */
   useEffect(() => {
-    const TOTAL = 2500, STEP = 25;
+    const TOTAL = 1200, STEP = 25;
     let elapsed = 0;
     const id = setInterval(() => {
       elapsed += STEP;
@@ -98,7 +98,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
   /* ── Auto-exit 1 s after loading completes ───────────────────────────── */
   useEffect(() => {
     if (!isLoaded) return;
-    const id = setTimeout(() => triggerExit(), 1000);
+    const id = setTimeout(() => triggerExit(), 300);
     return () => clearTimeout(id);
   }, [isLoaded, triggerExit]);
 
@@ -383,47 +383,25 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
         className="absolute bottom-16 flex flex-col items-center justify-center h-24 w-full px-6 select-none"
         style={{ animation: "pl-enter 0.8s 0.5s both" }}
       >
-        {!isLoaded ? (
-          <div className="flex flex-col items-center gap-3">
-            <div
-              className="relative overflow-hidden rounded-full"
-              style={{ width: 220, height: 1.5, background: "rgba(255,255,255,0.08)" }}
-            >
-              <div
-                className="absolute left-0 top-0 h-full rounded-full"
-                style={{
-                  width: `${progress}%`,
-                  background: "#ffffff",
-                  boxShadow: "0 0 8px rgba(255,255,255,0.6)",
-                  transition: "width 0.05s linear",
-                }}
-              />
-            </div>
-            <p className="text-white/20 text-[9px] tracking-[0.45em] tabular-nums uppercase">
-              LOADING EXPERIENCE {Math.round(progress).toString().padStart(3, "0")}%
-            </p>
-          </div>
-        ) : (
+        <div className="flex flex-col items-center gap-3">
           <div
-            className="flex flex-col items-center gap-2.5 animate-pulse"
-            style={{ animationDuration: "2.2s" }}
+            className="relative overflow-hidden rounded-full"
+            style={{ width: 220, height: 1.5, background: "rgba(255,255,255,0.08)" }}
           >
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-white/60 text-[10px] font-black tracking-[0.45em] uppercase">
-                SCROLL DOWN TO ENTER
-              </span>
-              <span className="text-white/30 text-[8px] tracking-[0.3em] uppercase">
-                OR CLICK ANYWHERE TO START
-              </span>
-            </div>
-            <div className="w-5 h-8 rounded-full border-2 border-white/20 flex justify-center p-1.5 relative mt-1 opacity-60">
-              <div
-                className="w-1 h-1.5 bg-white rounded-full absolute"
-                style={{ animation: "eq-pulse 1.4s ease-in-out infinite", transformOrigin: "center top" }}
-              />
-            </div>
+            <div
+              className="absolute left-0 top-0 h-full rounded-full"
+              style={{
+                width: `${progress}%`,
+                background: "#ffffff",
+                boxShadow: "0 0 8px rgba(255,255,255,0.6)",
+                transition: "width 0.05s linear",
+              }}
+            />
           </div>
-        )}
+          <p className="text-white/20 text-[9px] tracking-[0.45em] tabular-nums uppercase">
+            LOADING EXPERIENCE {Math.round(progress).toString().padStart(3, "0")}%
+          </p>
+        </div>
       </div>
 
       {/* ── Corner frame marks ──────────────────────────────────────── */}

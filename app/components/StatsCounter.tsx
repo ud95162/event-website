@@ -51,8 +51,9 @@ function StatItem({ label, value, suffix, trigger, delay }: {
 
   return (
     <div
-      className="flex-1 flex flex-col items-center text-center py-10 px-4"
+      className="flex-1 flex flex-col items-center text-center"
       style={{
+        padding: "clamp(8px, 3vh, 40px) 16px",
         opacity: started ? 1 : 0,
         transform: started ? "translateY(0)" : "translateY(24px)",
         transition: "opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)",
@@ -60,9 +61,10 @@ function StatItem({ label, value, suffix, trigger, delay }: {
     >
       {/* Number */}
       <span
-        className="font-black tracking-tighter leading-none mb-3"
+        className="font-black tracking-tighter leading-none"
         style={{
-          fontSize: "clamp(3.5rem, 7vw, 5.5rem)",
+          marginBottom: "clamp(4px, 1vh, 12px)",
+          fontSize: "clamp(2rem, 6vw + 2vh, 5.5rem)",
           background: "linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.35) 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
@@ -109,7 +111,7 @@ export default function StatsCounter() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="h-screen flex flex-col justify-center py-10 relative">
+    <section ref={sectionRef} className="snap-section flex flex-col justify-center relative" style={{ padding: "4vh 0" }}>
 
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
