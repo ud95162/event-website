@@ -6,37 +6,44 @@ import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { events as allEvents } from "../data/events";
 
-const events     = allEvents.slice(0, 6);   // show only first 6 featured events
-const CARD_W     = 340;
-const RADIUS_X   = 420;
+const events     = allEvents.slice(0, 6);
 const N          = events.length;
 const ANGLE_STEP = (Math.PI * 2) / N;
 
-function useCardSizes() {
-  const calc = () => {
-    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-    // section = 100dvh, padding = 10vh, header ≈ 70px → remaining ≈ 90vh - 70px
-    const availH = vh - 64; // snap container = 100dvh - 64px
-    // More aggressive reduction on short screens
-    const multiplier = availH < 600 ? 0.50 : availH < 700 ? 0.55 : 0.62;
-    const CARD_H = Math.round(Math.min(440, Math.max(180, availH * multiplier - 20)));
-    const IMG_H  = Math.round(CARD_H * 0.58);
-    const INFO_H = CARD_H - IMG_H;
-    return { CARD_H, IMG_H, INFO_H };
-  };
-  const [sizes, setSizes] = useState(calc);
+// Non-card content: header(80) + headerMargin(14) + stageOffset(40) + mt6×2(48) + dots(6) + button(50) ≈ 238
+const FIXED_OVERHEAD = 200;
+
+function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
+  const [sizes, setSizes] = useState({ CARD_H: 380, CARD_W: 285, IMG_H: 220, INFO_H: 160, RADIUS_X: 400 });
+
   useEffect(() => {
-    const handler = () => setSizes(calc());
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
+    const calc = (contentH: number, contentW: number) => {
+      // contentRect already excludes padding — no need to subtract it again
+      const CARD_H = Math.round(Math.min(520, Math.max(180, contentH - FIXED_OVERHEAD)));
+      const CARD_W = Math.round(CARD_H * 0.75);
+      const IMG_H  = Math.round(CARD_H * 0.58);
+      const INFO_H = CARD_H - IMG_H;
+      const RADIUS_X = Math.round(Math.min(contentW * 0.36, CARD_W * 1.35));
+      setSizes({ CARD_H, CARD_W, IMG_H, INFO_H, RADIUS_X });
+    };
+
+    const observer = new ResizeObserver(entries => {
+      for (const e of entries) calc(e.contentRect.height, e.contentRect.width);
+    });
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, [sectionRef]);
+
   return sizes;
 }
 
 export default function FeaturedEvents() {
   const { userLocation } = useUserLocation();
   const router = useRouter();
-  const { CARD_H, IMG_H, INFO_H } = useCardSizes();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { CARD_H, CARD_W, IMG_H, INFO_H, RADIUS_X } = useCardSizes(sectionRef);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   /* ── Angle state: current (animated) vs target (snaps on click) ─────── */
   const currentAngle = useRef(0);
@@ -124,7 +131,7 @@ export default function FeaturedEvents() {
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section id="events" className="snap-section overflow-hidden flex flex-col justify-center" style={{ padding: "5vh 0" }}>
+    <section ref={sectionRef} id="events" className="snap-section overflow-hidden flex flex-col justify-center" style={{ padding: "3vh 0" }}>
 
       <div className="flex flex-col items-center justify-center">
 
@@ -154,7 +161,7 @@ export default function FeaturedEvents() {
 
           {/* Card stage */}
           <div className="relative" style={{ width: "100%", height: CARD_H + 40 }}>
-            {sorted.map(card => (
+            {mounted && sorted.map(card => (
               /* Outer: handles position only (RAF-driven, no CSS transition) */
               <div
                 key={card.id}
@@ -247,11 +254,6 @@ export default function FeaturedEvents() {
                 {/* Info */}
                 <div className="px-4 pb-3 pt-1 text-center flex flex-col justify-between overflow-hidden" style={{ height: INFO_H }}>
                   <div>
-                    <p className="font-bold tracking-[0.25em] uppercase mb-1.5 transition-all duration-300"
-                      style={{
-                        color: hoveredCard === card.id ? "#39BD69" : "rgba(255,255,255,0.4)",
-                        fontSize: hoveredCard === card.id ? "12px" : "11px",
-                      }}>{card.tag}</p>
                     <h3 className="text-white font-black uppercase tracking-wide leading-tight mb-2 transition-all duration-300"
                       style={{ fontSize: hoveredCard === card.id ? "17px" : "16px" }}>{card.title}</h3>
                     <p className="leading-relaxed transition-all duration-300"
@@ -302,7 +304,7 @@ export default function FeaturedEvents() {
         </div>
 
         {/* ── Dot indicators ────────────────────────────────────────── */}
-        <div className="flex gap-2 mt-6 relative z-[200]">
+        <div className="flex gap-2 mt-3 relative z-[200]">
           {events.map((_, i) => (
             <button
               key={i}
@@ -319,7 +321,7 @@ export default function FeaturedEvents() {
         </div>
 
         {/* ── Explore button ────────────────────────────────────────── */}
-        <div className="text-center mt-6 relative z-[200]">
+        <div className="text-center mt-3 relative z-[200]">
           <button
             className="btn-outline text-sm px-10 py-3.5 rounded-full"
             onClick={() => router.push("/events")}

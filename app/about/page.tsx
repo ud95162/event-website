@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import NewsletterSection from "../components/NewsletterSection";
+import ParticleField from "../components/ParticleField";
 import { ArrowRight, Music2, Users, Globe, Zap, Heart, Star, MapPin, Mail, Phone } from "lucide-react";
 
 /* ── Count-up hook ─────────────────────────────────────────────── */
@@ -55,10 +56,9 @@ const values = [
 ];
 
 const stats = [
-  { value: 250, suffix: "+",  label: "Events Listed"    },
-  { value: 12,  suffix: "K+", label: "Happy Users"      },
-  { value: 48,  suffix: "M+", label: "Total Reach"      },
-  { value: 6,   suffix: "+",  label: "Years of Service" },
+  { value: 250, suffix: "+",  label: "Events Listed" },
+  { value: 12,  suffix: "K+", label: "Happy Users"   },
+  { value: 48,  suffix: "M+", label: "Total Reach"   },
 ];
 
 function StatItem({ value, suffix, label, trigger, delay }: { value: number; suffix: string; label: string; trigger: boolean; delay: number }) {
@@ -71,12 +71,103 @@ function StatItem({ value, suffix, label, trigger, delay }: { value: number; suf
   }, [trigger, delay]);
   return (
     <div style={{ textAlign: "center", opacity: started ? 1 : 0, transform: started ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.8s ease, transform 0.8s ease" }}>
-      <div style={{ fontSize: "clamp(2rem, 5vw, 4rem)", fontWeight: 900, background: "linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.35) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 }}>
+      <div style={{ fontSize: "clamp(3.5rem, 7vw, 6rem)", fontWeight: 900, background: "linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.35) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 }}>
         {count}{suffix}
       </div>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#39BD69", boxShadow: "0 0 8px rgba(57,189,105,0.6)", margin: "10px auto 8px", transform: started ? "scale(1)" : "scale(0)", transition: "transform 0.5s ease 0.4s" }} />
       <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase" }}>{label}</p>
     </div>
+  );
+}
+
+/* ── Contact Form ──────────────────────────────────────────────── */
+function ContactForm() {
+  const [form, setForm]     = useState({ name: "", email: "", subject: "", message: "" });
+  const [sent, setSent]     = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+
+  const inputStyle = (field: string): React.CSSProperties => ({
+    width: "100%", padding: "12px 16px", borderRadius: 12, outline: "none",
+    background: "rgba(255,255,255,0.04)",
+    border: `1px solid ${focused === field ? "rgba(57,189,105,0.5)" : "rgba(255,255,255,0.1)"}`,
+    color: "#fff", fontSize: 14, fontFamily: "inherit",
+    transition: "border-color 0.2s",
+    boxShadow: focused === field ? "0 0 0 3px rgba(57,189,105,0.08)" : "none",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSent(true);
+    setTimeout(() => { setSent(false); setForm({ name: "", email: "", subject: "", message: "" }); }, 3000);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Name + Email row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Name</p>
+          <input
+            type="text" required placeholder="Your name"
+            value={form.name}
+            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            onFocus={() => setFocused("name")} onBlur={() => setFocused(null)}
+            style={inputStyle("name")}
+          />
+        </div>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Email</p>
+          <input
+            type="email" required placeholder="you@example.com"
+            value={form.email}
+            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+            onFocus={() => setFocused("email")} onBlur={() => setFocused(null)}
+            style={inputStyle("email")}
+          />
+        </div>
+      </div>
+
+      {/* Subject */}
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Subject</p>
+        <input
+          type="text" required placeholder="How can we help?"
+          value={form.subject}
+          onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
+          onFocus={() => setFocused("subject")} onBlur={() => setFocused(null)}
+          style={inputStyle("subject")}
+        />
+      </div>
+
+      {/* Message */}
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Message</p>
+        <textarea
+          required placeholder="Tell us about your event, venue, or collaboration idea…"
+          rows={4} value={form.message}
+          onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+          onFocus={() => setFocused("message")} onBlur={() => setFocused(null)}
+          style={{ ...inputStyle("message"), resize: "none" }}
+        />
+      </div>
+
+      {/* Submit */}
+      <button
+        type="submit"
+        style={{
+          padding: "14px 32px", borderRadius: 12, cursor: "pointer",
+          background: sent ? "rgba(57,189,105,0.2)" : "linear-gradient(90deg,#39BD69,#2da857)",
+          color: sent ? "#39BD69" : "#000",
+          fontWeight: 800, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase",
+          fontFamily: "inherit",
+          border: sent ? "1px solid rgba(57,189,105,0.4)" : "none",
+          transition: "all 0.3s",
+          boxShadow: sent ? "none" : "0 0 24px rgba(57,189,105,0.2)",
+        } as React.CSSProperties}
+      >
+        {sent ? "✓ Message Sent!" : "Send Message"}
+      </button>
+    </form>
   );
 }
 
@@ -101,10 +192,11 @@ export default function AboutPage() {
 
   return (
     <div style={{ background: "#080808", color: "#fff", height: "100dvh", overflowX: "hidden" }}>
+      <ParticleField />
       <Navbar />
 
       {/* Snap container */}
-      <div className="snap-container" style={{ marginTop: 64, height: "calc(100dvh - 64px)" }}>
+      <div className="snap-container" style={{ marginTop: 64, height: "calc(100dvh - 64px)", position: "relative", zIndex: 1 }}>
 
         {/* ── 1. Hero ─────────────────────────────────────────── */}
         <div className="snap-section" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "clamp(24px,5vh,80px) 24px", position: "relative", overflow: "hidden" }}>
@@ -211,29 +303,42 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* ── 6. Contact + Footer ──────────────────────────────── */}
-        <div className="snap-section" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "clamp(24px,5vh,60px) 24px", background: "rgba(57,189,105,0.02)" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: "clamp(8px,1.5vh,16px)" }}>GET IN TOUCH</p>
-            <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900, marginBottom: "clamp(10px,2vh,20px)" }}>Let's Work Together</h2>
-            <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.8, marginBottom: "clamp(20px,3vh,40px)", fontSize: "clamp(0.85rem, 1.1vw, 1rem)", maxWidth: 560 }}>
-              Whether you're a venue, artist, or promoter — we'd love to hear from you and explore how we can bring your events to a wider audience.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", marginBottom: "clamp(20px,3vh,40px)" }}>
-              {[
-                { icon: Mail,    label: "hello@events.lk"   },
-                { icon: Phone,   label: "+94 11 234 5678"   },
-                { icon: MapPin,  label: "Colombo 03, Sri Lanka" },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.85rem, 1.1vw, 1rem)" }}>
-                  <Icon size={14} color="#39BD69" /> {label}
+        {/* ── 6. Contact (full screen) ─────────────────────────── */}
+        <div className="snap-section" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(32px,5vh,64px) clamp(24px,5vw,80px)", background: "rgba(57,189,105,0.02)" }}>
+            <div style={{ maxWidth: 1100, width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(32px,5vw,80px)", alignItems: "center" }}>
+
+              {/* Left — info */}
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: 14 }}>GET IN TOUCH</p>
+                <h2 style={{ fontSize: "clamp(1.8rem,3.5vw,3rem)", fontWeight: 900, lineHeight: 1.1, marginBottom: 16 }}>Let's Work Together</h2>
+                <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.8, fontSize: "clamp(0.85rem,1.1vw,1rem)", maxWidth: 420, marginBottom: 32 }}>
+                  Whether you're a venue, artist, or promoter — we'd love to hear from you and explore how we can bring your events to a wider audience.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {[
+                    { icon: Mail,   label: "hello@events.lk"      },
+                    { icon: Phone,  label: "+94 11 234 5678"       },
+                    { icon: MapPin, label: "Colombo 03, Sri Lanka" },
+                  ].map(({ icon: Icon, label }) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon size={15} color="#39BD69" />
+                      </div>
+                      <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.85rem,1vw,1rem)" }}>{label}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Right — form */}
+              <ContactForm />
+
             </div>
-            <button onClick={() => router.push("/events")} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 32px", borderRadius: 999, background: "linear-gradient(90deg,#39BD69,#2da857)", color: "#000", fontWeight: 800, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer", border: "none", boxShadow: "0 0 30px rgba(57,189,105,0.25)" }}>
-              Explore All Events <ArrowRight size={14} />
-            </button>
-          </div>
+        </div>
+
+        {/* ── 7. Newsletter + Footer ───────────────────────────── */}
+        <div className="snap-section flex flex-col">
+          <NewsletterSection />
           <Footer />
         </div>
 

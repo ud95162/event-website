@@ -32,16 +32,18 @@ export default function ParticleField() {
     window.addEventListener("resize", resize);
 
     const particles: Particle[] = Array.from({ length: COUNT }, () => {
-      const isGreen = Math.random() < 0.22;
+      const rnd = Math.random();
+      const isGreen = rnd < 0.22;
+      const isPink  = rnd < 0.38 && !isGreen;
       return {
         x:     Math.random() * window.innerWidth,
         y:     Math.random() * window.innerHeight,
         vx:    (Math.random() - 0.5) * 0.4,
         vy:    (Math.random() - 0.5) * 0.4,
-        r:     Math.random() * 1.8 + 0.8,
+        r:     Math.random() * 3.5 + 1.8,
         alpha: Math.random() * 0.45 + 0.2,
-        color: isGreen ? "#39BD69" : "#ffffff",
-        glow:  isGreen ? "rgba(57,189,105,0.9)" : "rgba(255,255,255,0.8)",
+        color: isGreen ? "#39BD69" : isPink ? "#e91e8c" : "#ffffff",
+        glow:  isGreen ? "rgba(57,189,105,0.9)" : isPink ? "rgba(233,30,140,0.9)" : "rgba(255,255,255,0.8)",
       };
     });
 
@@ -75,7 +77,7 @@ export default function ParticleField() {
         ctx.save();
         ctx.globalAlpha = p.alpha;
         ctx.shadowColor = p.glow;
-        ctx.shadowBlur  = 10;
+        ctx.shadowBlur  = 18;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = p.color;

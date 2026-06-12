@@ -34,7 +34,7 @@ export default function ArtistDetailPage() {
   const artistEvents = events.filter(ev => ev.lineup.includes(artist.name));
 
   return (
-    <main className="min-h-screen bg-[#080808] relative">
+    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       <ParticleField />
       <Navbar />
 

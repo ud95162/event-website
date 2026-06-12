@@ -4,23 +4,28 @@ import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart } from "lucide-react";
 
-const CARD_W     = 300;
-const RADIUS_X   = 400;
-const ANGLE_STEP = (Math.PI * 2) / 8;
+// ANGLE_STEP defined after N below
 
-function useCardHeight() {
-  const calc = () => {
-    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-    const availH = vh - 64;
-    return Math.round(Math.min(400, Math.max(200, availH * 0.68 - 20)));
-  };
-  const [h, setH] = useState(calc);
+const FIXED_OVERHEAD = 200;
+
+function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
+  const [sizes, setSizes] = useState({ CARD_H: 380, CARD_W: 285, RADIUS_X: 400 });
+
   useEffect(() => {
-    const handler = () => setH(calc());
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return h;
+    const calc = (contentH: number, contentW: number) => {
+      const CARD_H   = Math.round(Math.min(520, Math.max(180, contentH - FIXED_OVERHEAD)));
+      const CARD_W   = Math.round(CARD_H * 0.75);
+      const RADIUS_X = Math.round(Math.min(contentW * 0.36, CARD_W * 1.35));
+      setSizes({ CARD_H, CARD_W, RADIUS_X });
+    };
+    const observer = new ResizeObserver(entries => {
+      for (const e of entries) calc(e.contentRect.height, e.contentRect.width);
+    });
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, [sectionRef]);
+
+  return sizes;
 }
 
 const ACCENT_COLOR = "#39BD69";
@@ -37,19 +42,24 @@ const artists = [
   { id: 8, name: "Hiruni De Silva", role: "CLASSICAL FUSION ARTIST",   image: "/artists/4.png" },
 ];
 
-const N = artists.length;
+const N = Math.min(artists.length, 6);
+const ANGLE_STEP = (Math.PI * 2) / N;
 
 export default function FeaturedArtists() {
   const router = useRouter();
-  const CARD_H = useCardHeight();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { CARD_H, CARD_W, RADIUS_X } = useCardSizes(sectionRef);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const currentAngle = useRef(0);
   const targetAngle  = useRef(0);
   const rafRef       = useRef<number>(0);
   const animFn       = useRef<() => void>(() => {});
 
-  const [baseAngle, setBaseAngle] = useState(0);
-  const [followed,  setFollowed]  = useState<Set<number>>(new Set());
+  const [baseAngle,    setBaseAngle]    = useState(0);
+  const [followed,     setFollowed]     = useState<Set<number>>(new Set());
+  const [hoveredCard,  setHoveredCard]  = useState<number | null>(null);
 
   const toggleFollow = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,12 +97,12 @@ export default function FeaturedArtists() {
     startAnim();
   };
 
-  const cards = artists.map((artist, i) => {
+  const cards = artists.slice(0, 6).map((artist, i) => {
     const angle   = baseAngle + i * ANGLE_STEP;
     const x       = Math.sin(angle) * RADIUS_X;
     const z       = Math.cos(angle);
     const depth   = (z + 1) / 2;
-    const scale   = 0.55 + depth * 0.45;
+    const scale   = 1;
     const opacity = 0.25 + depth * 0.75;
     const y       = Math.sin(angle * 0.5) * 30;
     const zIndex  = Math.round(depth * 100);
@@ -103,7 +113,7 @@ export default function FeaturedArtists() {
   const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
-    <section id="artists" className="snap-section overflow-hidden flex flex-col justify-center relative" style={{ padding: "5vh 0" }}>
+    <section ref={sectionRef} id="artists" className="snap-section overflow-hidden flex flex-col justify-center relative" style={{ padding: "3vh 0" }}>
 
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
@@ -142,78 +152,83 @@ export default function FeaturedArtists() {
           </button>
 
           <div className="relative" style={{ width: "100%", height: CARD_H + 40 }}>
-            {sorted.map(card => (
+            {mounted && sorted.map(card => (
+              /* Outer: handles position only (RAF-driven, no CSS transition) */
               <div
                 key={card.id}
-                className="absolute rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() => router.push(`/artists/${card.id}`)}
+                className="absolute"
                 style={{
                   width: CARD_W,
                   height: CARD_H,
                   left: "50%",
                   top: "50%",
-                  background: "#1a1a2e",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  transform: `translate(-50%,-50%) translateX(${card.x}px) translateY(${card.y}px) scale(${card.scale})`,
+                  transform: `translate(-50%,-50%) translateX(${card.x}px) translateY(${card.y}px)`,
                   opacity: card.opacity,
-                  filter: card.isFront ? "brightness(1.1)" : `brightness(${0.4 + card.depth * 0.5})`,
                   zIndex: card.zIndex,
                   willChange: "transform",
                 }}
               >
-                {/* Image */}
-                <div className="relative w-full" style={{ height: "62%" }}>
-                  <img
-                    src={card.image}
-                    alt={card.name}
-                    loading="eager"
-                    decoding="async"
-                    className="w-full h-full object-cover object-top"
-                    style={{
-                      filter: card.isFront ? "grayscale(0%)" : "grayscale(60%)",
-                      transition: "filter 0.5s ease",
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e] via-transparent to-transparent" />
-
-                  {/* Follow button */}
-                  <button
-                    onClick={(e) => toggleFollow(card.id, e)}
-                    className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
-                    style={{
-                      background: followed.has(card.id) ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.45)",
-                      border: followed.has(card.id) ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.15)",
-                      backdropFilter: "blur(6px)",
-                    }}
-                  >
-                    <Heart
-                      size={11}
-                      strokeWidth={2.5}
-                      style={{ color: followed.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }}
-                      fill={followed.has(card.id) ? "#fff" : "none"}
-                    />
-                  </button>
-                </div>
-
-                {/* Info */}
-                <div className="px-4 pb-4 pt-2 text-center flex flex-col justify-between" style={{ height: "38%" }}>
-                  <div>
-                    <p className="text-white/35 text-[11px] font-bold tracking-[0.3em] uppercase mb-1.5">
-                      {card.role}
-                    </p>
-                    <h3 className="text-white font-black text-base uppercase mb-3 tracking-wide">
-                      {card.name}
-                    </h3>
-                  </div>
-                  <div className="flex justify-center">
-                    <div
-                      className="h-[3px] rounded-full"
+                {/* Inner: handles visuals + hover (CSS transition) */}
+                <div
+                  className="absolute rounded-2xl overflow-hidden cursor-pointer"
+                  onClick={() => router.push(`/artists/${card.id}`)}
+                  onMouseEnter={() => setHoveredCard(card.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  style={{
+                    width: CARD_W,
+                    height: CARD_H,
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%,-50%)",
+                    background: hoveredCard === card.id ? "#0d1f2d" : "#080808",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: hoveredCard === card.id ? `0 0 40px rgba(${ACCENT_RGB},0.15)` : "none",
+                    filter: card.isFront ? "brightness(1.1)" : `brightness(${0.4 + card.depth * 0.5})`,
+                    transition: "background 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease",
+                  }}
+                >
+                  {/* Image */}
+                  <div className="relative w-full overflow-hidden flex-shrink-0" style={{ height: "62%" }}>
+                    <img
+                      src={card.image}
+                      alt={card.name}
+                      loading="eager"
+                      decoding="async"
+                      className="w-full h-full object-cover object-top"
                       style={{
-                        width: card.isFront ? "60%" : "30%",
-                        background: `linear-gradient(90deg, ${ACCENT_COLOR}, #2ecc71)`,
-                        transition: "width 0.4s ease",
+                        transform: hoveredCard === card.id ? "scale(1.08)" : "scale(1)",
+                        filter: card.isFront ? "grayscale(0%)" : "grayscale(50%)",
+                        transition: "transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), filter 0.5s ease",
                       }}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent" />
+
+                    {/* Follow button */}
+                    <button
+                      onClick={(e) => toggleFollow(card.id, e)}
+                      className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
+                      style={{
+                        background: followed.has(card.id) ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.45)",
+                        border: followed.has(card.id) ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.15)",
+                        backdropFilter: "blur(6px)",
+                      }}
+                    >
+                      <Heart size={11} strokeWidth={2.5}
+                        style={{ color: followed.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }}
+                        fill={followed.has(card.id) ? "#fff" : "none"}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Info */}
+                  <div className="px-4 pb-4 pt-2 text-center flex flex-col justify-between" style={{ height: "38%" }}>
+                    <div>
+                      <p className="text-white/35 text-[11px] font-bold tracking-[0.3em] uppercase mb-1.5">{card.role}</p>
+                      <h3 className="text-white font-black text-base uppercase mb-3 tracking-wide">{card.name}</h3>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="h-[3px] rounded-full" style={{ width: card.isFront ? "60%" : "30%", background: `linear-gradient(90deg,${ACCENT_COLOR},#2ecc71)`, transition: "width 0.4s ease" }} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -230,7 +245,7 @@ export default function FeaturedArtists() {
         </div>
 
         {/* Dots */}
-        <div className="flex gap-2 mt-6 relative z-[200]">
+        <div className="flex gap-2 mt-3 relative z-[200]">
           {artists.map((_, i) => (
             <button
               key={i}
@@ -247,7 +262,7 @@ export default function FeaturedArtists() {
         </div>
 
         {/* Explore button */}
-        <div className="text-center mt-6 relative z-[200]">
+        <div className="text-center mt-3 relative z-[200]">
           <button className="btn-outline text-sm px-10 py-3.5 rounded-full">
             EXPLORE MORE
           </button>

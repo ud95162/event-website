@@ -113,19 +113,23 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
 /* ── Section ──────────────────────────────────────────────────────────── */
 export default function BrandMarquee() {
   return (
-    <section className="snap-section overflow-hidden flex flex-col justify-center" style={{ padding: "4vh 0" }}>
-      <div className="text-center select-none" style={{ marginBottom: "clamp(12px, 4vh, 64px)" }}>
-        <p className="text-white/30 text-[10px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
+    <section className="snap-section overflow-hidden flex flex-col" style={{ paddingTop: "clamp(24px, 4vh, 48px)" }}>
+
+      {/* Header — top, matches other sections */}
+      <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
+        <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
           TRUSTED BY THE BEST
         </p>
         <h2 className="text-white font-black uppercase tracking-tight" style={{ fontSize: "clamp(1.2rem, 3vw + 1vh, 2rem)" }}>
-          Brands & Companies
+          Brands &amp; Companies
         </h2>
       </div>
 
-      <MarqueeRow brands={row1Brands} direction="left" />
-      <div style={{ height: "clamp(8px, 2vh, 32px)" }} />
-      <MarqueeRow brands={row2Brands} direction="right" />
+      {/* Remaining space — logos centered vertically */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "clamp(8px, 2vh, 32px)" }}>
+        <MarqueeRow brands={row1Brands} direction="left" />
+        <MarqueeRow brands={row2Brands} direction="right" />
+      </div>
     </section>
   );
 }

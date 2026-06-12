@@ -45,7 +45,7 @@ export default function EventDetailPage() {
   const lineupArtists = getArtistsByNames(event.lineup);
 
   return (
-    <main className="min-h-screen bg-[#080808] relative">
+    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       <ParticleField />
       <Navbar />
       <div className="pt-16 relative z-10">

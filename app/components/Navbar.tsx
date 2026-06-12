@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Menu, X, User, Music2, MapPin, Navigation, Search, ChevronDown } from "lucide-react";
+import { Menu, X, User, Music2, MapPin, Navigation, Search, ChevronDown, Calendar } from "lucide-react";
 import { useUserLocation, type UserLocation } from "../context/LocationContext";
 
 const navLinks = [
@@ -101,7 +101,7 @@ function LocationPill() {
           border: isSet ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.18)",
           background: isSet ? "rgba(57,189,105,0.08)" : "rgba(255,255,255,0.04)",
           boxShadow: isSet ? "0 0 14px rgba(57,189,105,0.25)" : "none",
-          minWidth: 200,
+          minWidth: 360,
         }}
       >
         {detecting ? (
@@ -209,13 +209,16 @@ function CalendarPicker() {
   return (
     <Link
       href="/calendar"
-      className={`text-base tracking-widest uppercase font-bold transition-colors duration-300 relative pb-1 ${
-        isActive
-          ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#e91e8c]"
-          : "text-white/55 hover:text-[#e91e8c]"
-      }`}
+      title="Events Calendar"
+      className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300"
+      style={{
+        background: isActive ? "rgba(57,189,105,0.12)" : "rgba(255,255,255,0.04)",
+        border: isActive ? "1px solid rgba(57,189,105,0.5)" : "1px solid rgba(255,255,255,0.15)",
+        boxShadow: isActive ? "0 0 12px rgba(57,189,105,0.2)" : "none",
+        color: isActive ? "#39BD69" : "rgba(255,255,255,0.6)",
+      }}
     >
-      Events Calendar
+      <Calendar size={15} />
     </Link>
   );
 }
@@ -235,34 +238,72 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[300] bg-black/80 backdrop-blur-md border-b border-white/10">
+      <style>{`
+        @keyframes nav-spin {
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .nav-active-border {
+          position: relative;
+          padding: 2px;
+          border-radius: 0.75rem;
+          display: inline-flex;
+          overflow: hidden;
+          box-shadow: 0 0 14px rgba(57,189,105,0.2);
+        }
+        .nav-border-spinner {
+          position: absolute;
+          width: 200%;
+          height: 500%;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: conic-gradient(#39BD69, #e91e8c, #39BD69);
+          animation: nav-spin 2.5s linear infinite;
+          z-index: 0;
+        }
+        .nav-active-inner {
+          position: relative;
+          z-index: 1;
+          background: #080808;
+          border-radius: calc(0.75rem - 2px);
+          width: 100%;
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center">
-              <Music2 size={15} className="text-white" />
-            </div>
+          <Link href="/" className="flex items-center shrink-0">
             <div className="leading-none flex items-baseline gap-0.5">
-              <span className="text-white font-black text-xl tracking-[0.2em] uppercase">EVENTS</span>
-              <span className="text-white/40 text-[13px] tracking-[0.15em] uppercase">.LK</span>
+              <span className="text-white font-black text-2xl tracking-[0.2em] uppercase">EVENTS</span>
+              <span className="text-white/40 text-base tracking-[0.15em] uppercase">.LK</span>
             </div>
           </Link>
 
           {/* All nav items — equal gap between every item */}
           <div className="hidden lg:flex items-center justify-between flex-1 ml-24">
             {navLinks.map((l) => (
-              <Link key={l.label} href={l.href}
-                className={`text-base tracking-widest uppercase font-bold transition-colors duration-300 relative pb-1 ${
-                  isActive(l.href)
-                    ? "text-white after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#e91e8c]"
-                    : "text-white/55 hover:text-[#e91e8c]"
-                }`}>
-                {l.label}
-              </Link>
+              isActive(l.href) ? (
+                <div key={l.label} className="nav-active-border">
+                  <div className="nav-border-spinner" />
+                  <Link href={l.href} className="nav-active-inner text-base tracking-widest uppercase font-bold px-4 py-1.5">
+                    <span style={{ color: "#ffffff" }}>{l.label}</span>
+                  </Link>
+                </div>
+              ) : (
+                <Link key={l.label} href={l.href}
+                  className="text-base tracking-widest uppercase font-bold transition-all duration-300 px-4 py-1.5 rounded-xl"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "rgba(255,255,255,0.6)",
+                  }}>
+                  {l.label}
+                </Link>
+              )
             ))}
-            <CalendarPicker />
             <LocationPill />
+            <CalendarPicker />
             <button className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors">
               <User size={15} className="text-white/60" />
             </button>
