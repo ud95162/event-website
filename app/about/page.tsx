@@ -71,7 +71,7 @@ function StatItem({ value, suffix, label, trigger, delay }: { value: number; suf
   }, [trigger, delay]);
   return (
     <div style={{ textAlign: "center", opacity: started ? 1 : 0, transform: started ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.8s ease, transform 0.8s ease" }}>
-      <div style={{ fontSize: "clamp(3.5rem, 7vw, 6rem)", fontWeight: 900, background: "linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.35) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 }}>
+      <div style={{ fontSize: "clamp(1.8rem, 3.5vw, 3rem)", fontWeight: 900, background: "linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.35) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 }}>
         {count}{suffix}
       </div>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#39BD69", boxShadow: "0 0 8px rgba(57,189,105,0.6)", margin: "10px auto 8px", transform: started ? "scale(1)" : "scale(0)", transition: "transform 0.5s ease 0.4s" }} />
@@ -174,7 +174,6 @@ function ContactForm() {
 /* ══════════════════════════════════════════════════════════════ */
 export default function AboutPage() {
   const router  = useRouter();
-  const statsV  = useInView(0.3);
   const missionV = useInView(0.15);
   const valuesV = useInView(0.1);
   const teamV   = useInView(0.1);
@@ -222,18 +221,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* ── 2. Stats ─────────────────────────────────────────── */}
-        <div ref={statsV.ref} className="snap-section" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(24px,5vh,60px) clamp(24px,5vw,80px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ textAlign: "center", marginBottom: "clamp(24px,5vh,56px)" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: 12 }}>BY THE NUMBERS</p>
-            <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900 }}>Our Impact</h2>
-          </div>
-          <div style={{ maxWidth: 1000, margin: "0 auto", width: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "clamp(24px,4vh,48px)" }}>
-            {stats.map((s, i) => <StatItem key={s.label} {...s} trigger={statsV.inView} delay={i * 200} />)}
-          </div>
-        </div>
-
-        {/* ── 3. Mission ───────────────────────────────────────── */}
+        {/* ── 2. Mission ───────────────────────────────────────── */}
         <div ref={missionV.ref} className="snap-section" style={{ padding: "clamp(24px,5vh,60px) clamp(24px,5vw,80px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(32px,5vw,80px)", alignItems: "center", height: "100%" }}>
             <div style={{ opacity: missionV.inView ? 1 : 0, transform: missionV.inView ? "translateX(0)" : "translateX(-30px)", transition: "opacity 0.8s ease, transform 0.8s ease" }}>
@@ -242,9 +230,13 @@ export default function AboutPage() {
               <p style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.8, fontSize: "clamp(0.85rem, 1.1vw, 1rem)", marginBottom: "clamp(8px,1.5vh,16px)" }}>
                 We started Events.lk because we noticed a gap — amazing events happening across Sri Lanka, but no single place to discover them all. We set out to change that.
               </p>
-              <p style={{ color: "rgba(255,255,255,0.4)", lineHeight: 1.8, fontSize: "clamp(0.85rem, 1.1vw, 1rem)" }}>
+              <p style={{ color: "rgba(255,255,255,0.4)", lineHeight: 1.8, fontSize: "clamp(0.85rem, 1.1vw, 1rem)", marginBottom: "clamp(20px,3vh,36px)" }}>
                 Today, we partner with hundreds of venues, promoters, and artists to bring you the most comprehensive event listing platform in the country.
               </p>
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(16px,2vw,32px)" }}>
+                {stats.map((s, i) => <StatItem key={s.label} {...s} trigger={missionV.inView} delay={i * 200} />)}
+              </div>
             </div>
             <div style={{ position: "relative", opacity: missionV.inView ? 1 : 0, transform: missionV.inView ? "translateX(0)" : "translateX(30px)", transition: "opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s" }}>
               <div style={{ borderRadius: 20, overflow: "hidden", aspectRatio: "4/3" }}>

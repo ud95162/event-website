@@ -210,15 +210,15 @@ function CalendarPicker() {
     <Link
       href="/calendar"
       title="Events Calendar"
-      className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300"
+      className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300"
       style={{
-        background: isActive ? "rgba(57,189,105,0.12)" : "rgba(255,255,255,0.04)",
-        border: isActive ? "1px solid rgba(57,189,105,0.5)" : "1px solid rgba(255,255,255,0.15)",
-        boxShadow: isActive ? "0 0 12px rgba(57,189,105,0.2)" : "none",
-        color: isActive ? "#39BD69" : "rgba(255,255,255,0.6)",
+        background: isActive ? "rgba(192,192,192,0.15)" : "rgba(255,255,255,0.04)",
+        border: isActive ? "1px solid #C0C0C0" : "1px solid rgba(255,255,255,0.15)",
+        boxShadow: isActive ? "0 0 12px rgba(192,192,192,0.25)" : "none",
+        color: isActive ? "#C0C0C0" : "rgba(255,255,255,0.6)",
       }}
     >
-      <Calendar size={15} />
+      <Calendar size={20} />
     </Link>
   );
 }
@@ -239,33 +239,15 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-[300] bg-black/80 backdrop-blur-md border-b border-white/10">
       <style>{`
-        @keyframes nav-spin {
-          to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
         .nav-active-border {
-          position: relative;
-          padding: 2px;
           border-radius: 0.75rem;
           display: inline-flex;
-          overflow: hidden;
-          box-shadow: 0 0 14px rgba(57,189,105,0.2);
-        }
-        .nav-border-spinner {
-          position: absolute;
-          width: 200%;
-          height: 500%;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: conic-gradient(#39BD69, #e91e8c, #39BD69);
-          animation: nav-spin 2.5s linear infinite;
-          z-index: 0;
+          border: 1px solid #C0C0C0;
+          box-shadow: 0 0 10px rgba(192,192,192,0.2);
+          background: rgba(192,192,192,0.18);
         }
         .nav-active-inner {
-          position: relative;
-          z-index: 1;
-          background: #080808;
-          border-radius: calc(0.75rem - 2px);
+          border-radius: calc(0.75rem - 1px);
           width: 100%;
         }
       `}</style>
@@ -285,9 +267,8 @@ export default function Navbar() {
             {navLinks.map((l) => (
               isActive(l.href) ? (
                 <div key={l.label} className="nav-active-border">
-                  <div className="nav-border-spinner" />
                   <Link href={l.href} className="nav-active-inner text-base tracking-widest uppercase font-bold px-4 py-1.5">
-                    <span style={{ color: "#ffffff" }}>{l.label}</span>
+                    <span style={{ color: "#C0C0C0" }}>{l.label}</span>
                   </Link>
                 </div>
               ) : (
@@ -304,8 +285,8 @@ export default function Navbar() {
             ))}
             <LocationPill />
             <CalendarPicker />
-            <button className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors">
-              <User size={15} className="text-white/60" />
+            <button className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors">
+              <User size={20} className="text-white/60" />
             </button>
           </div>
 

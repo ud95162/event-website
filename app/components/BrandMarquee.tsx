@@ -98,7 +98,7 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
   }, [direction]);
 
   return (
-    <div className="relative overflow-hidden py-4">
+    <div className="relative overflow-hidden w-full">
       <div className="absolute left-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to right, #080808, transparent)" }} />
       <div className="absolute right-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to left, #080808, transparent)" }} />
       <div ref={trackRef} className="flex items-center gap-16 whitespace-nowrap w-max will-change-transform">
@@ -113,11 +113,10 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
 /* ── Section ──────────────────────────────────────────────────────────── */
 export default function BrandMarquee() {
   return (
-    <section className="snap-section overflow-hidden flex flex-col" style={{ paddingTop: "clamp(24px, 4vh, 48px)" }}>
-
-      {/* Header — top, matches other sections */}
-      <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
-        <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
+    <section className="snap-section overflow-hidden flex flex-col items-center justify-evenly">
+      {/* Header */}
+      <div className="text-center relative z-[200] select-none flex flex-col items-center" style={{ gap: "clamp(4px, 1vh, 12px)" }}>
+        <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase">
           TRUSTED BY THE BEST
         </p>
         <h2 className="text-white font-black uppercase tracking-tight" style={{ fontSize: "clamp(1.2rem, 3vw + 1vh, 2rem)" }}>
@@ -125,11 +124,8 @@ export default function BrandMarquee() {
         </h2>
       </div>
 
-      {/* Remaining space — logos centered vertically */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "clamp(8px, 2vh, 32px)" }}>
-        <MarqueeRow brands={row1Brands} direction="left" />
-        <MarqueeRow brands={row2Brands} direction="right" />
-      </div>
+      <MarqueeRow brands={row1Brands} direction="left" />
+      <MarqueeRow brands={row2Brands} direction="right" />
     </section>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, X, MapPin, Calendar, Ticket, ArrowRight, Music2 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import ParticleField from "../components/ParticleField";
 import { events, Event } from "../data/events";
@@ -65,31 +65,23 @@ function DayCard({
       onMouseLeave={() => { setHovered(false); setPopupPos(null); }}
       style={{ aspectRatio: "1/1", position: "relative", borderRadius: "0.75rem", overflow: "hidden", cursor: hasEvents ? "pointer" : "default" }}
     >
-      {/* Animated border for today */}
-      {todayCell && (
-        <div style={{
-          position: "absolute", width: "200%", height: "500%",
-          top: "50%", left: "50%",
-          transform: "translate(-50%,-50%)",
-          background: "conic-gradient(#39BD69, #e91e8c, #39BD69)",
-          animation: "cal-spin 2.5s linear infinite",
-          zIndex: 0,
-        }} />
-      )}
-
       {/* Inner card */}
       <div style={{
         position: "absolute",
-        inset: todayCell ? "2px" : "0",
-        borderRadius: todayCell ? "calc(0.75rem - 2px)" : "0.75rem",
+        inset: "0",
+        borderRadius: "0.75rem",
         overflow: "hidden",
-        border: !todayCell
-          ? hasEvents
-            ? `1px solid ${hovered ? "rgba(57,189,105,0.45)" : "rgba(255,255,255,0.1)"}`
-            : "1px solid rgba(255,255,255,0.05)"
-          : "none",
-        background: "#0a0a0a",
-        boxShadow: hovered ? "0 0 24px rgba(57,189,105,0.2)" : "none",
+        border: todayCell
+          ? "2px solid #C0C0C0"
+          : hasEvents
+            ? `1px solid ${hovered ? "rgba(57,189,105,0.45)" : "rgba(192,192,192,0.3)"}`
+            : "1px solid rgba(192,192,192,0.2)",
+        background: todayCell
+          ? "rgb(38,38,42)"
+          : hasEvents ? "#0a0a0a" : "rgb(26,26,30)",
+        boxShadow: todayCell
+          ? "0 0 16px rgba(192,192,192,0.2)"
+          : hovered ? "0 0 24px rgba(57,189,105,0.2)" : "none",
         transition: "border-color 0.3s, box-shadow 0.3s",
         zIndex: 1,
       }}>
@@ -133,16 +125,16 @@ function DayCard({
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             {/* Date circle */}
             <div style={{
-              width: 26, height: 26, borderRadius: "50%",
+              width: 32, height: 32, borderRadius: "50%",
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: todayCell ? "#39BD69" : hasEvents ? "rgba(0,0,0,0.55)" : "transparent",
+              background: todayCell ? "#C0C0C0" : hasEvents ? "rgba(0,0,0,0.55)" : "transparent",
               border: !todayCell && hasEvents ? "1px solid rgba(255,255,255,0.25)" : "none",
               backdropFilter: hasEvents ? "blur(4px)" : "none",
               flexShrink: 0,
             }}>
               <span style={{
-                fontSize: 10, fontWeight: 900,
-                color: todayCell ? "#000" : hasEvents ? "#fff" : "rgba(255,255,255,0.2)",
+                fontSize: 13, fontWeight: 900,
+                color: todayCell ? "#000" : hasEvents ? "#fff" : "rgba(255,255,255,0.35)",
               }}>
                 {date.getDate()}
               </span>
@@ -320,6 +312,8 @@ export default function CalendarPage() {
   const [activeLocation, setActiveLocation] = useState<string | null>(null);
   const [activeArtist,   setActiveArtist]   = useState<string | null>(null);
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
+  const [openSections,   setOpenSections]   = useState<Record<string, boolean>>({ genre: true, city: false, artist: false });
+  const toggleSection = (key: string) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
   const year  = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -407,7 +401,7 @@ export default function CalendarPage() {
       }}>
         {/* Sidebar header */}
         <div style={{ padding: "24px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>Filter Events</p>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>Filter Events</p>
           {hasFilters
             ? <p style={{ fontSize: 11, color: "#39BD69", fontWeight: 600 }}>{activeGenres.length + (activeLocation ? 1 : 0) + (activeArtist ? 1 : 0)} filter{activeGenres.length + (activeLocation ? 1 : 0) + (activeArtist ? 1 : 0) > 1 ? "s" : ""} active</p>
             : <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>No filters applied</p>
@@ -418,87 +412,91 @@ export default function CalendarPage() {
 
           {/* Genre */}
           <div>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>Genre</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {GENRE_FILTERS.map(({ label, value, color }) => {
-                const active = activeGenres.includes(value);
-                return (
-                  <button key={value} onClick={() => toggleGenre(value)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "10px 14px", borderRadius: 12, cursor: "pointer", textAlign: "left",
-                      background: active ? `${color}18` : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${active ? color + "60" : "rgba(255,255,255,0.07)"}`,
-                      transition: "all 0.2s",
-                    }}>
-                    <div style={{
-                      width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
-                      background: active ? color : "transparent",
-                      border: `2px solid ${active ? color : "rgba(255,255,255,0.2)"}`,
-                      transition: "all 0.2s",
-                    }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: active ? color : "rgba(255,255,255,0.6)" }}>{label}</span>
-                    {active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: color }} />}
-                  </button>
-                );
-              })}
-            </div>
+            <button onClick={() => toggleSection("genre")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: "0 0 12px", marginBottom: openSections.genre ? 8 : 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", margin: 0 }}>Genre</p>
+              <ChevronDown size={13} style={{ color: "rgba(255,255,255,0.4)", transform: openSections.genre ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+            </button>
+            {openSections.genre && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {GENRE_FILTERS.map(({ label, value, color }) => {
+                  const active = activeGenres.includes(value);
+                  return (
+                    <button key={value} onClick={() => toggleGenre(value)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 14px", borderRadius: 12, cursor: "pointer", textAlign: "left",
+                        background: active ? `${color}18` : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${active ? color + "60" : "rgba(255,255,255,0.07)"}`,
+                        transition: "all 0.2s",
+                      }}>
+                      <div style={{ width: 10, height: 10, borderRadius: "50%", flexShrink: 0, background: active ? color : "transparent", border: `2px solid ${active ? color : "rgba(255,255,255,0.2)"}`, transition: "all 0.2s" }} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: active ? color : "rgba(255,255,255,0.6)" }}>{label}</span>
+                      {active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: color }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* City */}
           <div>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>City</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {LOCATION_FILTERS.map(({ label, value }) => {
-                const active = activeLocation === value;
-                return (
-                  <button key={value} onClick={() => setActiveLocation(active ? null : value)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "10px 14px", borderRadius: 12, cursor: "pointer", textAlign: "left",
-                      background: active ? "rgba(233,30,140,0.12)" : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${active ? "rgba(233,30,140,0.5)" : "rgba(255,255,255,0.07)"}`,
-                      transition: "all 0.2s",
-                    }}>
-                    <MapPin size={12} style={{ color: active ? "#e91e8c" : "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: active ? "#e91e8c" : "rgba(255,255,255,0.6)" }}>{label}</span>
-                    {active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#e91e8c" }} />}
-                  </button>
-                );
-              })}
-            </div>
+            <button onClick={() => toggleSection("city")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: "0 0 12px", marginBottom: openSections.city ? 8 : 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", margin: 0 }}>City</p>
+              <ChevronDown size={13} style={{ color: "rgba(255,255,255,0.4)", transform: openSections.city ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+            </button>
+            {openSections.city && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {LOCATION_FILTERS.map(({ label, value }) => {
+                  const active = activeLocation === value;
+                  return (
+                    <button key={value} onClick={() => setActiveLocation(active ? null : value)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 14px", borderRadius: 12, cursor: "pointer", textAlign: "left",
+                        background: active ? "rgba(233,30,140,0.12)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${active ? "rgba(233,30,140,0.5)" : "rgba(255,255,255,0.07)"}`,
+                        transition: "all 0.2s",
+                      }}>
+                      <MapPin size={12} style={{ color: active ? "#e91e8c" : "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: active ? "#e91e8c" : "rgba(255,255,255,0.6)" }}>{label}</span>
+                      {active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#e91e8c" }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Artists */}
           <div>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 12 }}>Artist</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {ARTIST_FILTERS.map(name => {
-                const active = activeArtist === name;
-                return (
-                  <button key={name} onClick={() => setActiveArtist(active ? null : name)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "10px 14px", borderRadius: 12, cursor: "pointer", textAlign: "left",
-                      background: active ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${active ? "rgba(96,165,250,0.5)" : "rgba(255,255,255,0.07)"}`,
-                      transition: "all 0.2s",
-                    }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                      background: active ? "rgba(96,165,250,0.2)" : "rgba(255,255,255,0.06)",
-                      border: `1px solid ${active ? "rgba(96,165,250,0.4)" : "rgba(255,255,255,0.1)"}`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 9, fontWeight: 800, color: active ? "#60a5fa" : "rgba(255,255,255,0.4)",
-                    }}>
-                      {name.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: active ? "#60a5fa" : "rgba(255,255,255,0.6)", lineHeight: 1.3 }}>{name}</span>
-                    {active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#60a5fa" }} />}
-                  </button>
-                );
-              })}
-            </div>
+            <button onClick={() => toggleSection("artist")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: "0 0 12px", marginBottom: openSections.artist ? 8 : 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", margin: 0 }}>Artist</p>
+              <ChevronDown size={13} style={{ color: "rgba(255,255,255,0.4)", transform: openSections.artist ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+            </button>
+            {openSections.artist && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {ARTIST_FILTERS.map(name => {
+                  const active = activeArtist === name;
+                  return (
+                    <button key={name} onClick={() => setActiveArtist(active ? null : name)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 14px", borderRadius: 12, cursor: "pointer", textAlign: "left",
+                        background: active ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${active ? "rgba(96,165,250,0.5)" : "rgba(255,255,255,0.07)"}`,
+                        transition: "all 0.2s",
+                      }}>
+                      <div style={{ width: 24, height: 24, borderRadius: "50%", flexShrink: 0, background: active ? "rgba(96,165,250,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${active ? "rgba(96,165,250,0.4)" : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color: active ? "#60a5fa" : "rgba(255,255,255,0.4)" }}>
+                        {name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: active ? "#60a5fa" : "rgba(255,255,255,0.6)", lineHeight: 1.3 }}>{name}</span>
+                      {active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#60a5fa" }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -558,6 +556,62 @@ export default function CalendarPage() {
             </div>
           </div>
 
+          {/* ── Active filter chips ─────────────────────────────── */}
+          {hasFilters && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {activeGenres.map(g => {
+                const genre = GENRE_FILTERS.find(f => f.value === g);
+                return (
+                  <span key={g} style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "4px 10px 4px 12px", borderRadius: 999,
+                    background: "rgba(192,192,192,0.1)", border: "1px solid rgba(192,192,192,0.35)",
+                    fontSize: 11, fontWeight: 700, color: "#C0C0C0",
+                  }}>
+                    {genre?.label ?? g}
+                    <button onClick={() => toggleGenre(g)} style={{ display: "flex", alignItems: "center", background: "none", border: "none", cursor: "pointer", color: "inherit", padding: 0, opacity: 0.7 }}>
+                      <X size={11} />
+                    </button>
+                  </span>
+                );
+              })}
+              {activeLocation && (
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "4px 10px 4px 12px", borderRadius: 999,
+                  background: "rgba(192,192,192,0.1)", border: "1px solid rgba(192,192,192,0.35)",
+                  fontSize: 11, fontWeight: 700, color: "#C0C0C0",
+                }}>
+                  {activeLocation}
+                  <button onClick={() => setActiveLocation(null)} style={{ display: "flex", alignItems: "center", background: "none", border: "none", cursor: "pointer", color: "inherit", padding: 0, opacity: 0.7 }}>
+                    <X size={11} />
+                  </button>
+                </span>
+              )}
+              {activeArtist && (
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "4px 10px 4px 12px", borderRadius: 999,
+                  background: "rgba(192,192,192,0.1)", border: "1px solid rgba(192,192,192,0.35)",
+                  fontSize: 11, fontWeight: 700, color: "#C0C0C0",
+                }}>
+                  {activeArtist}
+                  <button onClick={() => setActiveArtist(null)} style={{ display: "flex", alignItems: "center", background: "none", border: "none", cursor: "pointer", color: "inherit", padding: 0, opacity: 0.7 }}>
+                    <X size={11} />
+                  </button>
+                </span>
+              )}
+              <button onClick={clearFilters} style={{
+                padding: "4px 10px", borderRadius: 999, cursor: "pointer",
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.15)",
+                fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)",
+                letterSpacing: "0.15em", textTransform: "uppercase",
+              }}>
+                Clear all
+              </button>
+            </div>
+          )}
+
           {/* ── Day-of-week headers ──────────────────────────────── */}
           <div className="grid grid-cols-7 gap-2 mb-3">
             {DAYS.map(d => (
@@ -575,8 +629,8 @@ export default function CalendarPage() {
                 <div key={`past-${i}`} style={{
                   aspectRatio: "1/1",
                   borderRadius: "0.75rem",
-                  border: "1px solid rgba(120,120,130,0.2)",
-                  background: "rgba(60,60,70,0.25)",
+                  border: "1px solid rgba(192,192,192,0.2)",
+                  background: "rgb(26,26,30)",
                   display: "flex",
                   alignItems: "flex-start",
                   padding: "8px",
@@ -584,7 +638,7 @@ export default function CalendarPage() {
                   position: "relative",
                   overflow: "hidden",
                 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(150,150,160,0.5)" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)" }}>
                     {date.getDate()}
                   </span>
                   {/* Subtle diagonal lines for disabled feel */}
@@ -610,7 +664,7 @@ export default function CalendarPage() {
           {/* ── Legend ──────────────────────────────────────────── */}
           <div className="flex items-center gap-6 mt-6">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ background: "#39BD69" }} />
+              <div className="w-3 h-3 rounded-full" style={{ background: "#C0C0C0" }} />
               <span className="text-white/30 text-[10px] font-bold tracking-widest uppercase">Today</span>
             </div>
             <div className="flex items-center gap-2">
