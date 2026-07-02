@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { events as allEvents } from "../data/events";
+import { eventSlug } from "../lib/slug";
 
 const events     = allEvents.slice(0, 6);
 const N          = events.length;
@@ -180,7 +181,7 @@ export default function FeaturedEvents() {
               {/* Inner: handles scale + visuals (CSS transition) */}
               <div
                 className="absolute rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() => router.push(`/events/${card.id}`)}
+                onClick={() => router.push(`/events/${eventSlug(card)}`)}
                 onMouseEnter={() => setHoveredCard(card.id)}
                 onMouseLeave={() => setHoveredCard(null)}
                 style={{

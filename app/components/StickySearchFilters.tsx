@@ -3,6 +3,7 @@
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, Search, Calendar, Check, X } from "lucide-react";
+import { useAdminData } from "../context/AdminDataContext";
 
 /* ── Data ─────────────────────────────────────────────────────────────── */
 const DATE_PRESETS = [
@@ -313,19 +314,22 @@ function FilterRow() {
 }
 
 const CAT_OPTIONS = [
-  { label: "Artists", color: "#e879f9", key: "artists" },
-  { label: "Genres",  color: "#39BD69", key: "genres"  },
+  { label: "Artists",    color: "#e879f9", key: "artists"    },
+  { label: "Genres",     color: "#39BD69", key: "genres"     },
+  { label: "Organizers", color: "#38bdf8", key: "organizers" },
 ];
 
 const EXAMPLES: Record<string, string> = {
-  artists: "e.g. DJ Nova, Randhir Witana…",
-  genres:  "e.g. Electronic, Rock & Indie…",
-  default: "e.g. Music Festival, Concert…",
+  artists:    "e.g. DJ Nova, Randhir Witana…",
+  genres:     "e.g. Electronic, Rock & Indie…",
+  organizers: "e.g. Rhythm Nation LK, Bass Nation…",
+  default:    "e.g. Music Festival, Concert…",
 };
 
 /* ── Main component ───────────────────────────────────────────────────── */
 export default function StickySearchFilters() {
   const router = useRouter();
+  const { organizers } = useAdminData();
   const [catOpen,      setCatOpen]      = useState(false);
   const [selectedCat,  setSelectedCat]  = useState<typeof CAT_OPTIONS[0] | null>(null);
   const [searchQuery,  setSearchQuery]  = useState("");
@@ -347,6 +351,13 @@ export default function StickySearchFilters() {
   const matchedResults: { label: string; color: string; type: string }[] = (() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
+
+    const orgMatches = organizers
+      .filter(o => o.name.toLowerCase().includes(q))
+      .map(o => ({ label: o.name, color: "#38bdf8", type: "Organizer" }));
+
+    if (selectedCat?.key === "organizers") return orgMatches;
+
     if (selectedCat?.key === "artists" || !selectedCat) {
       const artists = ARTISTS
         .filter(a => a.toLowerCase().includes(q))
@@ -355,7 +366,7 @@ export default function StickySearchFilters() {
       const genres = GENRES
         .filter(g => g.label.toLowerCase().includes(q))
         .map(g => ({ label: g.label, color: g.color, type: "Genre" }));
-      return [...artists, ...genres];
+      return [...artists, ...genres, ...orgMatches];
     }
     if (selectedCat?.key === "genres") {
       return GENRES

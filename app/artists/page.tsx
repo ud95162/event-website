@@ -2,9 +2,10 @@
 
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Heart, Music2, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { artists, Artist } from "../data/artists";
-import { events } from "../data/events";
+import { Heart, Music2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Artist } from "../data/artists";
+import { useAdminData } from "../context/AdminDataContext";
+import { artistSlug } from "../lib/slug";
 import Navbar from "../components/Navbar";
 import StickySearchFilters from "../components/StickySearchFilters";
 import ParticleField from "../components/ParticleField";
@@ -14,8 +15,8 @@ import { hasPreloaderShown, markPreloaderShown } from "../preloaderState";
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-const eventCountFor = (name: string) =>
-  events.filter(ev => ev.lineup.includes(name)).length;
+// eventCountFor is injected via prop to ArtistCard
+
 
 /* ── Artist Card ────────────────────────────────────────────────── */
 function ArtistCard({ artist, followed, onFollow }: {
@@ -24,12 +25,13 @@ function ArtistCard({ artist, followed, onFollow }: {
   onFollow: (e: React.MouseEvent) => void;
 }) {
   const router = useRouter();
+  const { events } = useAdminData();
   const [hovered, setHovered] = useState(false);
-  const eventCount = eventCountFor(artist.name);
+  const eventCount = events.filter(ev => ev.lineup.includes(artist.name)).length;
 
   return (
     <div
-      onClick={() => router.push(`/artists/${artist.id}`)}
+      onClick={() => router.push(`/artists/${artistSlug(artist)}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -85,39 +87,105 @@ function ArtistCard({ artist, followed, onFollow }: {
 }
 
 /* ── Artist Row ─────────────────────────────────────────────────── */
-function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow }: {
+function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, direction = "left" }: {
   title: string; subtitle?: string;
   artists: Artist[];
   followed: Set<number>;
   onFollow: (id: number) => void;
+  direction?: "left" | "right";
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scroll = (dir: "left" | "right") => {
-    scrollRef.current?.scrollBy({ left: dir === "left" ? -420 : 420, behavior: "smooth" });
+  const trackRef  = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+  const animating = useRef(false);
+  const posRef    = useRef(0);
+  const rafRef    = useRef<number>(0);
+  const CARD_STEP = 244 * 3;
+
+  const items = [...rowArtists, ...rowArtists];
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const speed = 0.4;
+    posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
+
+    const step = () => {
+      if (!pausedRef.current && !animating.current) {
+        posRef.current += direction === "left" ? -speed : speed;
+        const half = el.scrollWidth / 2;
+        if (direction === "left"  && posRef.current <= -half) posRef.current += half;
+        if (direction === "right" && posRef.current >= 0)     posRef.current -= half;
+        el.style.transform = `translateX(${posRef.current}px)`;
+      }
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [direction, rowArtists.length]);
+
+  const slideTo = (delta: number) => {
+    const el = trackRef.current;
+    if (!el || animating.current) return;
+    animating.current = true;
+    const start = posRef.current;
+    const target = start + delta;
+    const duration = 700;
+    const t0 = performance.now();
+    const animate = (now: number) => {
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2;
+      let pos = start + (target - start) * eased;
+      const half = el.scrollWidth / 2;
+      if (pos <= -half) pos += half;
+      if (pos >= 0 && direction === "right") pos -= half;
+      posRef.current = pos;
+      el.style.transform = `translateX(${pos}px)`;
+      if (p < 1) requestAnimationFrame(animate);
+      else animating.current = false;
+    };
+    requestAnimationFrame(animate);
   };
+
+  const ArrowBtn = ({ onClick, children, side }: { onClick: () => void; children: React.ReactNode; side: "left" | "right" }) => (
+    <button
+      onClick={onClick}
+      style={{
+        position: "absolute", [side]: 12, top: "50%", transform: "translateY(-50%)", zIndex: 10,
+        width: 40, height: 40, borderRadius: "50%", cursor: "pointer",
+        background: "rgba(10,10,14,0.85)", border: "1px solid rgba(255,255,255,0.18)",
+        backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center",
+        color: "rgba(255,255,255,0.8)", transition: "all 0.2s",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fff"; (e.currentTarget as HTMLElement).style.color = "#000"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(10,10,14,0.85)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
+    >{children}</button>
+  );
+
   if (!rowArtists.length) return null;
 
   return (
     <div style={{ marginBottom: 40 }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16 }}>
-        <div>
-          {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#39BD69", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
-          <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {(["left", "right"] as const).map(dir => (
-            <button key={dir} onClick={() => scroll(dir)}
-              style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fff"; (e.currentTarget as HTMLElement).style.color = "#000"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"; }}
-            >{dir === "left" ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}</button>
+      <div style={{ marginBottom: 16 }}>
+        {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#39BD69", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
+        <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
+      </div>
+      <div
+        style={{ overflow: "hidden", position: "relative" }}
+        onMouseEnter={() => { pausedRef.current = true; }}
+        onMouseLeave={() => { pausedRef.current = false; }}
+      >
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to right, #080808, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to left, #080808, transparent)", pointerEvents: "none" }} />
+
+        <ArrowBtn side="left"  onClick={() => slideTo(CARD_STEP)}><ChevronLeft size={18} /></ArrowBtn>
+        <ArrowBtn side="right" onClick={() => slideTo(-CARD_STEP)}><ChevronRight size={18} /></ArrowBtn>
+
+        <div ref={trackRef} style={{ display: "flex", gap: 14, width: "max-content", willChange: "transform", paddingBottom: 6 }}>
+          {items.map((a, i) => (
+            <ArtistCard key={`${a.id}-${i}`} artist={a} followed={followed.has(a.id)} onFollow={e => { e.stopPropagation(); onFollow(a.id); }} />
           ))}
         </div>
-      </div>
-      <div ref={scrollRef} style={{ display: "flex", gap: 14, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 6 }}>
-        {rowArtists.map(a => (
-          <ArtistCard key={a.id} artist={a} followed={followed.has(a.id)} onFollow={e => { e.stopPropagation(); onFollow(a.id); }} />
-        ))}
       </div>
     </div>
   );
@@ -129,6 +197,8 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow }:
 function ArtistsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { artists, events } = useAdminData();
+  const eventCountFor = (name: string) => events.filter(ev => ev.lineup.includes(name)).length;
   const [followed, setFollowed] = useState<Set<number>>(new Set());
   const queryParam  = searchParams.get("q")      ?? "";
   const filterParam = searchParams.get("filter") ?? "";
@@ -184,8 +254,8 @@ function ArtistsContent() {
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
-      {rows.map(row => (
-        <ArtistRow key={row.title} title={row.title} subtitle={row.subtitle} artists={row.data} followed={followed} onFollow={toggleFollow} />
+      {rows.map((row, i) => (
+        <ArtistRow key={row.title} title={row.title} subtitle={row.subtitle} artists={row.data} followed={followed} onFollow={toggleFollow} direction={i % 2 === 0 ? "left" : "right"} />
       ))}
     </div>
   );

@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Produces a self-contained .next/standalone server for lean VPS deploys
+  output: "standalone",
 };
 
 export default nextConfig;

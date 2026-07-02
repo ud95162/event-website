@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart } from "lucide-react";
+import { artistSlug } from "../lib/slug";
 
 // ANGLE_STEP defined after N below
 
@@ -171,7 +172,7 @@ export default function FeaturedArtists() {
                 {/* Inner: handles visuals + hover (CSS transition) */}
                 <div
                   className="absolute rounded-2xl overflow-hidden cursor-pointer"
-                  onClick={() => router.push(`/artists/${card.id}`)}
+                  onClick={() => router.push(`/artists/${artistSlug(card)}`)}
                   onMouseEnter={() => setHoveredCard(card.id)}
                   onMouseLeave={() => setHoveredCard(null)}
                   style={{

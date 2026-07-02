@@ -1,0 +1,76 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # allows manual "Run workflow" from the GitHub UI
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (standalone)
+        run: npm run build
+
+      # Bundle only what the standalone server needs.
+      - name: Package release
+        run: |
+          rm -rf release release.tar.gz
+          mkdir release
+          cp -r .next/standalone/. release/
+          mkdir -p release/.next
+          cp -r .next/static release/.next/static
+          cp -r public release/public
+          tar -czf release.tar.gz -C release .
+
+      - name: Upload to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          source: release.tar.gz
+          target: /tmp/events-lk-deploy
+
+      - name: Release & restart on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+            APP_DIR=/var/www/events-lk
+            mkdir -p "$APP_DIR"
+
+            # Wipe old build but KEEP the production env file
+            find "$APP_DIR" -mindepth 1 -maxdepth 1 ! -name '.env.production' -exec rm -rf {} +
+
+            # Extract the new standalone build
+            tar -xzf /tmp/events-lk-deploy/release.tar.gz -C "$APP_DIR"
+            rm -rf /tmp/events-lk-deploy
+
+            # (Re)start under PM2 on port 3001 with a clean env
+            cd "$APP_DIR"
+            pm2 delete events-lk >/dev/null 2>&1 || true
+            PORT=3001 NODE_ENV=production pm2 start server.js --name events-lk
+            pm2 save

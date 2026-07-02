@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/admin/layout,_N_T_/admin/artists/layout,_N_T_/admin/artists/new/layout,_N_T_/admin/artists/new/page,_N_T_/admin/artists/new"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/admin/artists/new/__PAGE__",
+    "/admin/artists/new",
+    "/admin/artists",
+    "/admin",
+    "/_index",
+    "/_head"
+  ]
+}

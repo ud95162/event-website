@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LocationProvider } from "./context/LocationContext";
+import { AuthProvider } from "./context/AuthContext";
+import { AdminDataProvider } from "./context/AdminDataContext";
 
 export const metadata: Metadata = {
   title: "Events.lk — Experience the Biggest Music Festivals",
@@ -22,7 +24,11 @@ export default function RootLayout({
         ))}
       </head>
       <body className="antialiased">
-        <LocationProvider>{children}</LocationProvider>
+        <AuthProvider>
+          <AdminDataProvider>
+            <LocationProvider>{children}</LocationProvider>
+          </AdminDataProvider>
+        </AuthProvider>
       </body>
     </html>
   );

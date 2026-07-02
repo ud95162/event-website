@@ -1,0 +1,250 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAdminData, Event } from "../../../context/AdminDataContext";
+import { ChevronLeft, Check } from "lucide-react";
+import ImageUpload from "../../components/ImageUpload";
+import LineupSelector from "../../components/LineupSelector";
+import CreatableSelect from "../../components/CreatableSelect";
+
+const EMPTY: Omit<Event, "id"> = {
+  tag: "", title: "", date: "", location: "", venue: "",
+  price: "", image: "", badge: null, genres: [], lineup: [],
+  organizer: "", description: "", lat: 0, lon: 0,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", borderRadius: 8,
+  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+  color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: 10, fontWeight: 700,
+  color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em",
+  textTransform: "uppercase", marginBottom: 6,
+};
+
+const sectionHeadStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.3em",
+  textTransform: "uppercase", paddingBottom: 8, marginBottom: 16,
+  borderBottom: "1px solid rgba(57,189,105,0.2)",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div><label style={labelStyle}>{label}</label>{children}</div>;
+}
+
+const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+// "21 June 2026" -> "2026-06-21"  (for the calendar input)
+const toISODate = (display: string): string => {
+  const t = new Date(display);
+  if (isNaN(t.getTime())) return "";
+  const y = t.getFullYear();
+  const m = String(t.getMonth() + 1).padStart(2, "0");
+  const d = String(t.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+// "2026-06-21" -> "21 June 2026"  (for storage/display)
+const fromISODate = (iso: string): string => {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  return `${d} ${MONTHS_FULL[m - 1]} ${y}`;
+};
+
+function EventFormInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { events, organizers, artists, genres: GENRES, badges, addEvent, updateEvent, addBadge } = useAdminData();
+
+  const editId = searchParams.get("id") ? Number(searchParams.get("id")) : null;
+  const editing = editId ? events.find(e => e.id === editId) ?? null : null;
+
+  const [form, setForm] = useState<Omit<Event, "id">>(EMPTY);
+
+  useEffect(() => {
+    if (editing) setForm({ ...editing });
+  }, [editing]);
+
+  const set = (key: keyof typeof EMPTY, val: unknown) =>
+    setForm(prev => ({ ...prev, [key]: val }));
+
+  const toggleGenre = (g: string) =>
+    set("genres", form.genres.includes(g) ? form.genres.filter(x => x !== g) : [...form.genres, g]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = { ...form };
+    if (editing) updateEvent({ ...data, id: editing.id });
+    else addEvent(data);
+    router.push("/admin/events");
+  };
+
+  return (
+    <div style={{ padding: 32 }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
+        <button
+          onClick={() => router.push("/admin/events")}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+        >
+          <ChevronLeft size={14} /> Back to Events
+        </button>
+        <div>
+          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 4 }}>
+            {editing ? "Edit Event" : "New Event"}
+          </p>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>
+            {editing ? editing.title : "Add Event"}
+          </h1>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+          {/* BASIC INFO */}
+          <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+            <p style={sectionHeadStyle}>Basic Info</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              <Field label="Event Title *">
+                <input style={inputStyle} value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Bass Nation Colombo" required />
+              </Field>
+              <Field label="Tag *">
+                <input style={inputStyle} value={form.tag} onChange={e => set("tag", e.target.value)} placeholder="e.g. EDM NIGHT" required />
+              </Field>
+              <Field label="Badge">
+                <CreatableSelect
+                  value={form.badge ?? ""}
+                  options={badges}
+                  onChange={val => set("badge", val || null)}
+                  onCreate={addBadge}
+                  placeholder="None"
+                />
+              </Field>
+              <Field label="Date *">
+                <input
+                  type="date"
+                  style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" }}
+                  value={toISODate(form.date)}
+                  onChange={e => set("date", fromISODate(e.target.value))}
+                  required
+                />
+              </Field>
+              <Field label="Location *">
+                <input style={inputStyle} value={form.location} onChange={e => set("location", e.target.value)} placeholder="Colombo" required />
+              </Field>
+              <Field label="Venue">
+                <input style={inputStyle} value={form.venue} onChange={e => set("venue", e.target.value)} placeholder="Trillium Rooftop, Colombo 03" />
+              </Field>
+              <Field label="Price">
+                <input style={inputStyle} value={form.price} onChange={e => set("price", e.target.value)} placeholder="Starting from LKR 3,000" />
+              </Field>
+              <Field label="Organizer">
+                <select style={{ ...inputStyle, cursor: "pointer" }} value={form.organizer} onChange={e => set("organizer", e.target.value)}>
+                  <option value="">Select organizer</option>
+                  {organizers.map(o => <option key={o.id} value={o.name}>{o.name}</option>)}
+                </select>
+              </Field>
+              <div style={{ gridColumn: "span 3" }}>
+                <label style={labelStyle}>Lineup</label>
+                <LineupSelector
+                  value={form.lineup}
+                  onChange={v => set("lineup", v)}
+                  allArtists={artists.map(a => a.stageName || a.name)}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* IMAGE */}
+          <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+            <p style={sectionHeadStyle}>Event Image</p>
+            <div style={{ maxWidth: 500 }}>
+              <ImageUpload
+                label="Event Image"
+                value={form.image}
+                onChange={val => set("image", val)}
+                aspectRatio="wide"
+                hint="Landscape image recommended · PNG, JPG, WEBP · Max 5 MB"
+              />
+            </div>
+          </section>
+
+          {/* GENRES */}
+          <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+            <p style={sectionHeadStyle}>Genres</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {GENRES.map(g => (
+                <button
+                  key={g} type="button"
+                  onClick={() => toggleGenre(g)}
+                  style={{
+                    padding: "7px 16px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+                    cursor: "pointer", textTransform: "capitalize", transition: "all 0.15s",
+                    background: form.genres.includes(g) ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${form.genres.includes(g) ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    color: form.genres.includes(g) ? "#39BD69" : "rgba(255,255,255,0.4)",
+                  }}
+                >{g}</button>
+              ))}
+            </div>
+          </section>
+
+          {/* DESCRIPTION */}
+          <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+            <p style={sectionHeadStyle}>Description</p>
+            <textarea
+              style={{ ...inputStyle, height: 120, resize: "vertical" }}
+              value={form.description}
+              onChange={e => set("description", e.target.value)}
+              placeholder="Describe the event…"
+            />
+          </section>
+
+          {/* LOCATION COORDS */}
+          <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+            <p style={sectionHeadStyle}>Coordinates (optional)</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              <Field label="Latitude">
+                <input type="number" step="any" style={inputStyle} value={form.lat || ""} onChange={e => set("lat", parseFloat(e.target.value) || 0)} placeholder="6.9271" />
+              </Field>
+              <Field label="Longitude">
+                <input type="number" step="any" style={inputStyle} value={form.lon || ""} onChange={e => set("lon", parseFloat(e.target.value) || 0)} placeholder="79.8612" />
+              </Field>
+            </div>
+          </section>
+
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={() => router.push("/admin/events")}
+            style={{ padding: "11px 24px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
+          >
+            <Check size={14} /> {editing ? "Save Changes" : "Create Event"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default function EventFormPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "#fff" }}>Loading…</div>}>
+      <EventFormInner />
+    </Suspense>
+  );
+}

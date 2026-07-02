@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ArrowRight, ChevronDown, Search } from "lucide-react";
+import { useAdminData } from "../context/AdminDataContext";
 
 const SLIDE_INTERVAL = 6000;
 const ANIM_MS        = 1000;
@@ -34,7 +35,7 @@ const categories = [
   { label: "Community Events", group: RED    },
 ];
 
-const panels = [
+const FALLBACK_PANELS = [
   {
     image: "/banner3.png",
     tag:   "MUSIC FESTIVAL",
@@ -59,6 +60,17 @@ const panels = [
 ];
 
 export default function Hero() {
+  const { banners } = useAdminData();
+  const panels = banners.length > 0
+    ? banners.map((b, i) => ({
+        image: b.url,
+        tag:   FALLBACK_PANELS[i % FALLBACK_PANELS.length].tag,
+        date:  FALLBACK_PANELS[i % FALLBACK_PANELS.length].date,
+        title: FALLBACK_PANELS[i % FALLBACK_PANELS.length].title,
+        desc:  FALLBACK_PANELS[i % FALLBACK_PANELS.length].desc,
+      }))
+    : FALLBACK_PANELS;
+
   const [current,       setCurrent]       = useState(0);
   const [prevIdx,       setPrevIdx]       = useState<number | null>(null);
   const [direction,     setDirection]     = useState<"left" | "right">("left");

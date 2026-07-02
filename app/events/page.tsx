@@ -2,9 +2,11 @@
 
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { events, Event } from "../data/events";
+import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Event } from "../data/events";
+import { useAdminData } from "../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
+import { eventSlug, organizerSlug } from "../lib/slug";
 import Navbar from "../components/Navbar";
 import StickySearchFilters from "../components/StickySearchFilters";
 import ParticleField from "../components/ParticleField";
@@ -23,14 +25,17 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
 }) {
   const router = useRouter();
   const { userLocation } = useUserLocation();
+  const { organizers } = useAdminData();
   const [hovered, setHovered] = useState(false);
+  const [orgHovered, setOrgHovered] = useState(false);
+  const organizer = organizers.find(o => o.name === event.organizer);
   const distance = userLocation
     ? haversineKm(userLocation.lat, userLocation.lon, event.lat, event.lon)
     : null;
 
   return (
     <div
-      onClick={() => router.push(`/events/${event.id}`)}
+      onClick={() => router.push(`/events/${eventSlug(event)}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -118,65 +123,143 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
           <p style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
             {event.price.replace("Starting from ", "")}
           </p>
+
+          {/* Organized by */}
+          {organizer && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ fontSize: 8, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Organized by</span>
+              <div
+                style={{ position: "relative", display: "flex", alignItems: "center" }}
+                onMouseEnter={() => setOrgHovered(true)}
+                onMouseLeave={() => setOrgHovered(false)}
+                onClick={(e) => { e.stopPropagation(); router.push(`/organizers/${organizerSlug(organizer)}`); }}
+              >
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                  border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.06)",
+                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                  transition: "border-color 0.2s",
+                  ...(orgHovered ? { borderColor: "#39BD69" } : {}),
+                }}>
+                  {organizer.logo ? (
+                    <img src={organizer.logo} alt={organizer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span style={{ fontSize: 9, fontWeight: 800, color: "#39BD69" }}>{organizer.name.charAt(0)}</span>
+                  )}
+                </div>
+                {/* Hover tooltip with name */}
+                {orgHovered && (
+                  <div style={{
+                    position: "absolute", bottom: "calc(100% + 6px)", left: 0, zIndex: 20,
+                    whiteSpace: "nowrap", padding: "4px 9px", borderRadius: 6,
+                    background: "rgba(0,0,0,0.92)", border: "1px solid rgba(57,189,105,0.4)",
+                    fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.03em",
+                    boxShadow: "0 6px 18px rgba(0,0,0,0.5)", pointerEvents: "none",
+                  }}>
+                    {organizer.name}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, onShare }: {
+function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, onShare, direction = "left" }: {
   title: string; subtitle?: string;
   events: Event[];
   liked: Set<number>; shared: Set<number>;
   onLike: (id: number, e: React.MouseEvent) => void;
   onShare: (id: number, title: string, e: React.MouseEvent) => void;
+  direction?: "left" | "right";
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const trackRef  = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+  const animating = useRef(false);
+  const posRef    = useRef(0);
+  const rafRef    = useRef<number>(0);
+  const CARD_STEP = 244 * 3; // 3 cards
 
-  const scroll = (dir: "left" | "right") => {
-    const el = scrollRef.current;
+  const items = [...rowEvents, ...rowEvents];
+
+  useEffect(() => {
+    const el = trackRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir === "left" ? -440 : 440, behavior: "smooth" });
+    const speed = 0.4;
+    posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
+
+    const step = () => {
+      if (!pausedRef.current && !animating.current) {
+        posRef.current += direction === "left" ? -speed : speed;
+        const half = el.scrollWidth / 2;
+        if (direction === "left"  && posRef.current <= -half) posRef.current += half;
+        if (direction === "right" && posRef.current >= 0)     posRef.current -= half;
+        el.style.transform = `translateX(${posRef.current}px)`;
+      }
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [direction, rowEvents.length]);
+
+  const slideTo = (delta: number) => {
+    const el = trackRef.current;
+    if (!el || animating.current) return;
+    animating.current = true;
+    const start = posRef.current;
+    const target = start + delta;
+    const duration = 700;
+    const t0 = performance.now();
+    const animate = (now: number) => {
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2;
+      let pos = start + (target - start) * eased;
+      const half = el.scrollWidth / 2;
+      if (pos <= -half) pos += half;
+      if (pos >= 0 && direction === "right") pos -= half;
+      posRef.current = pos;
+      el.style.transform = `translateX(${pos}px)`;
+      if (p < 1) requestAnimationFrame(animate);
+      else animating.current = false;
+    };
+    requestAnimationFrame(animate);
   };
 
   if (!rowEvents.length) return null;
 
   return (
     <div style={{ marginBottom: 40 }}>
-      {/* Row header */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16, paddingRight: 4 }}>
-        <div>
-          {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#39BD69", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
-          <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={() => scroll("left")}
-            style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fff"; (e.currentTarget as HTMLElement).style.color = "#000"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"; }}
-          ><ChevronLeft size={14} /></button>
-          <button onClick={() => scroll("right")}
-            style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fff"; (e.currentTarget as HTMLElement).style.color = "#000"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"; }}
-          ><ChevronRight size={14} /></button>
-        </div>
+      <div style={{ marginBottom: 16 }}>
+        {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#39BD69", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
+        <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
       </div>
 
-      {/* Horizontal scroll track */}
       <div
-        ref={scrollRef}
-        style={{ display: "flex", gap: 14, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 6, paddingRight: 4 }}
+        style={{ overflow: "hidden", position: "relative" }}
+        onMouseEnter={() => { pausedRef.current = true; }}
+        onMouseLeave={() => { pausedRef.current = false; }}
       >
-        {rowEvents.map(ev => (
-          <EventCard
-            key={ev.id} event={ev}
-            liked={liked.has(ev.id)} shared={shared.has(ev.id)}
-            onLike={e => onLike(ev.id, e)}
-            onShare={e => onShare(ev.id, ev.title, e)}
-          />
-        ))}
+        {/* Fade edges */}
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to right, #080808, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to left, #080808, transparent)", pointerEvents: "none" }} />
+
+        {/* Centered arrow buttons */}
+        <button onClick={() => slideTo(CARD_STEP)} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 40, height: 40, borderRadius: "50%", cursor: "pointer", background: "rgba(10,10,14,0.85)", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.8)", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="#fff"; (e.currentTarget as HTMLElement).style.color="#000"; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="rgba(10,10,14,0.85)"; (e.currentTarget as HTMLElement).style.color="rgba(255,255,255,0.8)"; }}><ChevronLeft size={18} /></button>
+        <button onClick={() => slideTo(-CARD_STEP)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 40, height: 40, borderRadius: "50%", cursor: "pointer", background: "rgba(10,10,14,0.85)", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.8)", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="#fff"; (e.currentTarget as HTMLElement).style.color="#000"; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="rgba(10,10,14,0.85)"; (e.currentTarget as HTMLElement).style.color="rgba(255,255,255,0.8)"; }}><ChevronRight size={18} /></button>
+
+        <div ref={trackRef} style={{ display: "flex", gap: 14, width: "max-content", willChange: "transform", paddingBottom: 6 }}>
+          {items.map((ev, i) => (
+            <EventCard
+              key={`${ev.id}-${i}`} event={ev}
+              liked={liked.has(ev.id)} shared={shared.has(ev.id)}
+              onLike={e => onLike(ev.id, e)}
+              onShare={e => onShare(ev.id, ev.title, e)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -189,6 +272,7 @@ function EventsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userLocation } = useUserLocation();
+  const { events } = useAdminData();
 
   const [liked,  setLiked]  = useState<Set<number>>(new Set());
   const [shared, setShared] = useState<Set<number>>(new Set());
@@ -219,10 +303,11 @@ function EventsContent() {
       if (genreParam && !ev.genres.includes(genreParam)) return false;
       if (queryParam) {
         const q = queryParam.toLowerCase();
-        const searchable = [ev.title, ev.tag, ev.location, ...ev.genres, ...ev.lineup].join(" ").toLowerCase();
+        const searchable = [ev.title, ev.tag, ev.location, ev.organizer, ...ev.genres, ...ev.lineup].join(" ").toLowerCase();
         if (!searchable.includes(q)) return false;
-        if (categoryParam === "artists" && !ev.lineup.some(a => a.toLowerCase().includes(q))) return false;
-        if (categoryParam === "genres" && !ev.genres.some(g => g.toLowerCase().includes(q))) return false;
+        if (categoryParam === "artists"    && !ev.lineup.some(a => a.toLowerCase().includes(q))) return false;
+        if (categoryParam === "genres"     && !ev.genres.some(g => g.toLowerCase().includes(q))) return false;
+        if (categoryParam === "organizers" && !(ev.organizer || "").toLowerCase().includes(q)) return false;
       }
       return true;
     });
@@ -285,7 +370,7 @@ function EventsContent() {
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
-      {rows.map(row => (
+      {rows.map((row, i) => (
         <EventRow
           key={row.title}
           title={row.title}
@@ -295,6 +380,7 @@ function EventsContent() {
           shared={shared}
           onLike={toggleLike}
           onShare={handleShare}
+          direction={i % 2 === 0 ? "left" : "right"}
         />
       ))}
     </div>
