@@ -201,6 +201,28 @@ export default function EventDetailPage() {
                   )}
                 </div>
 
+                {/* Ticket types */}
+                {(event.tickets ?? []).filter(t => t.name || t.price).length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-white/30 text-[8px] tracking-[0.35em] uppercase mb-2.5">TICKETS</p>
+                    <div className="flex flex-col gap-2">
+                      {(event.tickets ?? []).filter(t => t.name || t.price).map((t, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
+                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Ticket size={12} className="text-[#39BD69] flex-shrink-0" />
+                            <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
+                          </div>
+                          <span className="text-[#39BD69] text-xs font-bold flex-shrink-0 ml-3">{t.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Performing artists — names only */}
                 <div>
                   <p className="text-white/30 text-[8px] tracking-[0.35em] uppercase mb-2">PERFORMING ARTISTS</p>

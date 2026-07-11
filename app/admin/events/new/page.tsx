@@ -3,15 +3,16 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminData, Event } from "../../../context/AdminDataContext";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import LineupSelector from "../../components/LineupSelector";
 import CreatableSelect from "../../components/CreatableSelect";
+import MapPicker from "../../components/MapPicker";
 
 const EMPTY: Omit<Event, "id"> = {
   tag: "", title: "", date: "", location: "", venue: "",
   price: "", image: "", badge: null, genres: [], lineup: [],
-  organizer: "", description: "", lat: 0, lon: 0,
+  organizer: "", description: "", lat: 0, lon: 0, tickets: [],
 };
 
 const inputStyle: React.CSSProperties = {
@@ -64,6 +65,7 @@ function EventFormInner() {
   const editing = editId ? events.find(e => e.id === editId) ?? null : null;
 
   const [form, setForm] = useState<Omit<Event, "id">>(EMPTY);
+  const [coordMode, setCoordMode] = useState<"map" | "manual">("map");
 
   useEffect(() => {
     if (editing) setForm({ ...editing });
@@ -158,6 +160,49 @@ function EventFormInner() {
                 />
               </div>
             </div>
+
+            {/* Ticket types */}
+            <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+              <label style={labelStyle}>Ticket Types</label>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 14 }}>
+                Add ticket categories with their prices (e.g. General, VIP, Early Bird). These show on the event detail page.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {(form.tickets ?? []).map((t, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 40px", gap: 10, alignItems: "center" }}>
+                    <input
+                      style={inputStyle}
+                      value={t.name}
+                      onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))}
+                      placeholder="Ticket name (e.g. VIP)"
+                    />
+                    <input
+                      style={inputStyle}
+                      value={t.price}
+                      onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, price: e.target.value } : x))}
+                      placeholder="Price (e.g. LKR 5,000)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => set("tickets", (form.tickets ?? []).filter((_, xi) => xi !== i))}
+                      style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                {(form.tickets ?? []).length === 0 && (
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>No ticket types added yet.</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => set("tickets", [...(form.tickets ?? []), { name: "", price: "" }])}
+                style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                <Plus size={14} /> Add Ticket Type
+              </button>
+            </div>
           </section>
 
           {/* IMAGE */}
@@ -169,7 +214,7 @@ function EventFormInner() {
                 value={form.image}
                 onChange={val => set("image", val)}
                 aspectRatio="wide"
-                hint="Landscape image recommended · PNG, JPG, WEBP · Max 5 MB"
+                hint="Landscape 16:9 · Recommended 800 × 450 px · PNG, JPG, WEBP · Max 5 MB"
               />
             </div>
           </section>
@@ -207,15 +252,43 @@ function EventFormInner() {
 
           {/* LOCATION COORDS */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
-            <p style={sectionHeadStyle}>Coordinates (optional)</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-              <Field label="Latitude">
-                <input type="number" step="any" style={inputStyle} value={form.lat || ""} onChange={e => set("lat", parseFloat(e.target.value) || 0)} placeholder="6.9271" />
-              </Field>
-              <Field label="Longitude">
-                <input type="number" step="any" style={inputStyle} value={form.lon || ""} onChange={e => set("lon", parseFloat(e.target.value) || 0)} placeholder="79.8612" />
-              </Field>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(57,189,105,0.2)", paddingBottom: 8, marginBottom: 16 }}>
+              <p style={{ ...sectionHeadStyle, border: "none", padding: 0, margin: 0 }}>Coordinates (optional)</p>
+              {/* Mode toggle */}
+              <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                {(["map", "manual"] as const).map(m => (
+                  <button
+                    key={m} type="button"
+                    onClick={() => setCoordMode(m)}
+                    style={{
+                      padding: "5px 12px", borderRadius: 6, cursor: "pointer", border: "none",
+                      fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", textTransform: "capitalize",
+                      background: coordMode === m ? "rgba(57,189,105,0.15)" : "transparent",
+                      color: coordMode === m ? "#39BD69" : "rgba(255,255,255,0.4)",
+                    }}
+                  >
+                    {m === "map" ? "Pick on Map" : "Enter Manually"}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {coordMode === "map" ? (
+              <MapPicker
+                lat={form.lat}
+                lon={form.lon}
+                onChange={(la, lo) => setForm(prev => ({ ...prev, lat: la, lon: lo }))}
+              />
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                <Field label="Latitude">
+                  <input type="number" step="any" style={inputStyle} value={form.lat || ""} onChange={e => set("lat", parseFloat(e.target.value) || 0)} placeholder="6.9271" />
+                </Field>
+                <Field label="Longitude">
+                  <input type="number" step="any" style={inputStyle} value={form.lon || ""} onChange={e => set("lon", parseFloat(e.target.value) || 0)} placeholder="79.8612" />
+                </Field>
+              </div>
+            )}
           </section>
 
         </div>

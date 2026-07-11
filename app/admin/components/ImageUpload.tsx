@@ -50,7 +50,6 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
     }
   };
 
-  const previewH = aspectRatio === "square" ? 120 : 90;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -66,6 +65,13 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
           <LinkIcon size={10} /> {urlMode ? "Use upload" : "Use URL"}
         </button>
       </div>
+
+      {/* Always-visible size guidance */}
+      {hint && (
+        <p style={{ fontSize: 10, color: "rgba(57,189,105,0.7)", fontWeight: 600, letterSpacing: "0.02em" }}>
+          {hint}
+        </p>
+      )}
 
       {/* URL mode */}
       {urlMode ? (
@@ -110,10 +116,10 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
                 alt="preview"
                 style={{
                   width: "100%",
-                  height: previewH,
-                  objectFit: "cover",
-                  objectPosition: aspectRatio === "square" ? "top" : "center",
+                  maxHeight: 260,
+                  objectFit: "contain",
                   display: "block",
+                  background: "rgba(0,0,0,0.3)",
                 }}
               />
               {/* Overlay on hover */}
@@ -155,7 +161,7 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
                   Click to upload or drag & drop
                 </p>
                 <p style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
-                  {hint || "PNG, JPG, WEBP · Max 5 MB"}
+                  PNG, JPG, WEBP · Max 5 MB
                 </p>
               </div>
             </div>

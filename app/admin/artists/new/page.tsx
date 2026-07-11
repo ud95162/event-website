@@ -156,7 +156,7 @@ function ArtistFormInner() {
                 value={form.image}
                 onChange={val => set("image", val)}
                 aspectRatio="square"
-                hint="Square image recommended · Max 5 MB"
+                hint="Square 1:1 · Recommended 600 × 600 px · PNG, JPG, WEBP · Max 5 MB"
               />
               <div style={{ gridColumn: "span 2" }}>
                 <ImageUpload
@@ -164,7 +164,7 @@ function ArtistFormInner() {
                   value={form.bannerImage ?? ""}
                   onChange={val => set("bannerImage", val)}
                   aspectRatio="wide"
-                  hint="Wide/landscape image recommended · Max 5 MB"
+                  hint="Wide banner 16:5 · Recommended 1600 × 500 px · PNG, JPG, WEBP · Max 5 MB"
                 />
               </div>
             </div>

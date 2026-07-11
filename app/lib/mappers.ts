@@ -27,6 +27,7 @@ export function mapEventRow(r: any) {
     organizer: r.organizer,
     lineup: parseJson(r.lineup, []),
     genres: parseJson(r.genres, []),
+    tickets: parseJson(r.tickets, []),
   };
 }
 

@@ -120,14 +120,14 @@ export default function OrganizersAdminPage() {
               value={form.logo}
               onChange={val => set("logo", val)}
               aspectRatio="square"
-              hint="Square logo recommended · Max 5 MB"
+              hint="Square 1:1 · Recommended 400 × 400 px · PNG, JPG, WEBP · Max 5 MB"
             />
             <ImageUpload
               label="Banner Image"
               value={form.banner}
               onChange={val => set("banner", val)}
               aspectRatio="wide"
-              hint="Wide/landscape image recommended · Max 5 MB"
+              hint="Wide banner 16:5 · Recommended 1600 × 500 px · PNG, JPG, WEBP · Max 5 MB"
             />
           </div>
 

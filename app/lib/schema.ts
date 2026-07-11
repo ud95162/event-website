@@ -45,9 +45,18 @@ async function createAndSeed(): Promise<void> {
       venue VARCHAR(255),
       organizer VARCHAR(255),
       lineup JSON,
-      genres JSON
+      genres JSON,
+      tickets JSON
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  // Migration: add tickets column to pre-existing events tables.
+  const [ticketCol] = await pool.query<any[]>(
+    "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'events' AND COLUMN_NAME = 'tickets'"
+  );
+  if (ticketCol[0].c === 0) {
+    await pool.query("ALTER TABLE events ADD COLUMN tickets JSON");
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS artists (

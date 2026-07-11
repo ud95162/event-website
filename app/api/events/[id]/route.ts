@@ -14,12 +14,12 @@ export async function PUT(
   await pool.query(
     `UPDATE events SET
        tag=?, title=?, date=?, location=?, price=?, image=?, badge=?, lat=?, lon=?,
-       description=?, venue=?, organizer=?, lineup=?, genres=?
+       description=?, venue=?, organizer=?, lineup=?, genres=?, tickets=?
      WHERE id=?`,
     [
       e.tag, e.title, e.date, e.location, e.price, e.image, e.badge ?? null,
       e.lat, e.lon, e.description, e.venue, e.organizer,
-      JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), id,
+      JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), JSON.stringify(e.tickets ?? []), id,
     ]
   );
   const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [id]);

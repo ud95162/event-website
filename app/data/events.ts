@@ -1,3 +1,8 @@
+export type TicketType = {
+  name:  string;   // e.g. "General", "VIP", "Early Bird"
+  price: string;   // e.g. "LKR 3,000"
+};
+
 export type Event = {
   id:          number;
   tag:         string;
@@ -14,6 +19,7 @@ export type Event = {
   venue:       string;
   genres:      string[];   // e.g. ["electronic", "sinhala"]
   organizer:   string;
+  tickets?:    TicketType[];
 };
 
 export const events: Event[] = [

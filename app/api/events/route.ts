@@ -16,12 +16,12 @@ export async function POST(req: NextRequest) {
   const e = await req.json();
   const [result] = await pool.query<any>(
     `INSERT INTO events
-       (tag, title, date, location, price, image, badge, lat, lon, description, venue, organizer, lineup, genres)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       (tag, title, date, location, price, image, badge, lat, lon, description, venue, organizer, lineup, genres, tickets)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       e.tag, e.title, e.date, e.location, e.price, e.image, e.badge ?? null,
       e.lat, e.lon, e.description, e.venue, e.organizer,
-      JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []),
+      JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), JSON.stringify(e.tickets ?? []),
     ]
   );
   const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [result.insertId]);

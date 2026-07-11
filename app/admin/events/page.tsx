@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminData, Event } from "../../context/AdminDataContext";
-import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown, List, LayoutGrid, MapPin, Calendar } from "lucide-react";
 
 const selectStyle: React.CSSProperties = {
   padding: "9px 12px", borderRadius: 8,
@@ -16,6 +16,7 @@ export default function EventsAdminPage() {
   const router = useRouter();
   const { events, deleteEvent } = useAdminData();
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [view, setView] = useState<"list" | "grid">("list");
 
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -104,9 +105,84 @@ export default function EventsAdminPage() {
         <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>
           {filtered.length} of {events.length}
         </span>
+        {/* View toggle */}
+        <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          {([["list", List], ["grid", LayoutGrid]] as const).map(([mode, Icon]) => (
+            <button
+              key={mode}
+              onClick={() => setView(mode)}
+              title={mode === "list" ? "List view" : "Grid view"}
+              style={{
+                width: 30, height: 28, borderRadius: 6, cursor: "pointer", border: "none",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: view === mode ? "rgba(57,189,105,0.15)" : "transparent",
+                color: view === mode ? "#39BD69" : "rgba(255,255,255,0.4)",
+                transition: "all 0.15s",
+              }}
+            >
+              <Icon size={15} />
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Grid view */}
+      {view === "grid" && (
+        filtered.length === 0 ? (
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)", background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12 }}>
+            {hasFilters ? (
+              <>No events match your filters. <button onClick={clearFilters} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
+            ) : (
+              <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 16 }}>
+            {filtered.map((ev: Event) => (
+              <div key={ev.id} style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div style={{ position: "relative", height: 130 }}>
+                  <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,0.9) 0%, transparent 60%)" }} />
+                  {ev.badge && (
+                    <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(57,189,105,0.9)", color: "#000" }}>{ev.badge}</span>
+                  )}
+                </div>
+                <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                  <h3 style={{ fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{ev.title}</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                      <Calendar size={11} /> {ev.date}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                      <MapPin size={11} /> {ev.location}
+                    </div>
+                    {ev.organizer && <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>By {ev.organizer}</p>}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <button
+                      onClick={() => router.push(`/admin/events/new?id=${ev.id}`)}
+                      style={{ flex: 1, height: 32, borderRadius: 6, background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)", color: "#60a5fa", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontSize: 11, fontWeight: 600 }}
+                    >
+                      <Pencil size={12} /> Edit
+                    </button>
+                    {confirmDelete === ev.id ? (
+                      <>
+                        <button onClick={() => { deleteEvent(ev.id); setConfirmDelete(null); }} style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} /></button>
+                        <button onClick={() => setConfirmDelete(null)} style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={12} /></button>
+                      </>
+                    ) : (
+                      <button onClick={() => setConfirmDelete(ev.id)} style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Trash2 size={12} /></button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Table (list view) */}
+      {view === "list" && (
       <div style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -200,6 +276,7 @@ export default function EventsAdminPage() {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 }
