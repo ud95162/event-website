@@ -37,6 +37,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div><label style={labelStyle}>{label}</label>{children}</div>;
 }
 
+// Keep only digits, then group into thousands: "5000" -> "5,000"
+const formatPrice = (raw: string): string => {
+  const digits = (raw || "").replace(/\D/g, "");
+  return digits ? Number(digits).toLocaleString("en-US") : "";
+};
+
 const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 // "21 June 2026" -> "2026-06-21"  (for the calendar input)
@@ -142,9 +148,6 @@ function EventFormInner() {
               <Field label="Venue">
                 <input style={inputStyle} value={form.venue} onChange={e => set("venue", e.target.value)} placeholder="Trillium Rooftop, Colombo 03" />
               </Field>
-              <Field label="Price">
-                <input style={inputStyle} value={form.price} onChange={e => set("price", e.target.value)} placeholder="Starting from LKR 3,000" />
-              </Field>
               <Field label="Organizer">
                 <select style={{ ...inputStyle, cursor: "pointer" }} value={form.organizer} onChange={e => set("organizer", e.target.value)}>
                   <option value="">Select organizer</option>
@@ -176,12 +179,16 @@ function EventFormInner() {
                       onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))}
                       placeholder="Ticket name (e.g. VIP)"
                     />
-                    <input
-                      style={inputStyle}
-                      value={t.price}
-                      onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, price: e.target.value } : x))}
-                      placeholder="Price (e.g. LKR 5,000)"
-                    />
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", pointerEvents: "none" }}>LKR</span>
+                      <input
+                        style={{ ...inputStyle, paddingLeft: 46 }}
+                        inputMode="numeric"
+                        value={formatPrice(t.price)}
+                        onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, price: formatPrice(e.target.value) } : x))}
+                        placeholder="5,000"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => set("tickets", (form.tickets ?? []).filter((_, xi) => xi !== i))}

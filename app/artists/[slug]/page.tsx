@@ -30,6 +30,7 @@ const BrandIcon = ({ name, size = 14 }: { name: string; size?: number }) => {
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { eventSlug, artistSlug } from "../../lib/slug";
+import { fromPrice } from "../../lib/price";
 import Navbar from "../../components/Navbar";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
@@ -412,7 +413,7 @@ export default function ArtistDetailPage() {
                             </div>
                           </div>
                           <div className="flex-shrink-0 text-right">
-                            <p className="text-white/50 text-[11px] font-semibold mb-1">{event.price.replace("Starting from ", "")}</p>
+                            <p className="text-white/50 text-[11px] font-semibold mb-1">{fromPrice(event.tickets, event.price)}</p>
                             <ArrowRight size={14} className="text-white/25 group-hover:text-[#39BD69] group-hover:translate-x-0.5 transition-all duration-200 ml-auto" />
                           </div>
                         </div>

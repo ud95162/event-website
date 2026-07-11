@@ -7,6 +7,7 @@ import { Event } from "../data/events";
 import { useAdminData } from "../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { eventSlug, organizerSlug } from "../lib/slug";
+import { ticketPrices } from "../lib/price";
 import Navbar from "../components/Navbar";
 import StickySearchFilters from "../components/StickySearchFilters";
 import ParticleField from "../components/ParticleField";
@@ -121,7 +122,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
             )}
           </div>
           <p style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
-            {event.price.replace("Starting from ", "")}
+            {ticketPrices(event.tickets, event.price)}
           </p>
 
           {/* Organized by */}

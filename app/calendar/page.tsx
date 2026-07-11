@@ -8,6 +8,7 @@ import Navbar from "../components/Navbar";
 import ParticleField from "../components/ParticleField";
 import { events, Event } from "../data/events";
 import { eventSlug } from "../lib/slug";
+import { fromPrice } from "../lib/price";
 
 const DAYS   = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS = [
@@ -152,7 +153,7 @@ function DayCard({
             {[
               { Icon: Calendar, text: hoveredEvent.date },
               { Icon: MapPin,   text: hoveredEvent.location },
-              { Icon: Ticket,   text: hoveredEvent.price.replace("Starting from ", "") },
+              { Icon: Ticket,   text: fromPrice(hoveredEvent.tickets, hoveredEvent.price) },
             ].map(({ Icon, text }) => (
               <div key={text} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                 <Icon size={9} style={{ color: "#39BD69", flexShrink: 0 }} />

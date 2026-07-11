@@ -6,6 +6,7 @@ import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { events as allEvents } from "../data/events";
 import { eventSlug } from "../lib/slug";
+import { fromPrice } from "../lib/price";
 
 const events     = allEvents.slice(0, 6);
 const N          = events.length;
@@ -268,7 +269,7 @@ export default function FeaturedEvents() {
                         color: hoveredCard === card.id ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
                         fontSize: hoveredCard === card.id ? "14px" : "13px",
                         fontWeight: hoveredCard === card.id ? 500 : 400,
-                      }}>Price: {card.price.replace("Starting from ", "")}</p>
+                      }}>Price: {fromPrice(card.tickets, card.price)}</p>
                     {userLocation && (
                       <div className="flex items-center justify-center gap-1 mt-1.5">
                         <MapPin size={9} className="text-[#39BD69]" />

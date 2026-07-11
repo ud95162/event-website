@@ -178,7 +178,6 @@ export default function EventDetailPage() {
                   {[
                     { Icon: Calendar, label: "DATE",     value: event.date },
                     { Icon: MapPin,   label: "VENUE",    value: event.location },
-                    { Icon: Ticket,   label: "PRICE",    value: event.price.replace("Starting from ", "") },
                   ].map(({ Icon, label, value }) => (
                     <div key={label} className="flex items-center gap-3">
                       <div
@@ -216,7 +215,7 @@ export default function EventDetailPage() {
                             <Ticket size={12} className="text-[#39BD69] flex-shrink-0" />
                             <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
                           </div>
-                          <span className="text-[#39BD69] text-xs font-bold flex-shrink-0 ml-3">{t.price}</span>
+                          <span className="text-[#39BD69] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
                         </div>
                       ))}
                     </div>
