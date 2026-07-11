@@ -15,11 +15,20 @@ export default function OrganizerDetailPage() {
   const params  = useParams();
   const router  = useRouter();
   const slug    = String(params.slug);
-  const { organizers, events } = useAdminData();
+  const { organizers, events, loading } = useAdminData();
   const { userLocation } = useUserLocation();
   const organizer = organizers.find(o => organizerSlug(o) === slug) ?? null;
 
   const [imgError, setImgError] = useState(false);
+
+  if (loading && !organizer) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
+        <p className="text-white/30 text-xs tracking-widest uppercase">Loading organizer…</p>
+      </main>
+    );
+  }
 
   if (!organizer) {
     return (

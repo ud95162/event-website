@@ -14,12 +14,21 @@ export default function EventDetailPage() {
   const params   = useParams();
   const router   = useRouter();
   const slug     = String(params.slug);
-  const { events, artists, organizers } = useAdminData();
+  const { events, artists, organizers, loading } = useAdminData();
   const event    = events.find(e => eventSlug(e) === slug) ?? null;
   const { userLocation } = useUserLocation();
 
   const [liked,  setLiked]  = useState(false);
   const [shared, setShared] = useState(false);
+
+  if (loading && !event) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
+        <p className="text-white/30 text-xs tracking-widest uppercase">Loading event…</p>
+      </main>
+    );
+  }
 
   if (!event) {
     return (

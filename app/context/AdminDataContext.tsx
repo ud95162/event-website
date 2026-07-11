@@ -20,6 +20,7 @@ export type Organizer = {
 };
 
 type AdminDataContextType = {
+  loading: boolean;
   events: Event[];
   artists: Artist[];
   organizers: Organizer[];
@@ -70,15 +71,18 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [genres, setGenres] = useState<string[]>([]);
   const [badges, setBadges] = useState<string[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Initial load from the API.
   useEffect(() => {
-    jsonFetch<Event[]>("/api/events").then(setEvents).catch(() => {});
-    jsonFetch<Artist[]>("/api/artists").then(setArtists).catch(() => {});
-    jsonFetch<Organizer[]>("/api/organizers").then(setOrganizers).catch(() => {});
-    jsonFetch<string[]>("/api/genres").then(setGenres).catch(() => {});
-    jsonFetch<string[]>("/api/badges").then(setBadges).catch(() => {});
-    jsonFetch<Banner[]>("/api/banners").then(setBanners).catch(() => {});
+    Promise.allSettled([
+      jsonFetch<Event[]>("/api/events").then(setEvents),
+      jsonFetch<Artist[]>("/api/artists").then(setArtists),
+      jsonFetch<Organizer[]>("/api/organizers").then(setOrganizers),
+      jsonFetch<string[]>("/api/genres").then(setGenres),
+      jsonFetch<string[]>("/api/badges").then(setBadges),
+      jsonFetch<Banner[]>("/api/banners").then(setBanners),
+    ]).finally(() => setLoading(false));
   }, []);
 
   // ---- Events ----
@@ -212,6 +216,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
   return (
     <AdminDataContext.Provider value={{
+      loading,
       events, artists, organizers, genres, badges, banners,
       addEvent, updateEvent, deleteEvent,
       addArtist, updateArtist, deleteArtist,

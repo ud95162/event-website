@@ -103,11 +103,20 @@ export default function ArtistDetailPage() {
   const params  = useParams();
   const router  = useRouter();
   const slug    = String(params.slug);
-  const { artists, events } = useAdminData();
+  const { artists, events, loading } = useAdminData();
   const artist  = artists.find(a => artistSlug(a) === slug) ?? null;
   const { userLocation } = useUserLocation();
 
   const [followed, setFollowed] = useState(false);
+
+  if (loading && !artist) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
+        <p className="text-white/30 text-xs tracking-widest uppercase">Loading artist…</p>
+      </main>
+    );
+  }
 
   if (!artist) {
     return (
