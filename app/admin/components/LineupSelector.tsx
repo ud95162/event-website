@@ -4,12 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { Search, X } from "lucide-react";
 
 type Props = {
-  value: string[];          // selected artist names
+  value: string[];          // selected values
   onChange: (v: string[]) => void;
-  allArtists: string[];     // all available artist names
+  allArtists: string[];     // all available options
+  placeholder?: string;
 };
 
-export default function LineupSelector({ value, onChange, allArtists }: Props) {
+export default function LineupSelector({ value, onChange, allArtists, placeholder }: Props) {
   const [query, setQuery]     = useState("");
   const [open, setOpen]       = useState(false);
   const containerRef          = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ export default function LineupSelector({ value, onChange, allArtists }: Props) {
             value={query}
             onChange={e => { setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
-            placeholder={value.length === 0 ? "Search and select artists…" : "Add more…"}
+            placeholder={value.length === 0 ? (placeholder ?? "Search and select artists…") : "Add more…"}
             style={{
               background: "none", border: "none", outline: "none",
               color: "#fff", fontSize: 13, fontFamily: "inherit", flex: 1,

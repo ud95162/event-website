@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminData, Event } from "../../../context/AdminDataContext";
+import { EVENT_STATUSES } from "../../../data/events";
 import { ChevronLeft, Check, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import LineupSelector from "../../components/LineupSelector";
@@ -12,7 +13,9 @@ import MapPicker from "../../components/MapPicker";
 const EMPTY: Omit<Event, "id"> = {
   tag: "", title: "", date: "", location: "", venue: "",
   price: "", image: "", badge: null, genres: [], lineup: [],
-  organizer: "", description: "", lat: 0, lon: 0, tickets: [],
+  organizer: "", description: "", lat: 0, lon: 0, tickets: [], status: "Confirmed",
+  startTime: "", endDate: "", endTime: "", ageRestriction: "", capacity: null,
+  venueType: "", coOrganizers: [], videoTrailer: "", externalLink: "",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -133,13 +136,43 @@ function EventFormInner() {
                   placeholder="None"
                 />
               </Field>
-              <Field label="Date *">
+              <Field label="Status">
+                <select style={{ ...inputStyle, cursor: "pointer" }} value={form.status ?? ""} onChange={e => set("status", e.target.value)}>
+                  <option value="">No status</option>
+                  {EVENT_STATUSES.map(s => <option key={s.value} value={s.value}>{s.value}</option>)}
+                </select>
+              </Field>
+              <Field label="Start Date *">
                 <input
                   type="date"
                   style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" }}
                   value={toISODate(form.date)}
                   onChange={e => set("date", fromISODate(e.target.value))}
                   required
+                />
+              </Field>
+              <Field label="Start Time">
+                <input
+                  type="time"
+                  style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" }}
+                  value={form.startTime ?? ""}
+                  onChange={e => set("startTime", e.target.value)}
+                />
+              </Field>
+              <Field label="End Date (multi-day)">
+                <input
+                  type="date"
+                  style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" }}
+                  value={toISODate(form.endDate ?? "")}
+                  onChange={e => set("endDate", fromISODate(e.target.value))}
+                />
+              </Field>
+              <Field label="End Time">
+                <input
+                  type="time"
+                  style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" }}
+                  value={form.endTime ?? ""}
+                  onChange={e => set("endTime", e.target.value)}
                 />
               </Field>
               <Field label="Location *">
@@ -162,6 +195,14 @@ function EventFormInner() {
                   allArtists={artists.map(a => a.stageName || a.name)}
                 />
               </div>
+              <div style={{ gridColumn: "span 3" }}>
+                <label style={labelStyle}>Co-organizers (additional hosts)</label>
+                <LineupSelector
+                  value={form.coOrganizers ?? []}
+                  onChange={v => set("coOrganizers", v)}
+                  allArtists={organizers.map(o => o.name).filter(n => n !== form.organizer)}
+                />
+              </div>
             </div>
 
             {/* Ticket types */}
@@ -172,30 +213,38 @@ function EventFormInner() {
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {(form.tickets ?? []).map((t, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 40px", gap: 10, alignItems: "center" }}>
-                    <input
-                      style={inputStyle}
-                      value={t.name}
-                      onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))}
-                      placeholder="Ticket name (e.g. VIP)"
-                    />
-                    <div style={{ position: "relative" }}>
-                      <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", pointerEvents: "none" }}>LKR</span>
+                  <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 40px", gap: 10, alignItems: "center" }}>
                       <input
-                        style={{ ...inputStyle, paddingLeft: 46 }}
-                        inputMode="numeric"
-                        value={formatPrice(t.price)}
-                        onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, price: formatPrice(e.target.value) } : x))}
-                        placeholder="5,000"
+                        style={inputStyle}
+                        value={t.name}
+                        onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))}
+                        placeholder="Ticket name (e.g. VIP)"
                       />
+                      <div style={{ position: "relative" }}>
+                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", pointerEvents: "none" }}>LKR</span>
+                        <input
+                          style={{ ...inputStyle, paddingLeft: 46 }}
+                          inputMode="numeric"
+                          value={formatPrice(t.price)}
+                          onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, price: formatPrice(e.target.value) } : x))}
+                          placeholder="5,000"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => set("tickets", (form.tickets ?? []).filter((_, xi) => xi !== i))}
+                        style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => set("tickets", (form.tickets ?? []).filter((_, xi) => xi !== i))}
-                      style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <input
+                      style={{ ...inputStyle, fontSize: 12 }}
+                      value={t.desc ?? ""}
+                      onChange={e => set("tickets", (form.tickets ?? []).map((x, xi) => xi === i ? { ...x, desc: e.target.value } : x))}
+                      placeholder="What's included (e.g. VIP lounge access, fast-track entry)"
+                    />
                   </div>
                 ))}
                 {(form.tickets ?? []).length === 0 && (
@@ -255,6 +304,51 @@ function EventFormInner() {
               onChange={e => set("description", e.target.value)}
               placeholder="Describe the event…"
             />
+          </section>
+
+          {/* DETAILS */}
+          <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+            <p style={sectionHeadStyle}>Event Details</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              <Field label="Age Restriction">
+                <input
+                  style={inputStyle}
+                  list="age-options"
+                  value={form.ageRestriction ?? ""}
+                  onChange={e => set("ageRestriction", e.target.value)}
+                  placeholder="e.g. 21+"
+                />
+                <datalist id="age-options">
+                  <option value="All Ages" />
+                  <option value="18+" />
+                  <option value="21+" />
+                </datalist>
+              </Field>
+              <Field label="Capacity / Max Attendees">
+                <input
+                  type="number"
+                  min={0}
+                  style={inputStyle}
+                  value={form.capacity ?? ""}
+                  onChange={e => set("capacity", e.target.value ? Number(e.target.value) : null)}
+                  placeholder="e.g. 500"
+                />
+              </Field>
+              <Field label="Indoor / Outdoor">
+                <select style={{ ...inputStyle, cursor: "pointer" }} value={form.venueType ?? ""} onChange={e => set("venueType", e.target.value)}>
+                  <option value="">Not specified</option>
+                  <option value="Indoor">Indoor</option>
+                  <option value="Outdoor">Outdoor</option>
+                </select>
+              </Field>
+              <Field label="External Link (more info)">
+                <input style={inputStyle} type="url" value={form.externalLink ?? ""} onChange={e => set("externalLink", e.target.value)} placeholder="https://…" />
+              </Field>
+              <div style={{ gridColumn: "span 2" }}>
+                <label style={labelStyle}>Video Trailer URL (portrait preferred)</label>
+                <input style={inputStyle} type="url" value={form.videoTrailer ?? ""} onChange={e => set("videoTrailer", e.target.value)} placeholder="YouTube, Vimeo, or direct .mp4 URL" />
+              </div>
+            </div>
           </section>
 
           {/* LOCATION COORDS */}

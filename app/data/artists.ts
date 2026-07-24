@@ -1,3 +1,8 @@
+export type SocialLink = {
+  platform: string;   // e.g. "Facebook", "Instagram", "TikTok"
+  url:      string;
+};
+
 export type Artist = {
   id:              number;
   name:            string;   // kept for backward compat (used as stageName fallback)
@@ -9,21 +14,42 @@ export type Artist = {
   bio:             string;
   genres?:         string[];
   subGenres?:      string[];
-  bpmMin?:         number | null;
-  bpmMax?:         number | null;
+  bpm?:            number | null;   // single BPM value (Beats Per Minute)
   isDJ?:           boolean;
   city?:           string;
   touringRegion?:  string;
   soundcloudUrl?:  string;
   spotifyUrl?:     string;
   beatportUrl?:    string;
+  socialLinks?:    SocialLink[];    // dynamic, any-platform social links
+  bookingEmail?:   string;
+  bookingPhone?:   string;
+  level?:          string;          // e.g. "Emerging", "Established", "Headliner" — drives recommendations
+  rating?:         number;          // 0–5
+  // ── deprecated (kept for backward compat with older stored data) ──
+  bpmMin?:         number | null;
+  bpmMax?:         number | null;
   instagramUrl?:   string;
   tiktokUrl?:      string;
   youtubeUrl?:     string;
   bookingContact?: string;
   similarArtists?: string[];
-  rating?:         number;
 };
+
+// Predefined, expandable genre list for the artist genre dropdown.
+// Shared genre list — used by the artist and organizer-facing dropdowns.
+// Easy to extend: add new genres to this array.
+export const ARTIST_GENRES = [
+  "Progressive House", "House", "Mainstream Electronic", "Techno", "Psytrance",
+  "Tech House", "Afro House", "Disco House", "Big Room", "Drum & Bass (D&B)", "Dubstep",
+  "Deep House", "Melodic House & Techno", "Minimal / Deep Tech", "Trance", "Hard Techno",
+  "Future House", "Bass House", "Electro House", "Trap", "Hip-Hop / R&B", "Amapiano",
+  "Commercial / Top 40", "Nu-Disco", "Funky / Groove", "Garage / UK Garage", "Hardstyle",
+  "Ambient / Downtempo", "Live Band", "Acoustic", "Reggae / Dancehall",
+];
+
+// Artist levels (drives automatic recommendations alongside shared genres).
+export const ARTIST_LEVELS = ["Emerging", "Established", "Headliner"];
 
 export const artists: Artist[] = [
   {

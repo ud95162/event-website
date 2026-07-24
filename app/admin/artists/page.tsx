@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Artist } from "../../context/AdminDataContext";
-import { Plus, Pencil, Trash2, X, Check, Star, List, LayoutGrid, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Star, List, LayoutGrid, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
+const selectStyle: React.CSSProperties = {
+  padding: "8px 10px", borderRadius: 8,
+  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+  color: "#fff", fontSize: 12, outline: "none", cursor: "pointer", fontFamily: "inherit",
+};
 
 export default function ArtistsAdminPage() {
   const { user } = useAuth();
@@ -12,10 +20,17 @@ export default function ArtistsAdminPage() {
   const { artists, deleteArtist } = useAdminData();
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [view, setView] = useState<"list" | "grid">("list");
+  const [perPage, setPerPage] = useState(10);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (user && user.role !== "admin") router.replace("/admin");
   }, [user, router]);
+
+  const totalPages = Math.max(1, Math.ceil(artists.length / perPage));
+  useEffect(() => { setPage(1); }, [perPage]);
+  const currentPage = Math.min(page, totalPages);
+  const paged = artists.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   if (user?.role !== "admin") return null;
 
@@ -29,6 +44,13 @@ export default function ArtistsAdminPage() {
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Artists</h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Per-page selector */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Show</span>
+            <select value={perPage} onChange={e => setPerPage(Number(e.target.value))} style={selectStyle}>
+              {PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
           {/* View toggle */}
           <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
             {([["list", List], ["grid", LayoutGrid]] as const).map(([mode, Icon]) => (
@@ -65,7 +87,7 @@ export default function ArtistsAdminPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
-            {artists.map(a => (
+            {paged.map(a => (
               <div key={a.id} style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <div style={{ position: "relative", height: 160 }}>
                   <img src={a.image} alt={displayName(a)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
@@ -119,10 +141,10 @@ export default function ArtistsAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {artists.map((a, i) => (
+            {paged.map((a, i) => (
               <tr
                 key={a.id}
-                style={{ borderBottom: i < artists.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                style={{ borderBottom: i < paged.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
@@ -175,6 +197,49 @@ export default function ArtistsAdminPage() {
           </tbody>
         </table>
       </div>
+      )}
+
+      {/* Pagination */}
+      {artists.length > perPage && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, gap: 12, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+            Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, artists.length)} of {artists.length}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: currentPage === 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 600, cursor: currentPage === 1 ? "default" : "pointer" }}
+            >
+              <ChevronLeft size={13} /> Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .map((p, idx, arr) => (
+                <span key={p} style={{ display: "flex", alignItems: "center" }}>
+                  {idx > 0 && arr[idx - 1] !== p - 1 && <span style={{ color: "rgba(255,255,255,0.25)", padding: "0 4px" }}>…</span>}
+                  <button
+                    onClick={() => setPage(p)}
+                    style={{
+                      minWidth: 32, height: 32, borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 700,
+                      background: p === currentPage ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${p === currentPage ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.1)"}`,
+                      color: p === currentPage ? "#39BD69" : "rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    {p}
+                  </button>
+                </span>
+              ))}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: currentPage === totalPages ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 600, cursor: currentPage === totalPages ? "default" : "pointer" }}
+            >
+              Next <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

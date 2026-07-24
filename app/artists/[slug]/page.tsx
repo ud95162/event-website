@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Heart, ChevronLeft, MapPin, Calendar, Music2, ArrowRight,
-  Star, Mail,
+  Star, Mail, Phone,
 } from "lucide-react";
 
 /* ── Brand icons ───────────────────────────────────────────────────────────── */
@@ -23,9 +23,27 @@ const BrandIcon = ({ name, size = 14 }: { name: string; size?: number }) => {
       return <svg {...p}><path d="M16.5 2h-3v13.2a2.7 2.7 0 1 1-2-2.6V9.5a5.7 5.7 0 1 0 5 5.65V8.6a6.8 6.8 0 0 0 3.5.96V6.5a3.8 3.8 0 0 1-3.5-3.7V2Z"/></svg>;
     case "youtube":
       return <svg {...p}><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 0 0 1 7.5 31 31 0 0 0 .6 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-4.5 31 31 0 0 0-.4-4.5ZM9.8 15.3V8.7l5.7 3.3-5.7 3.3Z"/></svg>;
+    case "facebook":
+      return <svg {...p}><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z"/></svg>;
+    case "x": case "twitter":
+      return <svg {...p}><path d="M18.9 2H22l-7.5 8.6L23 22h-6.6l-5.2-6.8L5.3 22H2l8-9.2L1.5 2h6.8l4.7 6.2L18.9 2Zm-1.2 18h1.8L7.4 3.9H5.5L17.7 20Z"/></svg>;
+    case "website":
+      return <svg {...p} fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z" strokeLinecap="round"/></svg>;
     default:
-      return null;
+      return <svg {...p} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>;
   }
+};
+
+// Map a free-text platform name to a brand icon key + colour.
+const socialMeta = (platform: string): { icon: string; color: string } => {
+  const p = platform.toLowerCase();
+  if (p.includes("face")) return { icon: "facebook", color: "#1877f2" };
+  if (p.includes("insta")) return { icon: "instagram", color: "#e1306c" };
+  if (p.includes("tiktok") || p.includes("tik tok")) return { icon: "tiktok", color: "#69c9d0" };
+  if (p.includes("youtube") || p.includes("you tube")) return { icon: "youtube", color: "#ff0000" };
+  if (p.includes("x") || p.includes("twitter")) return { icon: "x", color: "#ffffff" };
+  if (p.includes("web") || p.includes("site")) return { icon: "website", color: "#39BD69" };
+  return { icon: "link", color: "#9ca3af" };
 };
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
@@ -136,11 +154,38 @@ export default function ArtistDetailPage() {
     ev.lineup.includes(displayName) || ev.lineup.includes(artist.name)
   );
 
+  // Social links: prefer the new dynamic list, fall back to legacy fixed fields.
+  const socials = (artist.socialLinks && artist.socialLinks.length > 0)
+    ? artist.socialLinks.filter(s => s.url)
+    : [
+        ...(artist.instagramUrl ? [{ platform: "Instagram", url: artist.instagramUrl }] : []),
+        ...(artist.tiktokUrl ? [{ platform: "TikTok", url: artist.tiktokUrl }] : []),
+        ...(artist.youtubeUrl ? [{ platform: "YouTube", url: artist.youtubeUrl }] : []),
+      ];
+
+  const bpmValue = artist.bpm ?? artist.bpmMin ?? null;
+  const bookingEmail = artist.bookingEmail || (artist.bookingContact?.includes("@") ? artist.bookingContact : "");
+  const bookingPhone = artist.bookingPhone || (artist.bookingContact && !artist.bookingContact.includes("@") ? artist.bookingContact : "");
+
   const hasBanner    = !!(artist.bannerImage);
   const hasStreaming = !!(artist.soundcloudUrl || artist.spotifyUrl || artist.beatportUrl);
-  const hasSocial    = !!(artist.instagramUrl  || artist.tiktokUrl  || artist.youtubeUrl);
+  const hasSocial    = socials.length > 0;
   const hasGenres    = !!(artist.genres?.length || artist.subGenres?.length);
-  const hasBPM       = !!(artist.isDJ && (artist.bpmMin != null || artist.bpmMax != null));
+  const hasBPM       = !!(artist.isDJ && bpmValue != null);
+
+  // Automatic recommendations: other artists sharing genres (and level), best matches first.
+  const recommended = artists
+    .filter(a => a.id !== artist.id)
+    .map(a => {
+      const shared = (a.genres ?? []).filter(g => (artist.genres ?? []).includes(g)).length;
+      const sameLevel = a.level && artist.level && a.level === artist.level ? 1 : 0;
+      const ratingClose = 1 - Math.min(1, Math.abs((a.rating ?? 0) - (artist.rating ?? 0)) / 5);
+      return { a, score: shared * 3 + sameLevel * 2 + ratingClose };
+    })
+    .filter(x => x.score > 0.5)
+    .sort((x, y) => y.score - x.score)
+    .slice(0, 4)
+    .map(x => x.a);
 
   return (
     <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
@@ -277,17 +322,15 @@ export default function ArtistDetailPage() {
                 </div>
               )}
 
-              {/* BPM Range */}
+              {/* BPM */}
               {hasBPM && (
                 <div
                   className="rounded-2xl p-4 flex items-center gap-6"
                   style={{ background: "rgba(57,189,105,0.06)", border: "1px solid rgba(57,189,105,0.15)" }}
                 >
                   <div>
-                    <p className="text-white/30 text-[9px] tracking-[0.25em] uppercase mb-1">BPM Range</p>
-                    <p className="text-[#39BD69] font-black text-2xl">
-                      {artist.bpmMin ?? "?"} – {artist.bpmMax ?? "?"}
-                    </p>
+                    <p className="text-white/30 text-[9px] tracking-[0.25em] uppercase mb-1">BPM (Beats Per Minute)</p>
+                    <p className="text-[#39BD69] font-black text-2xl">{bpmValue}</p>
                   </div>
                   <p className="text-white/25 text-xs">Typical set tempo for DJ performances</p>
                 </div>
@@ -305,75 +348,75 @@ export default function ArtistDetailPage() {
                 </div>
               )}
 
-              {/* Social Links */}
+              {/* Social Links — dynamic */}
               {hasSocial && (
                 <div>
                   <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">SOCIAL</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {artist.instagramUrl && <StreamBtn href={artist.instagramUrl} label="Instagram" color="#e1306c" icon="instagram" />}
-                    {artist.tiktokUrl    && <StreamBtn href={artist.tiktokUrl}    label="TikTok"    color="#69c9d0" icon="tiktok" />}
-                    {artist.youtubeUrl   && <StreamBtn href={artist.youtubeUrl}   label="YouTube"   color="#ff0000" icon="youtube" />}
+                    {socials.map((s, i) => {
+                      const m = socialMeta(s.platform);
+                      return <StreamBtn key={i} href={s.url} label={s.platform || "Link"} color={m.color} icon={m.icon} />;
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Booking Contact */}
-              {artist.bookingContact && (
+              {/* Booking Contact — email + phone */}
+              {(bookingEmail || bookingPhone) && (
                 <div
                   className="rounded-2xl p-5"
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
-                  <p className="text-white/30 text-[9px] font-bold tracking-[0.3em] uppercase mb-3">BOOK THIS ARTIST</p>
-                  <div className="flex items-center gap-3">
-                    <div
-                      style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                      <Mail size={15} style={{ color: "#39BD69" }} />
-                    </div>
-                    <div>
-                      <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Booking Contact</p>
-                      <p className="text-white/85 text-sm font-semibold">{artist.bookingContact}</p>
-                    </div>
+                  <p className="text-white/30 text-[9px] font-bold tracking-[0.3em] uppercase mb-4">BOOK THIS ARTIST</p>
+                  <div className="flex flex-col gap-3">
+                    {bookingEmail && (
+                      <a href={`mailto:${bookingEmail}`} className="flex items-center gap-3 group">
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Mail size={15} style={{ color: "#39BD69" }} />
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Email</p>
+                          <p className="text-white/85 text-sm font-semibold group-hover:text-[#39BD69] transition-colors">{bookingEmail}</p>
+                        </div>
+                      </a>
+                    )}
+                    {bookingPhone && (
+                      <a href={`tel:${bookingPhone.replace(/\s/g, "")}`} className="flex items-center gap-3 group">
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Phone size={15} style={{ color: "#39BD69" }} />
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Phone</p>
+                          <p className="text-white/85 text-sm font-semibold group-hover:text-[#39BD69] transition-colors">{bookingPhone}</p>
+                        </div>
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Similar Artists */}
-              {(artist.similarArtists ?? []).length > 0 && (
+              {recommended.length > 0 && (
                 <div>
-                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">SIMILAR ARTISTS</p>
-                  <div>
-                    {(artist.similarArtists ?? []).map(name => (
-                      <button
-                        key={name}
-                        onClick={() => router.push(`/artists?q=${encodeURIComponent(name)}`)}
-                        style={{
-                          display: "inline-block",
-                          padding: "4px 12px",
-                          borderRadius: 99,
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: "0.1em",
-                          textTransform: "uppercase",
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                          color: "rgba(255,255,255,0.55)",
-                          marginRight: 6,
-                          marginBottom: 6,
-                          cursor: "pointer",
-                          transition: "color 0.15s, border-color 0.15s",
-                        }}
-                        onMouseEnter={e => {
-                          (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.3)";
-                        }}
-                        onMouseLeave={e => {
-                          (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)";
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
-                        }}
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-1">RECOMMENDED ARTISTS</p>
+                  <p className="text-white/25 text-xs mb-4">Fans of {displayName} may also like these artists</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {recommended.map(rec => (
+                      <div
+                        key={rec.id}
+                        onClick={() => router.push(`/artists/${artistSlug(rec)}`)}
+                        className="relative rounded-2xl overflow-hidden group cursor-pointer"
+                        style={{ border: "1px solid rgba(255,255,255,0.07)" }}
                       >
-                        {name}
-                      </button>
+                        <div className="relative w-full overflow-hidden" style={{ height: 140 }}>
+                          <img src={rec.image} alt={rec.stageName || rec.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #080808 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
+                        </div>
+                        <div className="px-2.5 pb-2.5 pt-1.5 text-center">
+                          <h3 className="text-white font-black text-[11px] uppercase tracking-wide truncate">{rec.stageName || rec.name}</h3>
+                          <p className="text-white/30 text-[8px] font-bold tracking-[0.2em] uppercase truncate mt-0.5">{rec.role}</p>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -489,8 +532,8 @@ export default function ArtistDetailPage() {
                     <>
                       <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
                       <div>
-                        <p className="text-white/30 text-[8px] tracking-[0.25em] uppercase mb-0.5">BPM Range</p>
-                        <p className="text-[#39BD69] text-xs font-bold">{artist.bpmMin} – {artist.bpmMax} BPM</p>
+                        <p className="text-white/30 text-[8px] tracking-[0.25em] uppercase mb-0.5">BPM</p>
+                        <p className="text-[#39BD69] text-xs font-bold">{bpmValue} BPM</p>
                       </div>
                     </>
                   )}

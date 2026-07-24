@@ -1,11 +1,13 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Play } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { slugify, eventSlug, artistSlug, organizerSlug } from "../../lib/slug";
+import { track } from "../../lib/track";
+import { statusColor } from "../../data/events";
 import Navbar from "../../components/Navbar";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
@@ -20,6 +22,11 @@ export default function EventDetailPage() {
 
   const [liked,  setLiked]  = useState(false);
   const [shared, setShared] = useState(false);
+
+  // Track a page view once per event load.
+  useEffect(() => {
+    if (event?.id) track("event", event.id, "view");
+  }, [event?.id]);
 
   if (loading && !event) {
     return (
@@ -44,6 +51,39 @@ export default function EventDetailPage() {
   const distance = userLocation
     ? haversineKm(userLocation.lat, userLocation.lon, event.lat, event.lon)
     : null;
+
+  // Google Maps: use coordinates if set, else search by venue/location text.
+  const mapQuery = (event.lat && event.lon)
+    ? `${event.lat},${event.lon}`
+    : [event.venue, event.location].filter(Boolean).join(", ");
+  const mapUrl   = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+  const mapEmbed = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`;
+
+  // Human-readable date/time, with optional end date/time.
+  const whenText = (() => {
+    let s = event.date;
+    if (event.startTime) s += ` · ${event.startTime}`;
+    if (event.endDate && event.endDate !== event.date) {
+      s += ` → ${event.endDate}`;
+      if (event.endTime) s += ` ${event.endTime}`;
+    } else if (event.endTime) {
+      s += ` – ${event.endTime}`;
+    }
+    return s;
+  })();
+
+  // Video trailer embed: detect YouTube / Vimeo, else treat as a direct video file.
+  const trailer = (event.videoTrailer || "").trim();
+  const ytMatch = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+  const vimeoMatch = trailer.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  const trailerEmbed = ytMatch ? `https://www.youtube.com/embed/${ytMatch[1]}`
+    : vimeoMatch ? `https://player.vimeo.com/video/${vimeoMatch[1]}`
+    : "";
+
+  // Co-organizers resolved to organizer records (for logo + link).
+  const coOrgs = (event.coOrganizers ?? [])
+    .map(name => organizers.find(o => o.name === name))
+    .filter(Boolean) as typeof organizers;
 
   const handleShare = () => {
     if (navigator.share) navigator.share({ title: event.title, url: window.location.href });
@@ -182,11 +222,24 @@ export default function EventDetailPage() {
                   </div>
                 </div>
 
+                {/* Status */}
+                {event.status && (
+                  <div className="mb-5 -mt-2">
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full tracking-[0.18em] uppercase"
+                      style={{ background: `${statusColor(event.status)}22`, color: statusColor(event.status), border: `1px solid ${statusColor(event.status)}66` }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor(event.status) }} />
+                      {event.status}
+                    </span>
+                  </div>
+                )}
+
                 {/* Meta rows */}
                 <div className="flex flex-col gap-2.5 mb-6">
                   {[
-                    { Icon: Calendar, label: "DATE",     value: event.date },
-                    { Icon: MapPin,   label: "VENUE",    value: event.location },
+                    { Icon: Calendar, label: "WHEN",  value: whenText },
+                    { Icon: MapPin,   label: "VENUE", value: event.location },
                   ].map(({ Icon, label, value }) => (
                     <div key={label} className="flex items-center gap-3">
                       <div
@@ -217,14 +270,17 @@ export default function EventDetailPage() {
                       {(event.tickets ?? []).filter(t => t.name || t.price).map((t, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
+                          className="rounded-xl px-3.5 py-2.5"
                           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <Ticket size={12} className="text-[#39BD69] flex-shrink-0" />
-                            <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Ticket size={12} className="text-[#39BD69] flex-shrink-0" />
+                              <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
+                            </div>
+                            <span className="text-[#39BD69] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
                           </div>
-                          <span className="text-[#39BD69] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
+                          {t.desc && <p className="text-white/40 text-[10px] leading-snug mt-1.5 pl-[22px]">{t.desc}</p>}
                         </div>
                       ))}
                     </div>
@@ -262,6 +318,77 @@ export default function EventDetailPage() {
                 <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">ABOUT THIS EVENT</p>
                 <p className="text-white/65 text-sm leading-relaxed">{event.description}</p>
               </div>
+
+              {/* Genres */}
+              {event.genres.length > 0 && (
+                <div>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">GENRES</p>
+                  <div className="flex flex-wrap gap-2">
+                    {event.genres.map(g => (
+                      <span
+                        key={g}
+                        className="text-[10px] font-bold tracking-wide uppercase px-3 py-1.5 rounded-full"
+                        style={{ background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}
+                      >
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Event info — age, capacity, setting */}
+              {(event.ageRestriction || event.capacity || event.venueType || event.externalLink) && (
+                <div>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">EVENT INFO</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {event.ageRestriction && (
+                      <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><ShieldAlert size={11} className="text-[#39BD69]" /> Age</p>
+                        <p className="text-white/85 text-sm font-semibold">{event.ageRestriction}</p>
+                      </div>
+                    )}
+                    {event.capacity != null && event.capacity > 0 && (
+                      <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><Users size={11} className="text-[#39BD69]" /> Capacity</p>
+                        <p className="text-white/85 text-sm font-semibold">{event.capacity.toLocaleString()} max</p>
+                      </div>
+                    )}
+                    {event.venueType && (
+                      <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><Building2 size={11} className="text-[#39BD69]" /> Setting</p>
+                        <p className="text-white/85 text-sm font-semibold">{event.venueType}</p>
+                      </div>
+                    )}
+                  </div>
+                  {event.externalLink && (
+                    <a
+                      href={event.externalLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => track("event", event.id, "link_click")}
+                      className="inline-flex items-center gap-2 mt-4 py-2.5 px-4 rounded-xl text-[11px] font-bold tracking-widest uppercase transition-all"
+                      style={{ background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69" }}
+                    >
+                      <ExternalLink size={13} /> Event Website / More Info
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Video trailer */}
+              {trailer && (
+                <div>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-4 flex items-center gap-1.5"><Play size={11} /> TRAILER</p>
+                  <div className="rounded-2xl overflow-hidden w-full" style={{ aspectRatio: "16 / 9", border: "1px solid rgba(255,255,255,0.1)", background: "#000" }}>
+                    {trailerEmbed ? (
+                      <iframe src={trailerEmbed} title="Event trailer" width="100%" height="100%" style={{ border: 0 }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+                    ) : (
+                      <video src={trailer} controls playsInline className="w-full h-full object-contain" />
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Participating artists */}
               <div>
@@ -305,12 +432,43 @@ export default function EventDetailPage() {
             {/* Venue + view all */}
             <div className="flex flex-col gap-4">
               <div
-                className="rounded-2xl p-5"
+                className="rounded-2xl p-5 block group transition-colors"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <p className="text-white/30 text-[9px] font-bold tracking-[0.35em] uppercase mb-2">VENUE</p>
-                <p className="text-white font-semibold text-sm leading-snug mb-1">{event.location}</p>
-                <p className="text-white/45 text-xs leading-relaxed">{event.venue}</p>
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  onMouseEnter={e => { (e.currentTarget.closest('div') as HTMLElement).style.borderColor = "rgba(57,189,105,0.35)"; }}
+                  onMouseLeave={e => { (e.currentTarget.closest('div') as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"; }}
+                >
+                  <p className="text-white/30 text-[9px] font-bold tracking-[0.35em] uppercase mb-2">VENUE</p>
+                  <p className="text-white font-semibold text-sm leading-snug mb-1">{event.location}</p>
+                  <p className="text-white/45 text-xs leading-relaxed mb-3">{event.venue}</p>
+                </a>
+
+                {/* Embedded map preview */}
+                <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(255,255,255,0.1)", height: 170 }}>
+                  <iframe
+                    title={`Map of ${event.venue || event.location}`}
+                    src={mapEmbed}
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    style={{ border: 0, filter: "grayscale(0.15) contrast(1.05)" }}
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-[#39BD69] hover:gap-2.5 transition-all"
+                >
+                  <MapPin size={11} /> Open in Google Maps
+                </a>
               </div>
 
               {/* Organized By */}
@@ -341,6 +499,28 @@ export default function EventDetailPage() {
                   </div>
                 </div>
               )}
+
+              {/* Co-organizers */}
+              {coOrgs.length > 0 && (
+                <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <p className="text-white/30 text-[9px] font-bold tracking-[0.35em] uppercase mb-3">CO-HOSTED BY</p>
+                  <div className="flex flex-col gap-2.5">
+                    {coOrgs.map(co => (
+                      <div
+                        key={co.id}
+                        onClick={() => router.push(`/organizers/${organizerSlug(co)}`)}
+                        className="flex items-center gap-3 cursor-pointer group"
+                      >
+                        <div className="flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center" style={{ width: 34, height: 34, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)" }}>
+                          {co.logo ? <img src={co.logo} alt={co.name} className="w-full h-full object-cover" /> : <span style={{ fontSize: 13, fontWeight: 800, color: "#39BD69" }}>{co.name.charAt(0)}</span>}
+                        </div>
+                        <p className="text-white/80 text-xs font-semibold truncate group-hover:text-[#39BD69] transition-colors">{co.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={() => router.push("/#events")}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs tracking-widest uppercase transition-all"

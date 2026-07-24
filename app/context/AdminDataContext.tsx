@@ -17,6 +17,8 @@ export type Organizer = {
   logo?: string;
   description?: string;
   banner?: string;
+  email?: string;
+  phone?: string;
 };
 
 type AdminDataContextType = {

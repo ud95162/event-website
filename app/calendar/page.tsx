@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2, Search } from "lucide-react";
 import Navbar from "../components/Navbar";
 import ParticleField from "../components/ParticleField";
-import { events, Event } from "../data/events";
+import { Event } from "../data/events";
+import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
 import { fromPrice } from "../lib/price";
 
@@ -336,6 +337,7 @@ const ORGANIZER_FILTERS = [
 
 export default function CalendarPage() {
   const router = useRouter();
+  const { events } = useAdminData();
   const today  = new Date();
 
   const [viewDate,       setViewDate]       = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -379,7 +381,7 @@ export default function CalendarPage() {
       if (!searchable.includes(q)) return false;
     }
     return true;
-  }), [activeGenres, activeLocations, activeArtists, activeOrganizers, searchQuery]);
+  }), [events, activeGenres, activeLocations, activeArtists, activeOrganizers, searchQuery]);
 
   /* ── Map filtered events → date keys ───────────────────────────── */
   const eventsByDate = useMemo(() => {
@@ -612,38 +614,40 @@ export default function CalendarPage() {
           <div className="grid grid-cols-7 gap-2">
             {days.map((date, i) => {
               if (!date) return <div key={`empty-${i}`} style={{ aspectRatio: "1/1" }} />;
-              if (isPast(date)) return (
+              const dayEvents = getEvents(date);
+              const past = isPast(date);
+              // Past days with no events render as a subtle dimmed cell;
+              // past days WITH events still show clickable event tiles.
+              if (past && dayEvents.length === 0) return (
                 <div key={`past-${i}`} style={{
                   aspectRatio: "1/1",
                   borderRadius: "0.75rem",
-                  border: "1px solid rgba(192,192,192,0.2)",
-                  background: "rgb(26,26,30)",
+                  border: "1px solid rgba(192,192,192,0.14)",
+                  background: "rgb(22,22,26)",
                   display: "flex",
                   alignItems: "flex-start",
                   padding: "8px",
-                  cursor: "not-allowed",
                   position: "relative",
                   overflow: "hidden",
                 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.22)" }}>
                     {date.getDate()}
                   </span>
-                  {/* Subtle diagonal lines for disabled feel */}
                   <div style={{
                     position: "absolute", inset: 0, pointerEvents: "none",
                     backgroundImage: "repeating-linear-gradient(135deg, rgba(100,100,110,0.06) 0px, rgba(100,100,110,0.06) 1px, transparent 1px, transparent 8px)",
                   }} />
                 </div>
               );
-              const dayEvents = getEvents(date);
               return (
-                <DayCard
-                  key={dayKey(date)}
-                  date={date}
-                  dayEvents={dayEvents}
-                  isToday={isToday(date)}
-                  onSelect={setSelectedEvent}
-                />
+                <div key={dayKey(date)} style={{ opacity: past ? 0.72 : 1 }}>
+                  <DayCard
+                    date={date}
+                    dayEvents={dayEvents}
+                    isToday={isToday(date)}
+                    onSelect={setSelectedEvent}
+                  />
+                </div>
               );
             })}
           </div>

@@ -329,26 +329,50 @@ const EXAMPLES: Record<string, string> = {
 /* ── Main component ───────────────────────────────────────────────────── */
 export default function StickySearchFilters() {
   const router = useRouter();
-  const { organizers } = useAdminData();
+  const { organizers, genres: dataGenres } = useAdminData();
   const [catOpen,      setCatOpen]      = useState(false);
   const [selectedCat,  setSelectedCat]  = useState<typeof CAT_OPTIONS[0] | null>(null);
   const [searchQuery,  setSearchQuery]  = useState("");
   const [resultsOpen,  setResultsOpen]  = useState(false);
+  const [dateOpen,     setDateOpen]     = useState(false);
+  const [dateVal,      setDateVal]      = useState("");   // "", "today", "this-week", "this-month", "custom:from:to"
+  const [customFrom,   setCustomFrom]   = useState("");
   const catRef     = useRef<HTMLDivElement>(null);
   const searchRef  = useRef<HTMLDivElement>(null);
+  const dateRef    = useRef<HTMLDivElement>(null);
 
-  // Close category dropdown on outside click
+  const dateLabel = (() => {
+    const p = DATE_PRESETS.find(x => x.slug === dateVal);
+    if (p) return p.label;
+    if (dateVal.startsWith("custom:")) return "Custom";
+    return "Any Date";
+  })();
+
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) setDateOpen(false);
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) { setResultsOpen(false); setSearchQuery(""); }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const applyDate = (value: string) => {
+    setDateVal(value);
+    setDateOpen(false);
+    const params = new URLSearchParams();
+    if (selectedCat) params.set("category", selectedCat.key);
+    if (searchQuery.trim()) params.set("q", searchQuery.trim());
+    if (value) params.set("date", value);
+    router.push(`/events?${params.toString()}`);
+  };
+
   // Compute matching results based on category + query
-  const matchedResults: { label: string; color: string; type: string }[] = (() => {
+  const cap = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
+
+  const matchedResults: { label: string; color: string; type: string; value?: string }[] = (() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
 
@@ -356,32 +380,45 @@ export default function StickySearchFilters() {
       .filter(o => o.name.toLowerCase().includes(q))
       .map(o => ({ label: o.name, color: "#38bdf8", type: "Organizer" }));
 
+    // Genres come straight from the stored data keys so they always match.
+    const genreMatches = dataGenres
+      .filter(g => g.toLowerCase().includes(q))
+      .map(g => ({ label: cap(g), color: "#39BD69", type: "Genre", value: g }));
+
     if (selectedCat?.key === "organizers") return orgMatches;
+    if (selectedCat?.key === "genres") return genreMatches;
 
     if (selectedCat?.key === "artists" || !selectedCat) {
       const artists = ARTISTS
         .filter(a => a.toLowerCase().includes(q))
         .map(a => ({ label: a, color: "#e879f9", type: "Artist" }));
       if (selectedCat?.key === "artists") return artists;
-      const genres = GENRES
-        .filter(g => g.label.toLowerCase().includes(q))
-        .map(g => ({ label: g.label, color: g.color, type: "Genre" }));
-      return [...artists, ...genres, ...orgMatches];
-    }
-    if (selectedCat?.key === "genres") {
-      return GENRES
-        .filter(g => g.label.toLowerCase().includes(q))
-        .map(g => ({ label: g.label, color: g.color, type: "Genre" }));
+      return [...artists, ...genreMatches, ...orgMatches];
     }
     return [];
   })();
 
+  // Route a picked result to the right query param.
+  const pickResult = (r: { label: string; type: string; value?: string }) => {
+    if (r.type === "Genre" && r.value) {
+      const params = new URLSearchParams();
+      params.set("genre", r.value);
+      if (dateVal) params.set("date", dateVal);
+      router.push(`/events?${params.toString()}`);
+      setResultsOpen(false);
+      setSearchQuery(r.label);
+      return;
+    }
+    handleSearch(r.label);
+  };
+
   const handleSearch = (override?: string) => {
     const q = override ?? searchQuery.trim();
-    if (!q && !selectedCat) return;
+    if (!q && !selectedCat && !dateVal) return;
     const params = new URLSearchParams();
     if (selectedCat) params.set("category", selectedCat.key);
     if (q) params.set("q", q);
+    if (dateVal) params.set("date", dateVal);
     router.push(`/events?${params.toString()}`);
     setResultsOpen(false);
     setSearchQuery(override ?? searchQuery);
@@ -489,7 +526,7 @@ export default function StickySearchFilters() {
                 {matchedResults.map((r, i) => (
                   <button
                     key={i}
-                    onClick={() => handleSearch(r.label)}
+                    onClick={() => pickResult(r)}
                     className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/06 transition-colors text-left group"
                   >
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.color }} />
@@ -501,6 +538,64 @@ export default function StickySearchFilters() {
                   </button>
                 ))}
                 <div className="h-2" />
+              </div>
+            )}
+          </div>
+
+          {/* Date filter */}
+          <div ref={dateRef} className="relative flex-shrink-0">
+            <button
+              onClick={() => setDateOpen(o => !o)}
+              className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-l border-white/10 whitespace-nowrap transition-colors"
+              style={{ color: dateVal ? "#60a5fa" : "rgba(255,255,255,0.55)" }}
+            >
+              <Calendar size={13} />
+              <span className="hidden sm:inline">{dateLabel}</span>
+              {dateVal && (
+                <button
+                  onClick={e => { e.stopPropagation(); setDateVal(""); applyDate(""); }}
+                  className="text-white/30 hover:text-white/70 transition-colors"
+                >
+                  <X size={10} />
+                </button>
+              )}
+              <ChevronDown size={12} style={{ transform: dateOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+            </button>
+
+            {dateOpen && (
+              <div
+                className="absolute top-full mt-2 right-0 rounded-2xl border border-white/10 overflow-hidden"
+                style={{ width: 260, background: "rgba(10,10,20,0.98)", backdropFilter: "blur(20px)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", zIndex: 400 }}
+              >
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase">Quick Select</p>
+                </div>
+                {DATE_PRESETS.map(({ label, slug }) => {
+                  const active = dateVal === slug;
+                  return (
+                    <button
+                      key={slug}
+                      onClick={() => applyDate(active ? "" : slug)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/05 transition-colors text-left"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Calendar size={13} style={{ color: "#60a5fa" }} />
+                        <span className="text-sm font-medium" style={{ color: active ? "#60a5fa" : "rgba(255,255,255,0.8)" }}>{label}</span>
+                      </span>
+                      {active && <Check size={13} style={{ color: "#60a5fa" }} />}
+                    </button>
+                  );
+                })}
+                <div className="px-4 py-3 border-t border-white/08">
+                  <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase mb-2">Pick a Date</p>
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={e => { setCustomFrom(e.target.value); if (e.target.value) applyDate(`custom:${e.target.value}:${e.target.value}`); }}
+                    className="w-full bg-white/06 border border-white/10 rounded-lg px-2.5 py-2 text-white text-xs outline-none focus:border-[#60a5fa]/50"
+                    style={{ colorScheme: "dark" }}
+                  />
+                </div>
               </div>
             )}
           </div>

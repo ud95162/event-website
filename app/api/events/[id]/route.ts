@@ -14,12 +14,16 @@ export async function PUT(
   await pool.query(
     `UPDATE events SET
        tag=?, title=?, date=?, location=?, price=?, image=?, badge=?, lat=?, lon=?,
-       description=?, venue=?, organizer=?, lineup=?, genres=?, tickets=?
+       description=?, venue=?, organizer=?, lineup=?, genres=?, tickets=?, status=?,
+       start_time=?, end_date=?, end_time=?, age_restriction=?, capacity=?, venue_type=?, co_organizers=?, video_trailer=?, external_link=?
      WHERE id=?`,
     [
       e.tag, e.title, e.date, e.location, e.price, e.image, e.badge ?? null,
       e.lat, e.lon, e.description, e.venue, e.organizer,
-      JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), JSON.stringify(e.tickets ?? []), id,
+      JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), JSON.stringify(e.tickets ?? []), e.status ?? null,
+      e.startTime ?? null, e.endDate ?? null, e.endTime ?? null, e.ageRestriction ?? null,
+      e.capacity ?? null, e.venueType ?? null, JSON.stringify(e.coOrganizers ?? []),
+      e.videoTrailer ?? null, e.externalLink ?? null, id,
     ]
   );
   const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [id]);

@@ -5,16 +5,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useAdminData, Artist } from "../../../context/AdminDataContext";
-import { ChevronLeft, Check } from "lucide-react";
+import { ARTIST_GENRES, ARTIST_LEVELS } from "../../../data/artists";
+import { ChevronLeft, Check, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
+import LineupSelector from "../../components/LineupSelector";
+
+const SOCIAL_PLATFORMS = ["Facebook", "Instagram", "TikTok", "YouTube", "X (Twitter)", "Website"];
 
 const EMPTY: Omit<Artist, "id"> = {
   name: "", stageName: "", realName: "", role: "", image: "", bannerImage: "", bio: "",
-  genres: [], subGenres: [], isDJ: false, bpmMin: null, bpmMax: null,
+  genres: [], subGenres: [], isDJ: false, bpm: null,
   city: "", touringRegion: "",
   soundcloudUrl: "", spotifyUrl: "", beatportUrl: "",
-  instagramUrl: "", tiktokUrl: "", youtubeUrl: "",
-  bookingContact: "", similarArtists: [], rating: 0,
+  socialLinks: [], bookingEmail: "", bookingPhone: "", level: "", rating: 0,
 };
 
 const inputStyle: React.CSSProperties = {
@@ -40,7 +43,7 @@ function ArtistFormInner() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { artists, genres: GENRES, addArtist, updateArtist } = useAdminData();
+  const { artists, addArtist, updateArtist } = useAdminData();
 
   const editId = searchParams.get("id") ? Number(searchParams.get("id")) : null;
   const editing = editId ? artists.find(a => a.id === editId) ?? null : null;
@@ -64,18 +67,23 @@ function ArtistFormInner() {
         genres: editing.genres ?? [],
         subGenres: editing.subGenres ?? [],
         isDJ: editing.isDJ ?? false,
-        bpmMin: editing.bpmMin ?? null,
-        bpmMax: editing.bpmMax ?? null,
+        bpm: editing.bpm ?? (editing.bpmMin ?? null),
         city: editing.city ?? "",
         touringRegion: editing.touringRegion ?? "",
         soundcloudUrl: editing.soundcloudUrl ?? "",
         spotifyUrl: editing.spotifyUrl ?? "",
         beatportUrl: editing.beatportUrl ?? "",
-        instagramUrl: editing.instagramUrl ?? "",
-        tiktokUrl: editing.tiktokUrl ?? "",
-        youtubeUrl: editing.youtubeUrl ?? "",
-        bookingContact: editing.bookingContact ?? "",
-        similarArtists: editing.similarArtists ?? [],
+        // Migrate legacy fixed social fields into the dynamic list if needed
+        socialLinks: (editing.socialLinks && editing.socialLinks.length > 0)
+          ? editing.socialLinks
+          : [
+              ...(editing.instagramUrl ? [{ platform: "Instagram", url: editing.instagramUrl }] : []),
+              ...(editing.tiktokUrl ? [{ platform: "TikTok", url: editing.tiktokUrl }] : []),
+              ...(editing.youtubeUrl ? [{ platform: "YouTube", url: editing.youtubeUrl }] : []),
+            ],
+        bookingEmail: editing.bookingEmail ?? "",
+        bookingPhone: editing.bookingPhone ?? "",
+        level: editing.level ?? "",
         rating: editing.rating ?? 0,
       });
     }
@@ -182,24 +190,12 @@ function ArtistFormInner() {
             <p style={sectionHeadStyle}>Music</p>
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Genres</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {GENRES.map(g => {
-                  const active = (form.genres ?? []).includes(g);
-                  return (
-                    <button
-                      key={g} type="button"
-                      onClick={() => set("genres", active ? (form.genres ?? []).filter(x => x !== g) : [...(form.genres ?? []), g])}
-                      style={{
-                        padding: "6px 14px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                        cursor: "pointer", textTransform: "capitalize", transition: "all 0.15s",
-                        background: active ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${active ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.1)"}`,
-                        color: active ? "#39BD69" : "rgba(255,255,255,0.4)",
-                      }}
-                    >{g}</button>
-                  );
-                })}
-              </div>
+              <LineupSelector
+                value={form.genres ?? []}
+                onChange={v => set("genres", v)}
+                allArtists={ARTIST_GENRES}
+                placeholder="Search and select genres…"
+              />
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Sub-Genres (comma-separated)</label>
@@ -207,18 +203,12 @@ function ArtistFormInner() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <input type="checkbox" id="isDJ" checked={form.isDJ ?? false} onChange={e => set("isDJ", e.target.checked)} style={{ accentColor: "#39BD69", width: 16, height: 16, cursor: "pointer" }} />
-              <label htmlFor="isDJ" style={{ ...labelStyle, marginBottom: 0, cursor: "pointer", color: "rgba(255,255,255,0.6)" }}>This artist is a DJ (enables BPM range)</label>
+              <label htmlFor="isDJ" style={{ ...labelStyle, marginBottom: 0, cursor: "pointer", color: "rgba(255,255,255,0.6)" }}>This artist is a DJ</label>
             </div>
             {form.isDJ && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>BPM Min</label>
-                  <input type="number" style={inputStyle} value={form.bpmMin ?? ""} onChange={e => set("bpmMin", e.target.value ? Number(e.target.value) : null)} placeholder="126" />
-                </div>
-                <div>
-                  <label style={labelStyle}>BPM Max</label>
-                  <input type="number" style={inputStyle} value={form.bpmMax ?? ""} onChange={e => set("bpmMax", e.target.value ? Number(e.target.value) : null)} placeholder="134" />
-                </div>
+              <div style={{ maxWidth: 240 }}>
+                <label style={labelStyle}>BPM (Beats Per Minute)</label>
+                <input type="number" style={inputStyle} value={form.bpm ?? ""} onChange={e => set("bpm", e.target.value ? Number(e.target.value) : null)} placeholder="128" />
               </div>
             )}
           </section>
@@ -242,45 +232,92 @@ function ArtistFormInner() {
             </div>
           </section>
 
-          {/* SOCIAL */}
+          {/* SOCIAL — dynamic, any platform */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
             <p style={sectionHeadStyle}>Social Links</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Instagram URL</label>
-                <input style={inputStyle} value={form.instagramUrl ?? ""} onChange={e => set("instagramUrl", e.target.value)} placeholder="https://instagram.com/…" />
-              </div>
-              <div>
-                <label style={labelStyle}>TikTok URL</label>
-                <input style={inputStyle} value={form.tiktokUrl ?? ""} onChange={e => set("tiktokUrl", e.target.value)} placeholder="https://tiktok.com/@…" />
-              </div>
-              <div>
-                <label style={labelStyle}>YouTube URL</label>
-                <input style={inputStyle} value={form.youtubeUrl ?? ""} onChange={e => set("youtubeUrl", e.target.value)} placeholder="https://youtube.com/@…" />
-              </div>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 14 }}>
+              Add a link for any platform (Facebook, Instagram, TikTok, YouTube, X, website…).
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {(form.socialLinks ?? []).map((s, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "180px 1fr 40px", gap: 10, alignItems: "center" }}>
+                  <input
+                    style={inputStyle}
+                    list="social-platforms"
+                    value={s.platform}
+                    onChange={e => set("socialLinks", (form.socialLinks ?? []).map((x, xi) => xi === i ? { ...x, platform: e.target.value } : x))}
+                    placeholder="Platform (e.g. Facebook)"
+                  />
+                  <input
+                    style={inputStyle}
+                    value={s.url}
+                    onChange={e => set("socialLinks", (form.socialLinks ?? []).map((x, xi) => xi === i ? { ...x, url: e.target.value } : x))}
+                    placeholder="https://…"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => set("socialLinks", (form.socialLinks ?? []).filter((_, xi) => xi !== i))}
+                    style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              {(form.socialLinks ?? []).length === 0 && (
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.25)" }}>No social links added yet.</p>
+              )}
             </div>
+            <datalist id="social-platforms">
+              {SOCIAL_PLATFORMS.map(p => <option key={p} value={p} />)}
+            </datalist>
+            <button
+              type="button"
+              onClick={() => set("socialLinks", [...(form.socialLinks ?? []), { platform: "", url: "" }])}
+              style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+            >
+              <Plus size={14} /> Add Social Link
+            </button>
           </section>
 
           {/* BUSINESS */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
             <p style={sectionHeadStyle}>Business</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, marginBottom: 16 }}>
               <div>
-                <label style={labelStyle}>Booking Contact (email / phone)</label>
-                <input style={inputStyle} value={form.bookingContact ?? ""} onChange={e => set("bookingContact", e.target.value)} placeholder="booking@artist.com" />
+                <label style={labelStyle}>Booking Email</label>
+                <input type="email" style={inputStyle} value={form.bookingEmail ?? ""} onChange={e => set("bookingEmail", e.target.value)} placeholder="booking@artist.com" />
               </div>
               <div>
-                <label style={labelStyle}>Rating (0 – 5)</label>
-                <input type="number" min={0} max={5} step={0.1} style={inputStyle} value={form.rating ?? 0} onChange={e => set("rating", Number(e.target.value))} />
+                <label style={labelStyle}>Booking Phone</label>
+                <input type="tel" style={inputStyle} value={form.bookingPhone ?? ""} onChange={e => set("bookingPhone", e.target.value)} placeholder="+94 77 123 4567" />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Rating</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <input type="range" min={0} max={5} step={0.5} value={form.rating ?? 0} onChange={e => set("rating", Number(e.target.value))} style={{ flex: 1, accentColor: "#39BD69" }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#f59e0b", minWidth: 30, textAlign: "right" }}>{(form.rating ?? 0).toFixed(1)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>
+                <span>0 = Worst</span>
+                <span>5 = Best</span>
               </div>
             </div>
           </section>
 
-          {/* DISCOVERY */}
+          {/* DISCOVERY / LEVEL */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
             <p style={sectionHeadStyle}>Discovery</p>
-            <label style={labelStyle}>Similar Artists (comma-separated names)</label>
-            <input style={inputStyle} value={(form.similarArtists ?? []).join(", ")} onChange={e => set("similarArtists", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} placeholder="Martin Garrix, Afrojack, Hardwell" />
+            <div style={{ maxWidth: 280 }}>
+              <label style={labelStyle}>Artist Level</label>
+              <select style={{ ...inputStyle, cursor: "pointer" }} value={form.level ?? ""} onChange={e => set("level", e.target.value)}>
+                <option value="">Not set</option>
+                {ARTIST_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 10 }}>
+              Recommended artists are generated automatically on the public profile, based on shared genres and level — no manual list needed.
+            </p>
           </section>
 
         </div>

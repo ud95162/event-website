@@ -46,17 +46,39 @@ async function createAndSeed(): Promise<void> {
       organizer VARCHAR(255),
       lineup JSON,
       genres JSON,
-      tickets JSON
+      tickets JSON,
+      status VARCHAR(50),
+      start_time VARCHAR(20),
+      end_date VARCHAR(255),
+      end_time VARCHAR(20),
+      age_restriction VARCHAR(50),
+      capacity INT,
+      venue_type VARCHAR(20),
+      co_organizers JSON,
+      video_trailer MEDIUMTEXT,
+      external_link TEXT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
-  // Migration: add tickets column to pre-existing events tables.
-  const [ticketCol] = await pool.query<any[]>(
-    "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'events' AND COLUMN_NAME = 'tickets'"
-  );
-  if (ticketCol[0].c === 0) {
-    await pool.query("ALTER TABLE events ADD COLUMN tickets JSON");
-  }
+  // Migration: add columns to pre-existing events tables (idempotent).
+  const addColumn = async (name: string, ddl: string) => {
+    const [rows] = await pool.query<any[]>(
+      "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'events' AND COLUMN_NAME = ?",
+      [name]
+    );
+    if (rows[0].c === 0) await pool.query(`ALTER TABLE events ADD COLUMN ${ddl}`);
+  };
+  await addColumn("tickets", "tickets JSON");
+  await addColumn("status", "status VARCHAR(50)");
+  await addColumn("start_time", "start_time VARCHAR(20)");
+  await addColumn("end_date", "end_date VARCHAR(255)");
+  await addColumn("end_time", "end_time VARCHAR(20)");
+  await addColumn("age_restriction", "age_restriction VARCHAR(50)");
+  await addColumn("capacity", "capacity INT");
+  await addColumn("venue_type", "venue_type VARCHAR(20)");
+  await addColumn("co_organizers", "co_organizers JSON");
+  await addColumn("video_trailer", "video_trailer MEDIUMTEXT");
+  await addColumn("external_link", "external_link TEXT");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS artists (
@@ -83,9 +105,28 @@ async function createAndSeed(): Promise<void> {
       youtube_url VARCHAR(512),
       booking_contact VARCHAR(255),
       similar_artists JSON,
-      rating FLOAT
+      rating FLOAT,
+      bpm INT NULL,
+      social_links JSON,
+      booking_email VARCHAR(255),
+      booking_phone VARCHAR(255),
+      level VARCHAR(50)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  // Migration: add new artist columns to pre-existing tables (idempotent).
+  const addArtistCol = async (name: string, ddl: string) => {
+    const [rows] = await pool.query<any[]>(
+      "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'artists' AND COLUMN_NAME = ?",
+      [name]
+    );
+    if (rows[0].c === 0) await pool.query(`ALTER TABLE artists ADD COLUMN ${ddl}`);
+  };
+  await addArtistCol("bpm", "bpm INT NULL");
+  await addArtistCol("social_links", "social_links JSON");
+  await addArtistCol("booking_email", "booking_email VARCHAR(255)");
+  await addArtistCol("booking_phone", "booking_phone VARCHAR(255)");
+  await addArtistCol("level", "level VARCHAR(50)");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS organizers (
@@ -93,7 +134,9 @@ async function createAndSeed(): Promise<void> {
       name VARCHAR(255) UNIQUE,
       logo MEDIUMTEXT,
       description TEXT,
-      banner MEDIUMTEXT
+      banner MEDIUMTEXT,
+      email VARCHAR(255),
+      phone VARCHAR(50)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -104,6 +147,8 @@ async function createAndSeed(): Promise<void> {
     ["logo", "MEDIUMTEXT"],
     ["description", "TEXT"],
     ["banner", "MEDIUMTEXT"],
+    ["email", "VARCHAR(255)"],
+    ["phone", "VARCHAR(50)"],
   ] as const) {
     try {
       const [cols] = await pool.query<any[]>(
@@ -137,6 +182,18 @@ async function createAndSeed(): Promise<void> {
     CREATE TABLE IF NOT EXISTS banners (
       id INT PRIMARY KEY AUTO_INCREMENT,
       url MEDIUMTEXT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  // Analytics counters: page views + link clicks per event/organizer.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS analytics (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      entity_type VARCHAR(20),   -- 'event' | 'organizer'
+      entity_id INT,
+      metric VARCHAR(20),        -- 'view' | 'link_click'
+      count INT DEFAULT 0,
+      UNIQUE KEY uniq_metric (entity_type, entity_id, metric)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 

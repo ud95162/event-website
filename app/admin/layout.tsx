@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut } from "lucide-react";
+import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, LayoutDashboard } from "lucide-react";
 
 const NAV_ITEMS = [
+  { href: "/admin",            label: "Dashboard",  icon: LayoutDashboard, roles: ["admin"] },
   { href: "/admin/events",     label: "Events",     icon: CalendarDays,    roles: ["admin", "organizer"] },
   { href: "/admin/artists",    label: "Artists",    icon: Users,           roles: ["admin"] },
   { href: "/admin/organizers", label: "Organizers", icon: Building2,       roles: ["admin"] },

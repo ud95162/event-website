@@ -9,13 +9,13 @@ export async function PUT(
   await ensureSchema();
   const { id } = await params;
   const pool = getPool();
-  const { name, logo, description, banner } = await req.json();
+  const { name, logo, description, banner, email, phone } = await req.json();
   await pool.query(
-    "UPDATE organizers SET name = ?, logo = ?, description = ?, banner = ? WHERE id = ?",
-    [name, logo ?? null, description ?? null, banner ?? null, id]
+    "UPDATE organizers SET name = ?, logo = ?, description = ?, banner = ?, email = ?, phone = ? WHERE id = ?",
+    [name, logo ?? null, description ?? null, banner ?? null, email ?? null, phone ?? null, id]
   );
   const [rows] = await pool.query<any[]>(
-    "SELECT id, name, logo, description, banner FROM organizers WHERE id = ?",
+    "SELECT id, name, logo, description, banner, email, phone FROM organizers WHERE id = ?",
     [id]
   );
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });

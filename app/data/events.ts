@@ -1,6 +1,7 @@
 export type TicketType = {
   name:  string;   // e.g. "General", "VIP", "Early Bird"
   price: string;   // e.g. "LKR 3,000"
+  desc?: string;   // short description of what's included (e.g. "VIP lounge access")
 };
 
 export type Event = {
@@ -20,7 +21,27 @@ export type Event = {
   genres:      string[];   // e.g. ["electronic", "sinhala"]
   organizer:   string;
   tickets?:    TicketType[];
+  status?:     string;     // e.g. "Confirmed", "Cancelled", "Postponed"
+  startTime?:      string;   // "19:00"
+  endDate?:        string;   // readable, e.g. "22 June 2026" — multi-day
+  endTime?:        string;   // "23:00"
+  ageRestriction?: string;   // "21+", "All Ages"
+  capacity?:       number | null;
+  venueType?:      string;   // "Indoor" | "Outdoor"
+  coOrganizers?:   string[]; // additional organizer names
+  videoTrailer?:   string;   // promo video URL (portrait preferred)
+  externalLink?:   string;   // external / more-info URL
 };
+
+// Operational event statuses (extendable). Colour drives the public badge.
+export const EVENT_STATUSES: { value: string; color: string }[] = [
+  { value: "Confirmed", color: "#39BD69" },
+  { value: "Cancelled", color: "#ef4444" },
+  { value: "Postponed", color: "#f59e0b" },
+];
+
+export const statusColor = (status?: string) =>
+  EVENT_STATUSES.find(s => s.value.toLowerCase() === (status || "").toLowerCase())?.color ?? "#9ca3af";
 
 export const events: Event[] = [
   {

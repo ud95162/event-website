@@ -3,7 +3,7 @@
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { Event } from "../data/events";
+import { Event, statusColor } from "../data/events";
 import { useAdminData } from "../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { eventSlug, organizerSlug } from "../lib/slug";
@@ -109,6 +109,15 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
         <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, marginBottom: 6, letterSpacing: "0.04em" }}>
           {event.title}
         </h3>
+        {event.genres.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+            {event.genres.slice(0, 3).map(g => (
+              <span key={g} style={{ fontSize: 7, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 999, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}>
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Calendar size={8} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
@@ -161,6 +170,36 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                   </div>
                 )}
               </div>
+
+              {/* Status — inline, right after the organizer */}
+              {event.status && (
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto",
+                  background: `${statusColor(event.status)}22`, color: statusColor(event.status),
+                  border: `1px solid ${statusColor(event.status)}66`,
+                  fontSize: 8, fontWeight: 800, letterSpacing: "0.12em",
+                  textTransform: "uppercase", padding: "3px 7px", borderRadius: 999,
+                }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusColor(event.status) }} />
+                  {event.status}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Status (when no organizer) */}
+          {event.status && !organizer && (
+            <div style={{ marginTop: 7 }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                background: `${statusColor(event.status)}22`, color: statusColor(event.status),
+                border: `1px solid ${statusColor(event.status)}66`,
+                fontSize: 8, fontWeight: 800, letterSpacing: "0.12em",
+                textTransform: "uppercase", padding: "3px 7px", borderRadius: 999,
+              }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusColor(event.status) }} />
+                {event.status}
+              </span>
             </div>
           )}
         </div>
@@ -298,17 +337,49 @@ function EventsContent() {
 
   const isFiltered = !!genreParam || !!dateParam || !!queryParam;
 
+  /* ── Date matcher ─────────────────────────────────────────────── */
+  const matchesDate = (evDateStr: string): boolean => {
+    if (!dateParam) return true;
+    const d = new Date(evDateStr);
+    if (isNaN(d.getTime())) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    if (dateParam === "today") return dOnly.getTime() === today.getTime();
+    if (dateParam === "this-week") {
+      const end = new Date(today); end.setDate(today.getDate() + 7);
+      return dOnly >= today && dOnly < end;
+    }
+    if (dateParam === "this-month") {
+      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+    }
+    if (dateParam.startsWith("custom:")) {
+      const [, from, to] = dateParam.split(":");
+      const f = from ? new Date(from) : null;
+      const t = to ? new Date(to) : f;
+      if (f && dOnly < new Date(f.getFullYear(), f.getMonth(), f.getDate())) return false;
+      if (t && dOnly > new Date(t.getFullYear(), t.getMonth(), t.getDate())) return false;
+      return true;
+    }
+    return true;
+  };
+
   /* ── Filtered view ───────────────────────────────────────────── */
   if (isFiltered) {
     const filtered = events.filter(ev => {
-      if (genreParam && !ev.genres.includes(genreParam)) return false;
+      if (genreParam && !ev.genres.some(g => g.toLowerCase() === genreParam.toLowerCase())) return false;
+      if (!matchesDate(ev.date)) return false;
       if (queryParam) {
         const q = queryParam.toLowerCase();
-        const searchable = [ev.title, ev.tag, ev.location, ev.organizer, ...ev.genres, ...ev.lineup].join(" ").toLowerCase();
-        if (!searchable.includes(q)) return false;
-        if (categoryParam === "artists"    && !ev.lineup.some(a => a.toLowerCase().includes(q))) return false;
-        if (categoryParam === "genres"     && !ev.genres.some(g => g.toLowerCase().includes(q))) return false;
-        if (categoryParam === "organizers" && !(ev.organizer || "").toLowerCase().includes(q)) return false;
+        // For the genres category, match against genres only (skip the general searchable check).
+        if (categoryParam === "genres") {
+          if (!ev.genres.some(g => g.toLowerCase().includes(q) || q.includes(g.toLowerCase()))) return false;
+        } else {
+          const searchable = [ev.title, ev.tag, ev.location, ev.organizer, ...ev.genres, ...ev.lineup].join(" ").toLowerCase();
+          if (!searchable.includes(q)) return false;
+          if (categoryParam === "artists"    && !ev.lineup.some(a => a.toLowerCase().includes(q))) return false;
+          if (categoryParam === "organizers" && !(ev.organizer || "").toLowerCase().includes(q)) return false;
+        }
       }
       return true;
     });

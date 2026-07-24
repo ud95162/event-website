@@ -348,7 +348,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
                 <div
                   className="absolute inset-0 flex justify-center items-center pointer-events-none"
                   style={{
-                    clipPath: startFill ? "inset(0 0 0 0)" : "inset(100% 0 0 0)",
+                    clipPath: startFill ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
                     transition: "clip-path 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 >

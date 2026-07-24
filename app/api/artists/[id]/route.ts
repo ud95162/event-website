@@ -16,7 +16,8 @@ export async function PUT(
        name=?, stage_name=?, real_name=?, role=?, image=?, banner_image=?, bio=?,
        genres=?, sub_genres=?, bpm_min=?, bpm_max=?, is_dj=?, city=?, touring_region=?,
        soundcloud_url=?, spotify_url=?, beatport_url=?, instagram_url=?, tiktok_url=?,
-       youtube_url=?, booking_contact=?, similar_artists=?, rating=?
+       youtube_url=?, booking_contact=?, similar_artists=?, rating=?,
+       bpm=?, social_links=?, booking_email=?, booking_phone=?, level=?
      WHERE id=?`,
     [
       a.name, a.stageName ?? null, a.realName ?? null, a.role,
@@ -27,7 +28,9 @@ export async function PUT(
       a.soundcloudUrl ?? null, a.spotifyUrl ?? null, a.beatportUrl ?? null,
       a.instagramUrl ?? null, a.tiktokUrl ?? null, a.youtubeUrl ?? null,
       a.bookingContact ?? null, JSON.stringify(a.similarArtists ?? []),
-      a.rating ?? null, id,
+      a.rating ?? null,
+      a.bpm ?? null, JSON.stringify(a.socialLinks ?? []),
+      a.bookingEmail ?? null, a.bookingPhone ?? null, a.level ?? null, id,
     ]
   );
   const [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE id = ?", [id]);

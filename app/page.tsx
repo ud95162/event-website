@@ -13,6 +13,7 @@ import GradientOrbs from "./components/GradientOrbs";
 // import FloatingMusicians from "./components/FloatingMusicians";
 import Preloader from "./components/Preloader";
 import StickySearchFilters from "./components/StickySearchFilters";
+import ThisWeekPopup from "./components/ThisWeekPopup";
 import StatsCounter from "./components/StatsCounter";
 import BrandMarquee from "./components/BrandMarquee";
 import { hasPreloaderShown, markPreloaderShown } from "./preloaderState";
@@ -43,6 +44,8 @@ export default function Home() {
 
   return (
     <main className="relative" style={{ width: "100%", height: "100dvh", overflow: "hidden" }}>
+      {/* This week's events pop-up — only after the preloader has finished */}
+      {preloaderPhase === "gone" && <ThisWeekPopup />}
       {/* Preloader — only mounted once we know it's a first-time visit */}
       {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />

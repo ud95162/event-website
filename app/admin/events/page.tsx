@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminData, Event } from "../../context/AdminDataContext";
-import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown, List, LayoutGrid, MapPin, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown, List, LayoutGrid, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const selectStyle: React.CSSProperties = {
   padding: "9px 12px", borderRadius: 8,
@@ -20,8 +22,12 @@ export default function EventsAdminPage() {
 
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");        // exact day: yyyy-mm-dd
+  const [monthFilter, setMonthFilter] = useState("");      // specific month: yyyy-mm
+  const [period, setPeriod] = useState<"" | "today" | "week" | "month">(""); // relative
   const [dateSort, setDateSort] = useState<"asc" | "desc" | null>(null);
+  const [perPage, setPerPage] = useState(10);
+  const [page, setPage] = useState(1);
 
   const cycleDateSort = () =>
     setDateSort(s => (s === null ? "asc" : s === "asc" ? "desc" : null));
@@ -37,11 +43,30 @@ export default function EventsAdminPage() {
     return isNaN(t.getTime()) ? "" : t.toISOString().slice(0, 10);
   };
 
+  const matchesPeriod = (evDate: string): boolean => {
+    if (!period) return true;
+    const d = new Date(evDate);
+    if (isNaN(d.getTime())) return false;
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (period === "today") return dOnly.getTime() === now.getTime();
+    if (period === "week") {
+      const end = new Date(now); end.setDate(now.getDate() + 7);
+      return dOnly >= now && dOnly < end;
+    }
+    if (period === "month") {
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }
+    return true;
+  };
+
   const filtered = useMemo(() => {
     const list = events.filter(ev => {
       if (search && !ev.title.toLowerCase().includes(search.toLowerCase())) return false;
       if (locationFilter && ev.location !== locationFilter) return false;
       if (dateFilter && toISO(ev.date) !== dateFilter) return false;
+      if (monthFilter && toISO(ev.date).slice(0, 7) !== monthFilter) return false;
+      if (!matchesPeriod(ev.date)) return false;
       return true;
     });
     if (dateSort) {
@@ -52,10 +77,16 @@ export default function EventsAdminPage() {
       });
     }
     return list;
-  }, [events, search, locationFilter, dateFilter, dateSort]);
+  }, [events, search, locationFilter, dateFilter, monthFilter, period, dateSort]);
 
-  const hasFilters = !!search || !!locationFilter || !!dateFilter;
-  const clearFilters = () => { setSearch(""); setLocationFilter(""); setDateFilter(""); };
+  const hasFilters = !!search || !!locationFilter || !!dateFilter || !!monthFilter || !!period;
+  const clearFilters = () => { setSearch(""); setLocationFilter(""); setDateFilter(""); setMonthFilter(""); setPeriod(""); };
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  useEffect(() => { setPage(1); }, [search, locationFilter, dateFilter, monthFilter, period, dateSort, perPage]);
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
     <div style={{ padding: 32 }}>
@@ -102,9 +133,22 @@ export default function EventsAdminPage() {
             <X size={12} /> Clear
           </button>
         )}
-        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>
-          {filtered.length} of {events.length}
-        </span>
+        {filtered.length !== events.length && (
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>
+            {filtered.length} match{filtered.length !== 1 ? "es" : ""}
+          </span>
+        )}
+        {/* Per-page selector */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Show</span>
+          <select
+            value={perPage}
+            onChange={e => setPerPage(Number(e.target.value))}
+            style={{ ...selectStyle, minWidth: 0, padding: "8px 10px" }}
+          >
+            {PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
         {/* View toggle */}
         <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
           {([["list", List], ["grid", LayoutGrid]] as const).map(([mode, Icon]) => (
@@ -126,6 +170,47 @@ export default function EventsAdminPage() {
         </div>
       </div>
 
+      {/* Internal management: filter by period */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap", padding: "12px 14px", background: "rgba(57,189,105,0.04)", border: "1px solid rgba(57,189,105,0.15)", borderRadius: 10 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(57,189,105,0.9)" }}>Manage by period</span>
+        {/* Relative period segmented control */}
+        <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          {([["", "All"], ["today", "Today"], ["week", "This Week"], ["month", "This Month"]] as const).map(([val, lbl]) => (
+            <button
+              key={val || "all"}
+              onClick={() => { setPeriod(val); if (val) { setMonthFilter(""); setDateFilter(""); } }}
+              style={{
+                padding: "6px 12px", borderRadius: 6, cursor: "pointer", border: "none",
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.03em",
+                background: period === val ? "rgba(57,189,105,0.18)" : "transparent",
+                color: period === val ? "#39BD69" : "rgba(255,255,255,0.45)",
+                transition: "all 0.15s",
+              }}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
+        {/* Specific month */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Month:</span>
+          <input
+            type="month"
+            value={monthFilter}
+            onChange={e => { setMonthFilter(e.target.value); if (e.target.value) { setPeriod(""); setDateFilter(""); } }}
+            style={{ padding: "7px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 12, outline: "none", colorScheme: "dark", fontFamily: "inherit" }}
+          />
+        </div>
+        {(period || monthFilter) && (
+          <button
+            onClick={() => { setPeriod(""); setMonthFilter(""); }}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+          >
+            <X size={11} /> Reset period
+          </button>
+        )}
+      </div>
+
       {/* Grid view */}
       {view === "grid" && (
         filtered.length === 0 ? (
@@ -138,7 +223,7 @@ export default function EventsAdminPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 16 }}>
-            {filtered.map((ev: Event) => (
+            {paged.map((ev: Event) => (
               <div key={ev.id} style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <div style={{ position: "relative", height: 130 }}>
                   <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -211,10 +296,10 @@ export default function EventsAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((ev: Event, i: number) => (
+              {paged.map((ev: Event, i: number) => (
                 <tr
                   key={ev.id}
-                  style={{ borderBottom: i < filtered.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                  style={{ borderBottom: i < paged.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                 >
@@ -276,6 +361,49 @@ export default function EventsAdminPage() {
           </table>
         </div>
       </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > perPage && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, gap: 12, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+            Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, filtered.length)} of {filtered.length}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: currentPage === 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 600, cursor: currentPage === 1 ? "default" : "pointer" }}
+            >
+              <ChevronLeft size={13} /> Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .map((p, idx, arr) => (
+                <span key={p} style={{ display: "flex", alignItems: "center" }}>
+                  {idx > 0 && arr[idx - 1] !== p - 1 && <span style={{ color: "rgba(255,255,255,0.25)", padding: "0 4px" }}>…</span>}
+                  <button
+                    onClick={() => setPage(p)}
+                    style={{
+                      minWidth: 32, height: 32, borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 700,
+                      background: p === currentPage ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${p === currentPage ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.1)"}`,
+                      color: p === currentPage ? "#39BD69" : "rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    {p}
+                  </button>
+                </span>
+              ))}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: currentPage === totalPages ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 600, cursor: currentPage === totalPages ? "default" : "pointer" }}
+            >
+              Next <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

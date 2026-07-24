@@ -28,6 +28,16 @@ export function mapEventRow(r: any) {
     lineup: parseJson(r.lineup, []),
     genres: parseJson(r.genres, []),
     tickets: parseJson(r.tickets, []),
+    status: r.status ?? "",
+    startTime: r.start_time ?? "",
+    endDate: r.end_date ?? "",
+    endTime: r.end_time ?? "",
+    ageRestriction: r.age_restriction ?? "",
+    capacity: r.capacity ?? null,
+    venueType: r.venue_type ?? "",
+    coOrganizers: parseJson(r.co_organizers, []),
+    videoTrailer: r.video_trailer ?? "",
+    externalLink: r.external_link ?? "",
   };
 }
 
@@ -57,5 +67,10 @@ export function mapArtistRow(r: any) {
     bookingContact: r.booking_contact ?? undefined,
     similarArtists: parseJson(r.similar_artists, []),
     rating: r.rating ?? undefined,
+    bpm: r.bpm ?? null,
+    socialLinks: parseJson(r.social_links, []),
+    bookingEmail: r.booking_email ?? undefined,
+    bookingPhone: r.booking_phone ?? undefined,
+    level: r.level ?? undefined,
   };
 }

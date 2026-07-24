@@ -20,8 +20,8 @@ const labelStyle: React.CSSProperties = {
   textTransform: "uppercase", marginBottom: 6,
 };
 
-type FormState = { name: string; logo: string; description: string; banner: string };
-const EMPTY: FormState = { name: "", logo: "", description: "", banner: "" };
+type FormState = { name: string; logo: string; description: string; banner: string; email: string; phone: string };
+const EMPTY: FormState = { name: "", logo: "", description: "", banner: "", email: "", phone: "" };
 
 export default function OrganizersAdminPage() {
   const { user } = useAuth();
@@ -55,6 +55,8 @@ export default function OrganizersAdminPage() {
       logo: o.logo ?? "",
       description: o.description ?? "",
       banner: o.banner ?? "",
+      email: o.email ?? "",
+      phone: o.phone ?? "",
     });
     setShowForm(true);
   };
@@ -74,6 +76,8 @@ export default function OrganizersAdminPage() {
       logo: form.logo || undefined,
       description: form.description || undefined,
       banner: form.banner || undefined,
+      email: form.email || undefined,
+      phone: form.phone || undefined,
     };
     if (editingId != null) {
       updateOrganizer({ id: editingId, ...payload });
@@ -134,6 +138,17 @@ export default function OrganizersAdminPage() {
           <div style={{ marginBottom: 20 }}>
             <label style={labelStyle}>Description</label>
             <textarea style={{ ...inputStyle, height: 90, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Short description of the organizer…" />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+            <div>
+              <label style={labelStyle}>Contact Email</label>
+              <input type="email" style={inputStyle} value={form.email} onChange={e => set("email", e.target.value)} placeholder="bookings@organizer.com" />
+            </div>
+            <div>
+              <label style={labelStyle}>Phone Number</label>
+              <input type="tel" style={inputStyle} value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+94 77 123 4567" />
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
