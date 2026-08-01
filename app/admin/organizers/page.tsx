@@ -20,8 +20,8 @@ const labelStyle: React.CSSProperties = {
   textTransform: "uppercase", marginBottom: 6,
 };
 
-type FormState = { name: string; logo: string; description: string; banner: string; email: string; phone: string };
-const EMPTY: FormState = { name: "", logo: "", description: "", banner: "", email: "", phone: "" };
+type FormState = { name: string; logo: string; description: string; banner: string; email: string; phone: string; username: string; password: string };
+const EMPTY: FormState = { name: "", logo: "", description: "", banner: "", email: "", phone: "", username: "", password: "" };
 
 export default function OrganizersAdminPage() {
   const { user } = useAuth();
@@ -57,6 +57,8 @@ export default function OrganizersAdminPage() {
       banner: o.banner ?? "",
       email: o.email ?? "",
       phone: o.phone ?? "",
+      username: o.username ?? "",
+      password: "",
     });
     setShowForm(true);
   };
@@ -78,6 +80,8 @@ export default function OrganizersAdminPage() {
       banner: form.banner || undefined,
       email: form.email || undefined,
       phone: form.phone || undefined,
+      username: form.username.trim() || undefined,
+      password: form.password || undefined,
     };
     if (editingId != null) {
       updateOrganizer({ id: editingId, ...payload });
@@ -148,6 +152,39 @@ export default function OrganizersAdminPage() {
             <div>
               <label style={labelStyle}>Phone Number</label>
               <input type="tel" style={inputStyle} value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+94 77 123 4567" />
+            </div>
+          </div>
+
+          {/* Login credentials — organizer signs in with these to see only their events' analytics */}
+          <div style={{ padding: 16, marginBottom: 20, borderRadius: 10, background: "rgba(57,189,105,0.04)", border: "1px solid rgba(57,189,105,0.15)" }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>
+              Login Access
+            </p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>
+              The organizer signs in with these to view analytics for their own events only.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div>
+                <label style={labelStyle}>Username</label>
+                <input
+                  style={inputStyle}
+                  value={form.username}
+                  onChange={e => set("username", e.target.value)}
+                  placeholder="e.g. rhythmnation"
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Password</label>
+                <input
+                  type="password"
+                  style={inputStyle}
+                  value={form.password}
+                  onChange={e => set("password", e.target.value)}
+                  placeholder={editingId != null ? "Leave blank to keep current" : "Set a password"}
+                  autoComplete="new-password"
+                />
+              </div>
             </div>
           </div>
 

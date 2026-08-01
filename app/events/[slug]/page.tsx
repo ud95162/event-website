@@ -129,12 +129,21 @@ export default function EventDetailPage() {
               maxHeight: 520,
             }}
           >
-            {/* ── Left: Image ─────────────────────────────────────────── */}
-            <div className="relative w-[58%] flex-shrink-0">
+            {/* ── Left: Poster (native 4:5 / 1:1 ratio, blurred backdrop fill) ── */}
+            <div className="relative w-[58%] flex-shrink-0 overflow-hidden" style={{ minHeight: 420, maxHeight: 520 }}>
+              {/* Blurred backdrop fills the panel behind the poster */}
+              <img
+                src={event.image}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ filter: "blur(28px) brightness(0.5)", transform: "scale(1.15)" }}
+              />
+              {/* The actual poster, shown fully (contained) and centered */}
               <img
                 src={event.image}
                 alt={event.title}
-                className="w-full h-full object-cover object-center"
+                className="relative w-full h-full object-contain"
                 style={{ minHeight: 420, maxHeight: 520 }}
               />
               {/* Right-side fade into ticket panel */}
@@ -158,7 +167,7 @@ export default function EventDetailPage() {
               )}
 
               {/* Tag bottom-left */}
-              <div className="absolute bottom-5 left-5">
+              <div className="absolute bottom-5 left-5 z-20">
                 <span
                   className="text-[9px] font-bold tracking-[0.3em] uppercase px-3 py-1.5 rounded-full"
                   style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)" }}
@@ -166,6 +175,25 @@ export default function EventDetailPage() {
                   {event.tag}
                 </span>
               </div>
+
+              {/* Click the flyer to open the trailer video */}
+              {trailer && (
+                <a
+                  href={trailer}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track("event", event.id, "link_click")}
+                  aria-label="Watch event trailer"
+                  className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer group/play"
+                >
+                  <span
+                    className="flex items-center justify-center rounded-full transition-all duration-200 group-hover/play:scale-110"
+                    style={{ width: 66, height: 66, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(6px)" }}
+                  >
+                    <Play size={26} className="text-white" style={{ marginLeft: 3 }} fill="#fff" />
+                  </span>
+                </a>
+              )}
             </div>
 
             {/* ── Perforated tear ─────────────────────────────────────── */}

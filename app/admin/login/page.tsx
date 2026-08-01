@@ -16,11 +16,11 @@ export default function AdminLoginPage() {
     if (user) router.replace("/admin");
   }, [user, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const ok = login(username, password);
+    const ok = await login(username, password);
     if (ok) {
       router.replace("/admin");
     } else {

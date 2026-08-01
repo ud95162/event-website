@@ -7,18 +7,14 @@ export type UserRole = "admin" | "organizer";
 export type AuthUser = {
   username: string;
   role: UserRole;
+  orgName?: string;   // for organizer accounts — the organizer they manage (scopes analytics/events)
 };
 
 type AuthContextType = {
   user: AuthUser | null;
-  login: (username: string, password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
-
-const USERS = [
-  { username: "admin", password: "admin123", role: "admin" as UserRole },
-  { username: "organizer", password: "org123", role: "organizer" as UserRole },
-];
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -34,13 +30,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (username: string, password: string): boolean => {
-    const found = USERS.find(u => u.username === username && u.password === password);
-    if (!found) return false;
-    const authUser: AuthUser = { username: found.username, role: found.role };
-    setUser(authUser);
-    localStorage.setItem("admin_user", JSON.stringify(authUser));
-    return true;
+  // Authenticate server-side: admin (built-in) or an organizer account from the DB.
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) return false;
+      const authUser: AuthUser = await res.json();
+      setUser(authUser);
+      localStorage.setItem("admin_user", JSON.stringify(authUser));
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const logout = () => {

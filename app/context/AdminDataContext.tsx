@@ -11,6 +11,14 @@ export type Banner = {
   url: string;
 };
 
+export type PopupSettings = {
+  enabled: boolean;
+  title: string;
+  mode: "auto" | "manual";   // auto = events happening this week; manual = admin-selected
+};
+
+const DEFAULT_POPUP: PopupSettings = { enabled: true, title: "Happening This Week", mode: "auto" };
+
 export type Organizer = {
   id: number;
   name: string;
@@ -19,6 +27,8 @@ export type Organizer = {
   banner?: string;
   email?: string;
   phone?: string;
+  username?: string;   // organizer login username
+  password?: string;   // write-only; never returned by the API (blank on edit = keep current)
 };
 
 type AdminDataContextType = {
@@ -29,6 +39,8 @@ type AdminDataContextType = {
   genres: string[];
   badges: string[];
   banners: Banner[];
+  popupSettings: PopupSettings;
+  updatePopupSettings: (s: PopupSettings) => void;
 
   // Events CRUD
   addEvent: (ev: Omit<Event, "id">) => void;
@@ -73,6 +85,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [genres, setGenres] = useState<string[]>([]);
   const [badges, setBadges] = useState<string[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [popupSettings, setPopupSettings] = useState<PopupSettings>(DEFAULT_POPUP);
   const [loading, setLoading] = useState(true);
 
   // Initial load from the API.
@@ -84,8 +97,18 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       jsonFetch<string[]>("/api/genres").then(setGenres),
       jsonFetch<string[]>("/api/badges").then(setBadges),
       jsonFetch<Banner[]>("/api/banners").then(setBanners),
+      jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) setPopupSettings({ ...DEFAULT_POPUP, ...s }); }),
     ]).finally(() => setLoading(false));
   }, []);
+
+  const updatePopupSettings = (s: PopupSettings) => {
+    setPopupSettings(s);
+    fetch("/api/settings/popup", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(s),
+    }).catch(() => {});
+  };
 
   // ---- Events ----
   const addEvent = (ev: Omit<Event, "id">) => {
@@ -220,6 +243,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     <AdminDataContext.Provider value={{
       loading,
       events, artists, organizers, genres, badges, banners,
+      popupSettings, updatePopupSettings,
       addEvent, updateEvent, deleteEvent,
       addArtist, updateArtist, deleteArtist,
       addOrganizer, updateOrganizer, deleteOrganizer,

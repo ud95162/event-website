@@ -31,6 +31,8 @@ export type Event = {
   coOrganizers?:   string[]; // additional organizer names
   videoTrailer?:   string;   // promo video URL (portrait preferred)
   externalLink?:   string;   // external / more-info URL
+  featured?:       boolean;  // shown in the home "Featured Events" carousel
+  popup?:          boolean;  // shown in the home "This Week" popup (admin-selected)
 };
 
 // Operational event statuses (extendable). Colour drives the public badge.

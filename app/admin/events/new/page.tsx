@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../../../context/AuthContext";
 import { useAdminData, Event } from "../../../context/AdminDataContext";
 import { EVENT_STATUSES } from "../../../data/events";
 import { ChevronLeft, Check, Plus, Trash2 } from "lucide-react";
@@ -67,8 +68,14 @@ const fromISODate = (iso: string): string => {
 
 function EventFormInner() {
   const router = useRouter();
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const { events, organizers, artists, genres: GENRES, badges, addEvent, updateEvent, addBadge } = useAdminData();
+
+  // Event creation/editing is admin-only.
+  useEffect(() => {
+    if (user && user.role !== "admin") router.replace("/admin/analytics");
+  }, [user, router]);
 
   const editId = searchParams.get("id") ? Number(searchParams.get("id")) : null;
   const editing = editId ? events.find(e => e.id === editId) ?? null : null;
@@ -263,14 +270,17 @@ function EventFormInner() {
 
           {/* IMAGE */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
-            <p style={sectionHeadStyle}>Event Image</p>
-            <div style={{ maxWidth: 500 }}>
+            <p style={sectionHeadStyle}>Event Poster / Flyer</p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 14 }}>
+              Upload a social-media-ready poster. Use a <strong style={{ color: "#39BD69" }}>4:5 portrait</strong> or <strong style={{ color: "#39BD69" }}>1:1 square</strong> image so it looks consistent across the site.
+            </p>
+            <div style={{ maxWidth: 360 }}>
               <ImageUpload
-                label="Event Image"
+                label="Poster (4:5 or 1:1)"
                 value={form.image}
                 onChange={val => set("image", val)}
-                aspectRatio="wide"
-                hint="Landscape 16:9 · Recommended 800 × 450 px · PNG, JPG, WEBP · Max 5 MB"
+                aspectRatio="portrait"
+                hint="Portrait 4:5 (1080 × 1350) or Square 1:1 (1080 × 1080) · PNG, JPG, WEBP · Max 5 MB"
               />
             </div>
           </section>
@@ -378,7 +388,14 @@ function EventFormInner() {
               <MapPicker
                 lat={form.lat}
                 lon={form.lon}
-                onChange={(la, lo) => setForm(prev => ({ ...prev, lat: la, lon: lo }))}
+                onChange={(la, lo, place) => setForm(prev => ({
+                  ...prev,
+                  lat: la,
+                  lon: lo,
+                  // Auto-fill venue/location from the pinned place when available.
+                  ...(place?.venue    ? { venue: place.venue } : {}),
+                  ...(place?.location ? { location: place.location } : {}),
+                }))}
               />
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>

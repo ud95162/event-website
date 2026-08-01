@@ -1,16 +1,12 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
-import { events as allEvents } from "../data/events";
+import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
 import { fromPrice } from "../lib/price";
-
-const events     = allEvents.slice(0, 6);
-const N          = events.length;
-const ANGLE_STEP = (Math.PI * 2) / N;
 
 // Non-card content: header(80) + headerMargin(14) + stageOffset(40) + mt6×2(48) + dots(6) + button(50) ≈ 238
 const FIXED_OVERHEAD = 200;
@@ -41,11 +37,20 @@ function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
 
 export default function FeaturedEvents() {
   const { userLocation } = useUserLocation();
+  const { events: allEvents } = useAdminData();
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const { CARD_H, CARD_W, IMG_H, INFO_H, RADIUS_X } = useCardSizes(sectionRef);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Admin-selected featured events; fall back to the first events if none picked.
+  const events = useMemo(() => {
+    const featured = allEvents.filter((e) => e.featured);
+    return (featured.length ? featured : allEvents).slice(0, 8);
+  }, [allEvents]);
+  const N          = events.length || 1;
+  const ANGLE_STEP = (Math.PI * 2) / N;
 
   /* ── Angle state: current (animated) vs target (snaps on click) ─────── */
   const currentAngle = useRef(0);

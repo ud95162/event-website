@@ -56,7 +56,9 @@ async function createAndSeed(): Promise<void> {
       venue_type VARCHAR(20),
       co_organizers JSON,
       video_trailer MEDIUMTEXT,
-      external_link TEXT
+      external_link TEXT,
+      featured TINYINT(1) DEFAULT 0,
+      popup TINYINT(1) DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -79,6 +81,8 @@ async function createAndSeed(): Promise<void> {
   await addColumn("co_organizers", "co_organizers JSON");
   await addColumn("video_trailer", "video_trailer MEDIUMTEXT");
   await addColumn("external_link", "external_link TEXT");
+  await addColumn("featured", "featured TINYINT(1) DEFAULT 0");
+  await addColumn("popup", "popup TINYINT(1) DEFAULT 0");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS artists (
@@ -110,7 +114,8 @@ async function createAndSeed(): Promise<void> {
       social_links JSON,
       booking_email VARCHAR(255),
       booking_phone VARCHAR(255),
-      level VARCHAR(50)
+      level VARCHAR(50),
+      featured TINYINT(1) DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -127,6 +132,7 @@ async function createAndSeed(): Promise<void> {
   await addArtistCol("booking_email", "booking_email VARCHAR(255)");
   await addArtistCol("booking_phone", "booking_phone VARCHAR(255)");
   await addArtistCol("level", "level VARCHAR(50)");
+  await addArtistCol("featured", "featured TINYINT(1) DEFAULT 0");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS organizers (
@@ -136,7 +142,9 @@ async function createAndSeed(): Promise<void> {
       description TEXT,
       banner MEDIUMTEXT,
       email VARCHAR(255),
-      phone VARCHAR(50)
+      phone VARCHAR(50),
+      username VARCHAR(255),
+      password VARCHAR(255)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -149,6 +157,8 @@ async function createAndSeed(): Promise<void> {
     ["banner", "MEDIUMTEXT"],
     ["email", "VARCHAR(255)"],
     ["phone", "VARCHAR(50)"],
+    ["username", "VARCHAR(255)"],
+    ["password", "VARCHAR(255)"],
   ] as const) {
     try {
       const [cols] = await pool.query<any[]>(
@@ -196,6 +206,18 @@ async function createAndSeed(): Promise<void> {
       UNIQUE KEY uniq_metric (entity_type, entity_id, metric)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  // Key-value store for site settings (e.g. the "This Week" popup config).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      name VARCHAR(64) PRIMARY KEY,
+      data JSON
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await pool.query(
+    "INSERT IGNORE INTO settings (name, data) VALUES ('popup', ?)",
+    [JSON.stringify({ enabled: true, title: "Happening This Week", mode: "auto" })]
+  );
 
   // ---- Seed events ----
   const [evRows] = await pool.query<any[]>("SELECT COUNT(*) AS c FROM events");

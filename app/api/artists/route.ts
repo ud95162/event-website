@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
        (name, stage_name, real_name, role, image, banner_image, bio, genres, sub_genres,
         bpm_min, bpm_max, is_dj, city, touring_region, soundcloud_url, spotify_url, beatport_url,
         instagram_url, tiktok_url, youtube_url, booking_contact, similar_artists, rating,
-        bpm, social_links, booking_email, booking_phone, level)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        bpm, social_links, booking_email, booking_phone, level, featured)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       a.name, a.stageName ?? null, a.realName ?? null, a.role,
       a.image, a.bannerImage ?? null, a.bio,
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       a.bookingContact ?? null, JSON.stringify(a.similarArtists ?? []),
       a.rating ?? null,
       a.bpm ?? null, JSON.stringify(a.socialLinks ?? []),
-      a.bookingEmail ?? null, a.bookingPhone ?? null, a.level ?? null,
+      a.bookingEmail ?? null, a.bookingPhone ?? null, a.level ?? null, a.featured ? 1 : 0,
     ]
   );
   const [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE id = ?", [result.insertId]);

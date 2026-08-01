@@ -8,24 +8,30 @@ import { eventSlug } from "../lib/slug";
 
 export default function ThisWeekPopup() {
   const router = useRouter();
-  const { events, loading } = useAdminData();
+  const { events, loading, popupSettings } = useAdminData();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  // Events happening in the next 7 days
+  // Which events the popup shows depends on the admin's chosen mode:
+  //   manual → the events flagged in the admin "Week Popup" page
+  //   auto   → events happening in the next 7 days (default)
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
-  const weekEvents = events
-    .filter(ev => { const d = new Date(ev.date); return !isNaN(d.getTime()) && d >= now && d < weekEnd; })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const weekEvents =
+    popupSettings.mode === "manual"
+      ? events.filter(ev => ev.popup)
+      : events
+          .filter(ev => { const d = new Date(ev.date); return !isNaN(d.getTime()) && d >= now && d < weekEnd; })
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   useEffect(() => {
     if (loading) return;
+    if (!popupSettings.enabled) return;
     if (weekEvents.length === 0) return;
     const t = setTimeout(() => setOpen(true), 700);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, weekEvents.length]);
+  }, [loading, popupSettings.enabled, weekEvents.length]);
 
   const count = weekEvents.length;
   const prev = () => setIndex(i => (i - 1 + count) % count);
@@ -78,7 +84,7 @@ export default function ThisWeekPopup() {
         {/* Eyebrow header */}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 3, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}>
-            <Sparkles size={12} style={{ color: "#39BD69" }} /> Happening This Week
+            <Sparkles size={12} style={{ color: "#39BD69" }} /> {popupSettings.title || "Happening This Week"}
           </p>
           <button
             onClick={close}

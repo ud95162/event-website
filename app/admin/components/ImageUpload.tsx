@@ -7,7 +7,7 @@ type Props = {
   label: string;
   value: string;
   onChange: (val: string) => void;
-  aspectRatio?: "square" | "wide";
+  aspectRatio?: "square" | "wide" | "portrait";
   hint?: string;
 };
 

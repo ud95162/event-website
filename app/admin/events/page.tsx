@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Event } from "../../context/AdminDataContext";
 import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown, List, LayoutGrid, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -16,9 +17,15 @@ const selectStyle: React.CSSProperties = {
 
 export default function EventsAdminPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { events, deleteEvent } = useAdminData();
+
+  // Events management is admin-only; organizers are sent to their analytics.
+  useEffect(() => {
+    if (user && user.role !== "admin") router.replace("/admin/analytics");
+  }, [user, router]);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid">("grid");
 
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");

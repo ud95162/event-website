@@ -26,6 +26,7 @@ export type Artist = {
   bookingPhone?:   string;
   level?:          string;          // e.g. "Emerging", "Established", "Headliner" — drives recommendations
   rating?:         number;          // 0–5
+  featured?:       boolean;         // shown in the home "Featured Artists" carousel
   // ── deprecated (kept for backward compat with older stored data) ──
   bpmMin?:         number | null;
   bpmMax?:         number | null;

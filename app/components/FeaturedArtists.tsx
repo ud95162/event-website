@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart } from "lucide-react";
+import { useAdminData } from "../context/AdminDataContext";
 import { artistSlug } from "../lib/slug";
-
-// ANGLE_STEP defined after N below
 
 const FIXED_OVERHEAD = 200;
 
@@ -32,26 +31,21 @@ function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
 const ACCENT_COLOR = "#39BD69";
 const ACCENT_RGB   = "57,189,105";
 
-const artists = [
-  { id: 1, name: "DJ Nova",         role: "EDM / HOUSE MUSIC",         image: "/artists/1.png" },
-  { id: 2, name: "Randhir Witana",  role: "SRI LANKAN MUSICAL ARTIST", image: "/artists/2.png" },
-  { id: 3, name: "Maya Perera",     role: "POP & ACOUSTIC ARTIST",     image: "/artists/3.png" },
-  { id: 4, name: "Ashanthi Dias",   role: "SRI LANKAN MUSICAL ARTIST", image: "/artists/4.png" },
-  { id: 5, name: "Kasun Silva",     role: "ROCK & INDIE ARTIST",       image: "/artists/1.png" },
-  { id: 6, name: "Nadia Fernando",  role: "R&B / SOUL ARTIST",         image: "/artists/2.png" },
-  { id: 7, name: "The Beat Crew",   role: "LIVE BAND",                 image: "/artists/3.png" },
-  { id: 8, name: "Hiruni De Silva", role: "CLASSICAL FUSION ARTIST",   image: "/artists/4.png" },
-];
-
-const N = Math.min(artists.length, 6);
-const ANGLE_STEP = (Math.PI * 2) / N;
-
 export default function FeaturedArtists() {
+  const { artists: allArtists } = useAdminData();
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const { CARD_H, CARD_W, RADIUS_X } = useCardSizes(sectionRef);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Admin-selected featured artists; fall back to the first artists if none picked.
+  const artists = useMemo(() => {
+    const featured = allArtists.filter((a) => a.featured);
+    return (featured.length ? featured : allArtists).slice(0, 6);
+  }, [allArtists]);
+  const N          = artists.length || 1;
+  const ANGLE_STEP = (Math.PI * 2) / N;
 
   const currentAngle = useRef(0);
   const targetAngle  = useRef(0);
@@ -98,7 +92,7 @@ export default function FeaturedArtists() {
     startAnim();
   };
 
-  const cards = artists.slice(0, 6).map((artist, i) => {
+  const cards = artists.map((artist, i) => {
     const angle   = baseAngle + i * ANGLE_STEP;
     const x       = Math.sin(angle) * RADIUS_X;
     const z       = Math.cos(angle);
@@ -192,7 +186,7 @@ export default function FeaturedArtists() {
                   <div className="relative w-full overflow-hidden flex-shrink-0" style={{ height: "62%" }}>
                     <img
                       src={card.image}
-                      alt={card.name}
+                      alt={card.stageName || card.name}
                       loading="eager"
                       decoding="async"
                       className="w-full h-full object-cover object-top"
@@ -225,7 +219,7 @@ export default function FeaturedArtists() {
                   <div className="px-4 pb-4 pt-2 text-center flex flex-col justify-between" style={{ height: "38%" }}>
                     <div>
                       <p className="text-white/35 text-[11px] font-bold tracking-[0.3em] uppercase mb-1.5">{card.role}</p>
-                      <h3 className="text-white font-black text-base uppercase mb-3 tracking-wide">{card.name}</h3>
+                      <h3 className="text-white font-black text-base uppercase mb-3 tracking-wide">{card.stageName || card.name}</h3>
                     </div>
                     <div className="flex justify-center">
                       <div className="h-[3px] rounded-full" style={{ width: card.isFront ? "60%" : "30%", background: `linear-gradient(90deg,${ACCENT_COLOR},#2ecc71)`, transition: "width 0.4s ease" }} />

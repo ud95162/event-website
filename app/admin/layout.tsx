@@ -4,15 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, LayoutDashboard } from "lucide-react";
+import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/admin",            label: "Dashboard",  icon: LayoutDashboard, roles: ["admin"] },
-  { href: "/admin/events",     label: "Events",     icon: CalendarDays,    roles: ["admin", "organizer"] },
-  { href: "/admin/artists",    label: "Artists",    icon: Users,           roles: ["admin"] },
-  { href: "/admin/organizers", label: "Organizers", icon: Building2,       roles: ["admin"] },
-  { href: "/admin/genres",     label: "Genres",     icon: Tag,             roles: ["admin"] },
-  { href: "/admin/banners",    label: "Banners",    icon: ImageIcon,       roles: ["admin"] },
+  { href: "/admin/analytics",        label: "Analytics",        icon: BarChart3,       roles: ["admin", "organizer"] },
+  { href: "/admin/events",           label: "Events",           icon: CalendarDays,    roles: ["admin"] },
+  { href: "/admin/artists",          label: "Artists",          icon: Users,           roles: ["admin"] },
+  { href: "/admin/featured-events",  label: "Featured Events",  icon: Star,            roles: ["admin"] },
+  { href: "/admin/featured-artists", label: "Featured Artists", icon: Sparkles,        roles: ["admin"] },
+  { href: "/admin/popup",            label: "Week Popup",       icon: MonitorPlay,     roles: ["admin"] },
+  { href: "/admin/organizers",       label: "Organizers",       icon: Building2,       roles: ["admin"] },
+  { href: "/admin/genres",           label: "Genres",           icon: Tag,             roles: ["admin"] },
+  { href: "/admin/banners",          label: "Banners",          icon: ImageIcon,       roles: ["admin"] },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

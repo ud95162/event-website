@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Event, statusColor } from "../data/events";
@@ -34,11 +35,55 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
     ? haversineKm(userLocation.lat, userLocation.lon, event.lat, event.lon)
     : null;
 
+  // ── Enlarged hover preview (rendered in a portal so it escapes the row's overflow) ──
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
+  const showTimer = useRef<number | null>(null);
+  const PREVIEW_W = 330;
+  const PREVIEW_H = 450;
+
+  const openPreview = () => {
+    const el = cardRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const gap = 16;
+    let left = r.right + gap;                                   // prefer to the right
+    if (left + PREVIEW_W > window.innerWidth - 8) left = r.left - gap - PREVIEW_W; // else left
+    if (left < 8) left = Math.min(Math.max(8, r.left + r.width / 2 - PREVIEW_W / 2), window.innerWidth - PREVIEW_W - 8);
+    let top = r.top + r.height / 2 - PREVIEW_H / 2;             // vertically centred on card
+    top = Math.min(Math.max(8, top), window.innerHeight - PREVIEW_H - 8);
+    setPreview({ top, left });
+  };
+
+  const enter = () => {
+    setHovered(true);
+    if (showTimer.current) clearTimeout(showTimer.current);
+    showTimer.current = window.setTimeout(openPreview, 320);
+  };
+  const leave = () => {
+    setHovered(false);
+    if (showTimer.current) { clearTimeout(showTimer.current); showTimer.current = null; }
+    setPreview(null);
+  };
+
+  useEffect(() => () => { if (showTimer.current) clearTimeout(showTimer.current); }, []);
+
+  // Hide the preview if anything scrolls or the window resizes (its anchor would drift).
+  useEffect(() => {
+    if (!preview) return;
+    const hide = () => setPreview(null);
+    window.addEventListener("scroll", hide, true);
+    window.addEventListener("resize", hide);
+    return () => { window.removeEventListener("scroll", hide, true); window.removeEventListener("resize", hide); };
+  }, [preview]);
+
   return (
+    <>
     <div
+      ref={cardRef}
       onClick={() => router.push(`/events/${eventSlug(event)}`)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={enter}
+      onMouseLeave={leave}
       style={{
         flexShrink: 0,
         width: 230,
@@ -205,6 +250,80 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
         </div>
       </div>
     </div>
+
+    {/* ── Enlarged preview popup, rendered in a portal ───────────── */}
+    {preview && typeof document !== "undefined" && createPortal(
+      <div
+        style={{
+          position: "fixed", top: preview.top, left: preview.left,
+          width: PREVIEW_W, zIndex: 9999, pointerEvents: "none",
+          borderRadius: 18, overflow: "hidden",
+          background: "#0b0b10", border: "1px solid rgba(57,189,105,0.35)",
+          boxShadow: "0 30px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.05)",
+          animation: "hp-in 0.2s ease",
+        }}
+      >
+        {/* Poster */}
+        <div style={{ position: "relative", height: 210, overflow: "hidden" }}>
+          <img src={event.image} alt={event.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0b0b10 0%, rgba(11,11,16,0.25) 55%, transparent 100%)" }} />
+          {event.badge && (
+            <span style={{ position: "absolute", top: 12, left: 12, background: "#fff", color: "#000", fontSize: 9, fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 999 }}>{event.badge}</span>
+          )}
+          {event.status && (
+            <span style={{
+              position: "absolute", top: 12, right: 12, display: "inline-flex", alignItems: "center", gap: 5,
+              background: `${statusColor(event.status)}22`, color: statusColor(event.status),
+              border: `1px solid ${statusColor(event.status)}66`, fontSize: 8, fontWeight: 800, letterSpacing: "0.12em",
+              textTransform: "uppercase", padding: "4px 8px", borderRadius: 999, backdropFilter: "blur(4px)",
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusColor(event.status) }} />
+              {event.status}
+            </span>
+          )}
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "4px 18px 18px", marginTop: -6 }}>
+          <p style={{ fontSize: 9, fontWeight: 700, color: "#39BD69", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 6 }}>{event.tag}</p>
+          <h3 style={{ fontSize: 18, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.15, letterSpacing: "0.01em", marginBottom: 10 }}>{event.title}</h3>
+
+          {event.genres.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
+              {event.genres.slice(0, 4).map(g => (
+                <span key={g} style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}>{g}</span>
+              ))}
+            </div>
+          )}
+
+          {event.description && (
+            <p style={{ fontSize: 11, lineHeight: 1.55, color: "rgba(255,255,255,0.5)", marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{event.description}</p>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <Calendar size={12} style={{ color: "#39BD69", flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{event.date}{event.startTime ? ` · ${event.startTime}` : ""}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <MapPin size={12} style={{ color: "#39BD69", flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{event.venue ? `${event.venue}, ` : ""}{event.location}{distance !== null ? ` · ${formatDistance(distance)}` : ""}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <Ticket size={12} style={{ color: "#39BD69", flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{ticketPrices(event.tickets, event.price)}</span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{organizer ? `By ${organizer.name}` : ""}</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.1em", textTransform: "uppercase" }}>View Details <ArrowRight size={12} /></span>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
 

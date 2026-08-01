@@ -38,6 +38,8 @@ export function mapEventRow(r: any) {
     coOrganizers: parseJson(r.co_organizers, []),
     videoTrailer: r.video_trailer ?? "",
     externalLink: r.external_link ?? "",
+    featured: !!r.featured,
+    popup: !!r.popup,
   };
 }
 
@@ -72,5 +74,6 @@ export function mapArtistRow(r: any) {
     bookingEmail: r.booking_email ?? undefined,
     bookingPhone: r.booking_phone ?? undefined,
     level: r.level ?? undefined,
+    featured: !!r.featured,
   };
 }
