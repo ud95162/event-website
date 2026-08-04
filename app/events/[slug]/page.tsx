@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Play } from "lucide-react";
+import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { slugify, eventSlug, artistSlug, organizerSlug } from "../../lib/slug";
@@ -73,11 +73,14 @@ export default function EventDetailPage() {
   })();
 
   // Video trailer embed: detect YouTube / Vimeo, else treat as a direct video file.
+  // Autoplay muted + looped so it plays in the poster slot on load (browsers require muted).
   const trailer = (event.videoTrailer || "").trim();
   const ytMatch = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
   const vimeoMatch = trailer.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  const trailerEmbed = ytMatch ? `https://www.youtube.com/embed/${ytMatch[1]}`
-    : vimeoMatch ? `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  const trailerEmbed = ytMatch
+    ? `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`
+    : vimeoMatch
+    ? `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&background=1`
     : "";
 
   // Co-organizers resolved to organizer records (for logo + link).
@@ -120,41 +123,62 @@ export default function EventDetailPage() {
               TICKET STUB BANNER
              ══════════════════════════════════════════════════════════════ */}
           <div
-            className="w-full flex rounded-3xl overflow-hidden relative"
+            className="w-full flex items-stretch rounded-3xl overflow-hidden relative"
             style={{
               background: "#0d0d1f",
               border: "1px solid rgba(255,255,255,0.08)",
               boxShadow: "0 40px 80px rgba(0,0,0,0.6)",
-              minHeight: 420,
-              maxHeight: 520,
             }}
           >
-            {/* ── Left: Poster (native 4:5 / 1:1 ratio, blurred backdrop fill) ── */}
-            <div className="relative w-[58%] flex-shrink-0 overflow-hidden" style={{ minHeight: 420, maxHeight: 520 }}>
-              {/* Blurred backdrop fills the panel behind the poster */}
+            {/* ── Left: media panel — trailer plays at exact 16:9 (YouTube size) ── */}
+            <div className="relative flex-shrink-0 overflow-hidden" style={{ width: "62%" }}>
+              {/* Ambient blurred backdrop fills the whole panel behind the media */}
               <img
                 src={event.image}
                 alt=""
                 aria-hidden="true"
                 className="absolute inset-0 w-full h-full object-cover"
-                style={{ filter: "blur(28px) brightness(0.5)", transform: "scale(1.15)" }}
+                style={{ filter: "blur(30px) brightness(0.4)", transform: "scale(1.2)" }}
               />
-              {/* The actual poster, shown fully (contained) and centered */}
-              <img
-                src={event.image}
-                alt={event.title}
-                className="relative w-full h-full object-contain"
-                style={{ minHeight: 420, maxHeight: 520 }}
-              />
-              {/* Right-side fade into ticket panel */}
+
+              {trailer ? (
+                /* 16:9 trailer, sized exactly like a YouTube video, centred in the panel */
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+                    {trailerEmbed ? (
+                      <iframe
+                        src={trailerEmbed}
+                        title="Event trailer"
+                        className="absolute inset-0 w-full h-full"
+                        style={{ border: 0 }}
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={trailer}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* No trailer — show the flyer fully (contained) */
+                <img
+                  src={event.image}
+                  alt={event.title}
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              )}
+
+              {/* Right-side fade blends the panel edge into the ticket */}
               <div
-                className="absolute inset-0"
-                style={{ background: "linear-gradient(to right, transparent 50%, #0d0d1f 100%)" }}
-              />
-              {/* Bottom fade */}
-              <div
-                className="absolute inset-0"
-                style={{ background: "linear-gradient(to top, rgba(13,13,31,0.7) 0%, transparent 50%)" }}
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(to right, transparent 78%, #0d0d1f 100%)" }}
               />
 
               {/* Badge */}
@@ -176,24 +200,6 @@ export default function EventDetailPage() {
                 </span>
               </div>
 
-              {/* Click the flyer to open the trailer video */}
-              {trailer && (
-                <a
-                  href={trailer}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => track("event", event.id, "link_click")}
-                  aria-label="Watch event trailer"
-                  className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer group/play"
-                >
-                  <span
-                    className="flex items-center justify-center rounded-full transition-all duration-200 group-hover/play:scale-110"
-                    style={{ width: 66, height: 66, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.4)", backdropFilter: "blur(6px)" }}
-                  >
-                    <Play size={26} className="text-white" style={{ marginLeft: 3 }} fill="#fff" />
-                  </span>
-                </a>
-              )}
             </div>
 
             {/* ── Perforated tear ─────────────────────────────────────── */}
@@ -401,20 +407,6 @@ export default function EventDetailPage() {
                       <ExternalLink size={13} /> Event Website / More Info
                     </a>
                   )}
-                </div>
-              )}
-
-              {/* Video trailer */}
-              {trailer && (
-                <div>
-                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-4 flex items-center gap-1.5"><Play size={11} /> TRAILER</p>
-                  <div className="rounded-2xl overflow-hidden w-full" style={{ aspectRatio: "16 / 9", border: "1px solid rgba(255,255,255,0.1)", background: "#000" }}>
-                    {trailerEmbed ? (
-                      <iframe src={trailerEmbed} title="Event trailer" width="100%" height="100%" style={{ border: 0 }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
-                    ) : (
-                      <video src={trailer} controls playsInline className="w-full h-full object-contain" />
-                    )}
-                  </div>
                 </div>
               )}
 

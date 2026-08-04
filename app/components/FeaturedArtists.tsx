@@ -6,20 +6,19 @@ import { ArrowRight, Heart } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
 import { artistSlug } from "../lib/slug";
 
-const FIXED_OVERHEAD = 200;
+const FIXED_OVERHEAD = 220;
 
 function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
-  const [sizes, setSizes] = useState({ CARD_H: 380, CARD_W: 285, RADIUS_X: 400 });
+  const [sizes, setSizes] = useState({ CARD_H: 380, CARD_W: 274 });
 
   useEffect(() => {
-    const calc = (contentH: number, contentW: number) => {
-      const CARD_H   = Math.round(Math.min(520, Math.max(180, contentH - FIXED_OVERHEAD)));
-      const CARD_W   = Math.round(CARD_H * 0.75);
-      const RADIUS_X = Math.round(Math.min(contentW * 0.36, CARD_W * 1.35));
-      setSizes({ CARD_H, CARD_W, RADIUS_X });
+    const calc = (contentH: number) => {
+      const CARD_H = Math.round(Math.min(460, Math.max(300, contentH - FIXED_OVERHEAD)));
+      const CARD_W = Math.round(CARD_H * 0.72);
+      setSizes({ CARD_H, CARD_W });
     };
     const observer = new ResizeObserver(entries => {
-      for (const e of entries) calc(e.contentRect.height, e.contentRect.width);
+      for (const e of entries) calc(e.contentRect.height);
     });
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
@@ -35,77 +34,31 @@ export default function FeaturedArtists() {
   const { artists: allArtists } = useAdminData();
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
-  const { CARD_H, CARD_W, RADIUS_X } = useCardSizes(sectionRef);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { CARD_H, CARD_W } = useCardSizes(sectionRef);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   // Admin-selected featured artists; fall back to the first artists if none picked.
   const artists = useMemo(() => {
     const featured = allArtists.filter((a) => a.featured);
-    return (featured.length ? featured : allArtists).slice(0, 6);
+    return (featured.length ? featured : allArtists).slice(0, 8);
   }, [allArtists]);
-  const N          = artists.length || 1;
-  const ANGLE_STEP = (Math.PI * 2) / N;
 
-  const currentAngle = useRef(0);
-  const targetAngle  = useRef(0);
-  const rafRef       = useRef<number>(0);
-  const animFn       = useRef<() => void>(() => {});
-
-  const [baseAngle,    setBaseAngle]    = useState(0);
-  const [followed,     setFollowed]     = useState<Set<number>>(new Set());
-  const [hoveredCard,  setHoveredCard]  = useState<number | null>(null);
+  const [followed,    setFollowed]    = useState<Set<number>>(new Set());
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   const toggleFollow = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setFollowed(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   };
 
-  animFn.current = () => {
-    const diff = targetAngle.current - currentAngle.current;
-    if (Math.abs(diff) < 0.0003) {
-      currentAngle.current = targetAngle.current;
-      setBaseAngle(targetAngle.current);
-      return;
-    }
-    currentAngle.current += diff * 0.09;
-    setBaseAngle(currentAngle.current);
-    rafRef.current = requestAnimationFrame(() => animFn.current());
+  // Each arrow click scrolls the row by about two cards.
+  const scrollByCards = (dir: 1 | -1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * (CARD_W + 20) * 2, behavior: "smooth" });
   };
-
-  const startAnim = () => {
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => animFn.current());
-  };
-
-  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
-
-  const activeIndex = ((-Math.round(targetAngle.current / ANGLE_STEP)) % N + N) % N;
-
-  const next = () => { targetAngle.current -= ANGLE_STEP; startAnim(); };
-  const prev = () => { targetAngle.current += ANGLE_STEP; startAnim(); };
-
-  const goTo = (i: number) => {
-    const base = -i * ANGLE_STEP;
-    const k    = Math.round((targetAngle.current - base) / (N * ANGLE_STEP));
-    targetAngle.current = base + k * (N * ANGLE_STEP);
-    startAnim();
-  };
-
-  const cards = artists.map((artist, i) => {
-    const angle   = baseAngle + i * ANGLE_STEP;
-    const x       = Math.sin(angle) * RADIUS_X;
-    const z       = Math.cos(angle);
-    const depth   = (z + 1) / 2;
-    const scale   = 1;
-    const opacity = 0.25 + depth * 0.75;
-    const y       = Math.sin(angle * 0.5) * 30;
-    const zIndex  = Math.round(depth * 100);
-    const isFront = depth > 0.92;
-    return { ...artist, x, y, depth, scale, opacity, zIndex, isFront };
-  });
-
-  const sorted = [...cards].sort((a, b) => a.depth - b.depth);
 
   return (
     <section ref={sectionRef} id="artists" className="snap-section overflow-hidden flex flex-col justify-center relative" style={{ padding: "3vh 0" }}>
@@ -123,7 +76,7 @@ export default function FeaturedArtists() {
         <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #080808, transparent)" }} />
       </div>
 
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center w-full">
 
         {/* Header */}
         <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
@@ -135,55 +88,51 @@ export default function FeaturedArtists() {
           </h2>
         </div>
 
-        {/* Carousel + Arrows */}
-        <div className="relative flex items-center justify-center w-full" style={{ maxWidth: 1100 }}>
+        {/* Horizontal scroll row + arrows */}
+        <div className="relative w-full z-[100]" style={{ maxWidth: 1200 }}>
+          <style>{`.fa-row::-webkit-scrollbar{display:none}`}</style>
 
+          {/* Fade edges */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to right, #080808, transparent)" }} />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to left, #080808, transparent)" }} />
+
+          {/* Prev arrow */}
           <button
-            onClick={prev}
-            aria-label="Previous artist"
-            className="absolute left-4 z-[200] w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/prev"
+            onClick={() => scrollByCards(-1)}
+            aria-label="Scroll left"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-[200] w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-black/50 backdrop-blur hover:bg-white hover:border-white transition-all group/prev"
           >
-            <ArrowRight size={14} className="text-white group-hover/prev:text-black transition-colors rotate-180" />
+            <ArrowRight size={15} className="text-white group-hover/prev:text-black transition-colors rotate-180" />
           </button>
 
-          <div className="relative" style={{ width: "100%", height: CARD_H + 40 }}>
-            {mounted && sorted.map(card => (
-              /* Outer: handles position only (RAF-driven, no CSS transition) */
-              <div
-                key={card.id}
-                className="absolute"
-                style={{
-                  width: CARD_W,
-                  height: CARD_H,
-                  left: "50%",
-                  top: "50%",
-                  transform: `translate(-50%,-50%) translateX(${card.x}px) translateY(${card.y}px)`,
-                  opacity: card.opacity,
-                  zIndex: card.zIndex,
-                  willChange: "transform",
-                }}
-              >
-                {/* Inner: handles visuals + hover (CSS transition) */}
+          {/* Scroll track */}
+          <div
+            ref={scrollRef}
+            className="fa-row flex overflow-x-auto"
+            style={{ gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
+          >
+            {mounted && artists.map(card => {
+              const hovered = hoveredCard === card.id;
+              return (
                 <div
-                  className="absolute rounded-2xl overflow-hidden cursor-pointer"
+                  key={card.id}
                   onClick={() => router.push(`/artists/${artistSlug(card)}`)}
                   onMouseEnter={() => setHoveredCard(card.id)}
                   onMouseLeave={() => setHoveredCard(null)}
+                  className="relative rounded-2xl overflow-hidden cursor-pointer flex-shrink-0"
                   style={{
                     width: CARD_W,
                     height: CARD_H,
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%,-50%)",
-                    background: hoveredCard === card.id ? "#0d1f2d" : "#080808",
+                    scrollSnapAlign: "start",
+                    background: hovered ? "#0d1f2d" : "#080808",
                     border: "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: hoveredCard === card.id ? `0 0 40px rgba(${ACCENT_RGB},0.15)` : "none",
-                    filter: card.isFront ? "brightness(1.1)" : `brightness(${0.4 + card.depth * 0.5})`,
-                    transition: "background 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease",
+                    boxShadow: hovered ? `0 0 40px rgba(${ACCENT_RGB},0.15)` : "none",
+                    transform: hovered ? "translateY(-6px)" : "translateY(0)",
+                    transition: "background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease",
                   }}
                 >
                   {/* Image */}
-                  <div className="relative w-full overflow-hidden flex-shrink-0" style={{ height: "62%" }}>
+                  <div className="relative w-full overflow-hidden" style={{ height: "62%" }}>
                     <img
                       src={card.image}
                       alt={card.stageName || card.name}
@@ -191,8 +140,8 @@ export default function FeaturedArtists() {
                       decoding="async"
                       className="w-full h-full object-cover object-top"
                       style={{
-                        transform: hoveredCard === card.id ? "scale(1.08)" : "scale(1)",
-                        filter: card.isFront ? "grayscale(0%)" : "grayscale(50%)",
+                        transform: hovered ? "scale(1.08)" : "scale(1)",
+                        filter: hovered ? "grayscale(0%)" : "grayscale(35%)",
                         transition: "transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), filter 0.5s ease",
                       }}
                     />
@@ -222,43 +171,27 @@ export default function FeaturedArtists() {
                       <h3 className="text-white font-black text-base uppercase mb-3 tracking-wide">{card.stageName || card.name}</h3>
                     </div>
                     <div className="flex justify-center">
-                      <div className="h-[3px] rounded-full" style={{ width: card.isFront ? "60%" : "30%", background: `linear-gradient(90deg,${ACCENT_COLOR},#2ecc71)`, transition: "width 0.4s ease" }} />
+                      <div className="h-[3px] rounded-full" style={{ width: hovered ? "60%" : "30%", background: `linear-gradient(90deg,${ACCENT_COLOR},#2ecc71)`, transition: "width 0.4s ease" }} />
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
+          {/* Next arrow */}
           <button
-            onClick={next}
-            aria-label="Next artist"
-            className="absolute right-4 z-[200] w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/next"
+            onClick={() => scrollByCards(1)}
+            aria-label="Scroll right"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-[200] w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-black/50 backdrop-blur hover:bg-white hover:border-white transition-all group/next"
           >
-            <ArrowRight size={14} className="text-white group-hover/next:text-black transition-colors" />
+            <ArrowRight size={15} className="text-white group-hover/next:text-black transition-colors" />
           </button>
         </div>
 
-        {/* Dots */}
-        <div className="flex gap-2 mt-3 relative z-[200]">
-          {artists.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              aria-label={`Go to artist ${i + 1}`}
-              className="rounded-full transition-all duration-300"
-              style={{
-                width: i === activeIndex ? 24 : 6,
-                height: 6,
-                background: i === activeIndex ? ACCENT_COLOR : "rgba(255,255,255,0.25)",
-              }}
-            />
-          ))}
-        </div>
-
         {/* Explore button */}
-        <div className="text-center mt-3 relative z-[200]">
-          <button className="btn-outline text-sm px-10 py-3.5 rounded-full">
+        <div className="text-center mt-6 relative z-[200]">
+          <button className="btn-outline text-sm px-10 py-3.5 rounded-full" onClick={() => router.push("/artists")}>
             EXPLORE MORE
           </button>
         </div>
