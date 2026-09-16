@@ -27,6 +27,8 @@ export default function PopupAdminPage() {
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState(popupSettings);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user && user.role !== "admin") router.replace("/admin/analytics");
@@ -54,10 +56,18 @@ export default function PopupAdminPage() {
     if (ev) updateEvent({ ...ev, popup: !current });
   };
 
-  const saveSettings = () => {
-    updatePopupSettings(draft);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1800);
+  const saveSettings = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    const ok = await updatePopupSettings(draft);
+    setSaving(false);
+    if (ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    } else {
+      setError("Couldn't save — the server didn't respond. Please try again.");
+    }
   };
 
   if (user?.role !== "admin") return null;
@@ -131,13 +141,15 @@ export default function PopupAdminPage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 14 }}>
+          {error && <span style={{ fontSize: 12, color: "#f87171" }}>{error}</span>}
           <button
             type="button"
             onClick={saveSettings}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
+            disabled={saving}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 24px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
           >
-            <Check size={14} /> {saved ? "Saved" : "Save Settings"}
+            <Check size={14} /> {saving ? "Saving…" : saved ? "Saved" : "Save Settings"}
           </button>
         </div>
       </div>

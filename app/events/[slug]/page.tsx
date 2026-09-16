@@ -1,14 +1,15 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { slugify, eventSlug, artistSlug, organizerSlug } from "../../lib/slug";
 import { track } from "../../lib/track";
 import { statusColor } from "../../data/events";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
 
@@ -72,16 +73,8 @@ export default function EventDetailPage() {
     return s;
   })();
 
-  // Video trailer embed: detect YouTube / Vimeo, else treat as a direct video file.
-  // Autoplay muted + looped so it plays in the poster slot on load (browsers require muted).
+  // Raw trailer URL (the media slider builds the right embed / plays the file).
   const trailer = (event.videoTrailer || "").trim();
-  const ytMatch = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
-  const vimeoMatch = trailer.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  const trailerEmbed = ytMatch
-    ? `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&loop=1&playlist=${ytMatch[1]}&controls=0&modestbranding=1&rel=0&playsinline=1`
-    : vimeoMatch
-    ? `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&background=1`
-    : "";
 
   // Co-organizers resolved to organizer records (for logo + link).
   const coOrgs = (event.coOrganizers ?? [])
@@ -141,39 +134,8 @@ export default function EventDetailPage() {
                 style={{ filter: "blur(30px) brightness(0.4)", transform: "scale(1.2)" }}
               />
 
-              {trailer ? (
-                /* 16:9 trailer, sized exactly like a YouTube video, centred in the panel */
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-                    {trailerEmbed ? (
-                      <iframe
-                        src={trailerEmbed}
-                        title="Event trailer"
-                        className="absolute inset-0 w-full h-full"
-                        style={{ border: 0 }}
-                        allow="autoplay; fullscreen; picture-in-picture"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <video
-                        src={trailer}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* No trailer — show the flyer fully (contained) */
-                <img
-                  src={event.image}
-                  alt={event.title}
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
-              )}
+              {/* Flyer → (after 5s) video slider — keyed so it resets per event */}
+              <EventMedia key={event.id} image={event.image} title={event.title} trailer={trailer} />
 
               {/* Right-side fade blends the panel edge into the ticket */}
               <div
@@ -268,6 +230,9 @@ export default function EventDetailPage() {
                     </span>
                   </div>
                 )}
+
+                {/* Countdown (upcoming) / Completed (past) */}
+                <EventCountdown date={event.date} startTime={event.startTime} endDate={event.endDate} endTime={event.endTime} />
 
                 {/* Meta rows */}
                 <div className="flex flex-col gap-2.5 mb-6">
@@ -554,6 +519,222 @@ export default function EventDetailPage() {
 
         </div>
       </div>
+      <Footer />
     </main>
+  );
+}
+
+/* ── Flyer → video slider (auto-switches to the trailer after 5s) ──── */
+function EventMedia({ image, title, trailer }: { image: string; title: string; trailer: string }) {
+  const yt    = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+  const vimeo = trailer.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  const hasVideo = !!trailer;
+
+  const [slide, setSlide] = useState(0);   // 0 = flyer, 1 = video
+  // Start muted so the video reliably auto-plays (browsers block unmuted autoplay);
+  // one tap on the sound button unmutes it.
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Auto-advance from the flyer to the video 5 seconds after the page loads.
+  useEffect(() => {
+    if (!hasVideo) return;
+    const t = setTimeout(() => setSlide(1), 5000);
+    return () => clearTimeout(t);
+  }, [hasVideo]);
+
+  // For a direct-file trailer, drive playback / mute imperatively.
+  useEffect(() => {
+    if (slide === 1 && videoRef.current) {
+      const v = videoRef.current;
+      v.muted = muted;
+      v.play().catch(() => {
+        // Browser blocked unmuted autoplay — retry muted so it at least plays.
+        if (!muted) { v.muted = true; setMuted(true); v.play().catch(() => {}); }
+      });
+    }
+  }, [slide, muted]);
+
+  const showVideo = hasVideo && slide === 1;
+
+  // YouTube / Vimeo embed with autoplay + sound (mute toggled by state).
+  const embed = yt
+    ? `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1`
+    : vimeo
+    ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${muted ? 1 : 0}&playsinline=1`
+    : "";
+
+  return (
+    <>
+      {/* Flyer */}
+      <img
+        src={image}
+        alt={title}
+        className="absolute inset-0 w-full h-full object-contain transition-opacity duration-500"
+        style={{ opacity: showVideo ? 0 : 1 }}
+      />
+
+      {/* Video (16:9, autoplays with sound when it becomes active) */}
+      {showVideo && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+            {embed ? (
+              <iframe
+                key={muted ? "m" : "u"}
+                src={embed}
+                title="Event trailer"
+                className="absolute inset-0 w-full h-full"
+                style={{ border: 0 }}
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                src={trailer}
+                autoPlay
+                playsInline
+                controls
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sound toggle — prominent "tap for sound" while muted */}
+      {showVideo && (
+        <button
+          onClick={() => setMuted(m => !m)}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="absolute top-5 right-5 z-30 flex items-center gap-2 rounded-full transition-all"
+          style={{
+            padding: muted ? "7px 12px" : "0",
+            width: muted ? "auto" : 36,
+            height: 36,
+            justifyContent: "center",
+            background: muted ? "#39BD69" : "rgba(0,0,0,0.55)",
+            border: muted ? "none" : "1px solid rgba(255,255,255,0.25)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          {muted ? (
+            <>
+              <VolumeX size={15} className="text-black" />
+              <span className="text-black text-[11px] font-bold tracking-wide">Tap for sound</span>
+            </>
+          ) : (
+            <Volume2 size={15} className="text-white" />
+          )}
+        </button>
+      )}
+
+      {/* Slider dots (flyer / video) */}
+      {hasVideo && (
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          {[0, 1].map(i => (
+            <button
+              key={i}
+              onClick={() => setSlide(i)}
+              aria-label={i === 0 ? "Show flyer" : "Play trailer"}
+              className="rounded-full transition-all"
+              style={{ width: slide === i ? 22 : 7, height: 7, background: slide === i ? "#39BD69" : "rgba(255,255,255,0.4)" }}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ── Event countdown / completed indicator ─────────────────────────── */
+function toDateTime(dateStr?: string, timeStr?: string): Date | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  if (timeStr && /^\d{1,2}:\d{2}/.test(timeStr)) {
+    const [h, m] = timeStr.split(":").map(Number);
+    d.setHours(h, m, 0, 0);
+  } else {
+    d.setHours(0, 0, 0, 0);
+  }
+  return d;
+}
+
+function EventCountdown({ date, startTime, endDate, endTime }: {
+  date: string; startTime?: string; endDate?: string; endTime?: string;
+}) {
+  const [now, setNow] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const start = toDateTime(date, startTime);
+  if (!mounted || !start) return null;                     // avoid hydration mismatch / unparseable dates
+
+  const startMs = start.getTime();
+  const end = toDateTime(endDate || date, endTime || "23:59");
+  const endMs = end ? end.getTime() : startMs + 3 * 60 * 60 * 1000; // assume ~3h if no end given
+
+  // ── Completed ──
+  if (now > endMs) {
+    return (
+      <div className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3"
+        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <CheckCircle2 size={16} style={{ color: "rgba(255,255,255,0.55)" }} />
+        <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: "rgba(255,255,255,0.6)" }}>
+          Event Completed
+        </span>
+      </div>
+    );
+  }
+
+  // ── Happening now ──
+  if (now >= startMs && now <= endMs) {
+    return (
+      <div className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3"
+        style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)" }}>
+        <Radio size={16} className="animate-pulse" style={{ color: "#f87171" }} />
+        <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: "#f87171" }}>
+          Happening Now
+        </span>
+      </div>
+    );
+  }
+
+  // ── Upcoming — live countdown ──
+  const diff  = startMs - now;
+  const days  = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000) / 60000);
+  const secs  = Math.floor((diff % 60000) / 1000);
+  const boxes = [
+    { v: days,  l: "Days" },
+    { v: hours, l: "Hrs"  },
+    { v: mins,  l: "Min"  },
+    { v: secs,  l: "Sec"  },
+  ];
+
+  return (
+    <div className="mb-6 rounded-xl p-4"
+      style={{ background: "rgba(57,189,105,0.06)", border: "1px solid rgba(57,189,105,0.2)" }}>
+      <p className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.3em] uppercase mb-3" style={{ color: "#39BD69" }}>
+        <Clock size={11} /> Starts In
+      </p>
+      <div className="grid grid-cols-4 gap-2">
+        {boxes.map(b => (
+          <div key={b.l} className="flex flex-col items-center rounded-lg py-2"
+            style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <span className="text-white font-black text-xl leading-none tabular-nums">{String(b.v).padStart(2, "0")}</span>
+            <span className="text-white/35 text-[8px] font-bold tracking-[0.15em] uppercase mt-1">{b.l}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

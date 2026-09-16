@@ -7,6 +7,7 @@ import { Artist } from "../data/artists";
 import { useAdminData } from "../context/AdminDataContext";
 import { artistSlug } from "../lib/slug";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import StickySearchFilters from "../components/StickySearchFilters";
 import ParticleField from "../components/ParticleField";
 import Preloader from "../components/Preloader";
@@ -299,6 +300,7 @@ export default function ArtistsPage() {
             </Suspense>
           </div>
         </div>
+        <Footer />
       </div>
     </main>
   );

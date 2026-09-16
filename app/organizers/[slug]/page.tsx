@@ -9,6 +9,7 @@ import { eventSlug, organizerSlug } from "../../lib/slug";
 import { fromPrice } from "../../lib/price";
 import { track } from "../../lib/track";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
 
@@ -222,6 +223,7 @@ export default function OrganizerDetailPage() {
           )}
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

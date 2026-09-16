@@ -82,6 +82,8 @@ function EventFormInner() {
 
   const [form, setForm] = useState<Omit<Event, "id">>(EMPTY);
   const [coordMode, setCoordMode] = useState<"map" | "manual">("map");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (editing) setForm({ ...editing });
@@ -93,12 +95,19 @@ function EventFormInner() {
   const toggleGenre = (g: string) =>
     set("genres", form.genres.includes(g) ? form.genres.filter(x => x !== g) : [...form.genres, g]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    setError("");
     const data = { ...form };
-    if (editing) updateEvent({ ...data, id: editing.id });
-    else addEvent(data);
-    router.push("/admin/events");
+    const ok = editing ? await updateEvent({ ...data, id: editing.id }) : await addEvent(data);
+    if (ok) {
+      router.push("/admin/events");
+    } else {
+      setSaving(false);
+      setError("Couldn't save — the server didn't respond. Your inputs are safe; please click again to retry.");
+    }
   };
 
   return (
@@ -411,6 +420,13 @@ function EventFormInner() {
 
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div style={{ marginTop: 20, padding: "12px 16px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+
         {/* Actions */}
         <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "flex-end" }}>
           <button
@@ -422,9 +438,10 @@ function EventFormInner() {
           </button>
           <button
             type="submit"
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
+            disabled={saving}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
           >
-            <Check size={14} /> {editing ? "Save Changes" : "Create Event"}
+            <Check size={14} /> {saving ? "Saving…" : editing ? "Save Changes" : "Create Event"}
           </button>
         </div>
       </form>

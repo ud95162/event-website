@@ -32,6 +32,8 @@ export default function OrganizersAdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user && user.role !== "admin") router.replace("/admin");
@@ -45,11 +47,13 @@ export default function OrganizersAdminPage() {
   const openAdd = () => {
     setEditingId(null);
     setForm(EMPTY);
+    setError("");
     setShowForm(true);
   };
 
   const openEdit = (o: Organizer) => {
     setEditingId(o.id);
+    setError("");
     setForm({
       name: o.name,
       logo: o.logo ?? "",
@@ -67,12 +71,16 @@ export default function OrganizersAdminPage() {
     setShowForm(false);
     setEditingId(null);
     setForm(EMPTY);
+    setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const name = form.name.trim();
     if (!name) return;
+    setSaving(true);
+    setError("");
     const payload = {
       name,
       logo: form.logo || undefined,
@@ -83,12 +91,15 @@ export default function OrganizersAdminPage() {
       username: form.username.trim() || undefined,
       password: form.password || undefined,
     };
-    if (editingId != null) {
-      updateOrganizer({ id: editingId, ...payload });
+    const ok = editingId != null
+      ? await updateOrganizer({ id: editingId, ...payload })
+      : await addOrganizer(payload);
+    setSaving(false);
+    if (ok) {
+      closeForm();
     } else {
-      addOrganizer(payload);
+      setError("Couldn't save — the server didn't respond. Your inputs are safe; please click again to retry.");
     }
-    closeForm();
   };
 
   return (
@@ -188,12 +199,18 @@ export default function OrganizersAdminPage() {
             </div>
           </div>
 
+          {error && (
+            <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: 13 }}>
+              {error}
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <button type="button" onClick={closeForm} style={{ padding: "10px 22px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
               Cancel
             </button>
-            <button type="submit" style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              <Check size={14} /> {editingId != null ? "Save Changes" : "Create"}
+            <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <Check size={14} /> {saving ? "Saving…" : editingId != null ? "Save Changes" : "Create"}
             </button>
           </div>
         </form>

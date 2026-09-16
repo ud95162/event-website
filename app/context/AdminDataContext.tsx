@@ -9,6 +9,9 @@ export type { Event, Artist };
 export type Banner = {
   id: number;
   url: string;
+  eventId?: number | null;   // event the banner's "Explore Event" CTA links to (date/venue come from it)
+  title?: string | null;     // banner's own headline
+  description?: string | null; // banner's own description
 };
 
 export type PopupSettings = {
@@ -40,21 +43,21 @@ type AdminDataContextType = {
   badges: string[];
   banners: Banner[];
   popupSettings: PopupSettings;
-  updatePopupSettings: (s: PopupSettings) => void;
+  updatePopupSettings: (s: PopupSettings) => Promise<boolean>;
 
-  // Events CRUD
-  addEvent: (ev: Omit<Event, "id">) => void;
-  updateEvent: (ev: Event) => void;
+  // Events CRUD (add/update resolve true on success, false if the request failed)
+  addEvent: (ev: Omit<Event, "id">) => Promise<boolean>;
+  updateEvent: (ev: Event) => Promise<boolean>;
   deleteEvent: (id: number) => void;
 
   // Artists CRUD
-  addArtist: (a: Omit<Artist, "id">) => void;
-  updateArtist: (a: Artist) => void;
+  addArtist: (a: Omit<Artist, "id">) => Promise<boolean>;
+  updateArtist: (a: Artist) => Promise<boolean>;
   deleteArtist: (id: number) => void;
 
   // Organizers CRUD
-  addOrganizer: (o: Omit<Organizer, "id">) => void;
-  updateOrganizer: (o: Organizer) => void;
+  addOrganizer: (o: Omit<Organizer, "id">) => Promise<boolean>;
+  updateOrganizer: (o: Organizer) => Promise<boolean>;
   deleteOrganizer: (id: number) => void;
 
   // Genres CRUD
@@ -66,7 +69,8 @@ type AdminDataContextType = {
   deleteBadge: (name: string) => void;
 
   // Banners CRUD
-  addBanner: (url: string) => void;
+  addBanner: (data: Omit<Banner, "id">) => Promise<boolean>;
+  updateBanner: (b: Banner) => Promise<boolean>;
   deleteBanner: (id: number) => void;
 };
 
@@ -101,34 +105,47 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     ]).finally(() => setLoading(false));
   }, []);
 
-  const updatePopupSettings = (s: PopupSettings) => {
+  const updatePopupSettings = async (s: PopupSettings): Promise<boolean> => {
     setPopupSettings(s);
-    fetch("/api/settings/popup", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(s),
-    }).catch(() => {});
+    try {
+      const res = await fetch("/api/settings/popup", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(s),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   };
 
   // ---- Events ----
-  const addEvent = (ev: Omit<Event, "id">) => {
-    jsonFetch<Event>("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ev),
-    })
-      .then((created) => setEvents((prev) => [...prev, created]))
-      .catch(() => {});
+  const addEvent = async (ev: Omit<Event, "id">): Promise<boolean> => {
+    try {
+      const created = await jsonFetch<Event>("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ev),
+      });
+      setEvents((prev) => [...prev, created]);
+      return true;
+    } catch {
+      return false;
+    }
   };
-  const updateEvent = (ev: Event) => {
+  const updateEvent = async (ev: Event): Promise<boolean> => {
     setEvents((prev) => prev.map((e) => (e.id === ev.id ? ev : e)));
-    jsonFetch<Event>(`/api/events/${ev.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ev),
-    })
-      .then((updated) => setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e))))
-      .catch(() => {});
+    try {
+      const updated = await jsonFetch<Event>(`/api/events/${ev.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ev),
+      });
+      setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+      return true;
+    } catch {
+      return false;
+    }
   };
   const deleteEvent = (id: number) => {
     setEvents((prev) => prev.filter((e) => e.id !== id));
@@ -136,24 +153,32 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   };
 
   // ---- Artists ----
-  const addArtist = (a: Omit<Artist, "id">) => {
-    jsonFetch<Artist>("/api/artists", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(a),
-    })
-      .then((created) => setArtists((prev) => [...prev, created]))
-      .catch(() => {});
+  const addArtist = async (a: Omit<Artist, "id">): Promise<boolean> => {
+    try {
+      const created = await jsonFetch<Artist>("/api/artists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(a),
+      });
+      setArtists((prev) => [...prev, created]);
+      return true;
+    } catch {
+      return false;
+    }
   };
-  const updateArtist = (a: Artist) => {
+  const updateArtist = async (a: Artist): Promise<boolean> => {
     setArtists((prev) => prev.map((x) => (x.id === a.id ? a : x)));
-    jsonFetch<Artist>(`/api/artists/${a.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(a),
-    })
-      .then((updated) => setArtists((prev) => prev.map((x) => (x.id === updated.id ? updated : x))))
-      .catch(() => {});
+    try {
+      const updated = await jsonFetch<Artist>(`/api/artists/${a.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(a),
+      });
+      setArtists((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      return true;
+    } catch {
+      return false;
+    }
   };
   const deleteArtist = (id: number) => {
     setArtists((prev) => prev.filter((x) => x.id !== id));
@@ -161,31 +186,37 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   };
 
   // ---- Organizers ----
-  const addOrganizer = (o: Omit<Organizer, "id">) => {
-    if (!o.name) return;
-    jsonFetch<Organizer>("/api/organizers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(o),
-    })
-      .then((created) =>
-        setOrganizers((prev) =>
-          prev.some((x) => x.id === created.id)
-            ? prev.map((x) => (x.id === created.id ? created : x))
-            : [...prev, created]
-        )
-      )
-      .catch(() => {});
+  const addOrganizer = async (o: Omit<Organizer, "id">): Promise<boolean> => {
+    if (!o.name) return false;
+    try {
+      const created = await jsonFetch<Organizer>("/api/organizers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(o),
+      });
+      setOrganizers((prev) =>
+        prev.some((x) => x.id === created.id)
+          ? prev.map((x) => (x.id === created.id ? created : x))
+          : [...prev, created]
+      );
+      return true;
+    } catch {
+      return false;
+    }
   };
-  const updateOrganizer = (o: Organizer) => {
+  const updateOrganizer = async (o: Organizer): Promise<boolean> => {
     setOrganizers((prev) => prev.map((x) => (x.id === o.id ? o : x)));
-    jsonFetch<Organizer>(`/api/organizers/${o.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(o),
-    })
-      .then((updated) => setOrganizers((prev) => prev.map((x) => (x.id === updated.id ? updated : x))))
-      .catch(() => {});
+    try {
+      const updated = await jsonFetch<Organizer>(`/api/organizers/${o.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(o),
+      });
+      setOrganizers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      return true;
+    } catch {
+      return false;
+    }
   };
   const deleteOrganizer = (id: number) => {
     setOrganizers((prev) => prev.filter((o) => o.id !== id));
@@ -225,14 +256,32 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   };
 
   // ---- Banners ----
-  const addBanner = (url: string) => {
-    jsonFetch<Banner>("/api/banners", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    })
-      .then((created) => setBanners((prev) => [...prev, created]))
-      .catch(() => {});
+  const addBanner = async (data: Omit<Banner, "id">): Promise<boolean> => {
+    try {
+      const created = await jsonFetch<Banner>("/api/banners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      setBanners((prev) => [...prev, created]);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const updateBanner = async (b: Banner): Promise<boolean> => {
+    setBanners((prev) => prev.map((x) => (x.id === b.id ? b : x)));
+    try {
+      const updated = await jsonFetch<Banner>(`/api/banners/${b.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: b.url, eventId: b.eventId ?? null, title: b.title ?? null, description: b.description ?? null }),
+      });
+      setBanners((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      return true;
+    } catch {
+      return false;
+    }
   };
   const deleteBanner = (id: number) => {
     setBanners((prev) => prev.filter((b) => b.id !== id));
@@ -249,7 +298,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       addOrganizer, updateOrganizer, deleteOrganizer,
       addGenre, deleteGenre,
       addBadge, deleteBadge,
-      addBanner, deleteBanner,
+      addBanner, updateBanner, deleteBanner,
     }}>
       {children}
     </AdminDataContext.Provider>

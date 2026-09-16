@@ -10,6 +10,7 @@ import { useUserLocation, haversineKm, formatDistance } from "../context/Locatio
 import { eventSlug, organizerSlug } from "../lib/slug";
 import { ticketPrices } from "../lib/price";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import StickySearchFilters from "../components/StickySearchFilters";
 import ParticleField from "../components/ParticleField";
 import Preloader from "../components/Preloader";
@@ -622,6 +623,7 @@ export default function EventsPage() {
             </Suspense>
           </div>
         </div>
+        <Footer />
       </div>
     </main>
   );

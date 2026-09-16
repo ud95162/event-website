@@ -1,8 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, ChevronDown, Search } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
+import { eventSlug } from "../lib/slug";
+
+// Split an event title into up to two balanced lines for the hero headline.
+const splitTitle = (t: string): string[] => {
+  const words = t.trim().split(/\s+/);
+  if (words.length <= 1) return [t];
+  const mid = Math.ceil(words.length / 2);
+  return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+};
 
 const SLIDE_INTERVAL = 6000;
 const ANIM_MS        = 1000;
@@ -60,16 +70,25 @@ const FALLBACK_PANELS = [
 ];
 
 export default function Hero() {
-  const { banners } = useAdminData();
-  const panels = banners.length > 0
-    ? banners.map((b, i) => ({
-        image: b.url,
-        tag:   FALLBACK_PANELS[i % FALLBACK_PANELS.length].tag,
-        date:  FALLBACK_PANELS[i % FALLBACK_PANELS.length].date,
-        title: FALLBACK_PANELS[i % FALLBACK_PANELS.length].title,
-        desc:  FALLBACK_PANELS[i % FALLBACK_PANELS.length].desc,
-      }))
-    : FALLBACK_PANELS;
+  const { banners, events } = useAdminData();
+  const router = useRouter();
+  const panels: {
+    image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null;
+  }[] = banners.length > 0
+    ? banners.map((b, i) => {
+        const fb = FALLBACK_PANELS[i % FALLBACK_PANELS.length];
+        const ev = b.eventId != null ? events.find(e => e.id === b.eventId) : null;
+        // Title & description come from the banner's own fields (falling back to the event, then the demo text).
+        const title = b.title ? splitTitle(b.title) : ev ? splitTitle(ev.title) : fb.title;
+        const rawDesc = b.description || ev?.description || "";
+        const desc = rawDesc ? rawDesc.slice(0, 120) + (rawDesc.length > 120 ? "…" : "") : fb.desc;
+        // Date & venue come from the linked event.
+        const venue = ev?.venue || ev?.location || "";
+        const date = ev ? `${ev.date}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
+        const tag = ev?.tag ? ev.tag.toUpperCase() : fb.tag;
+        return { image: b.url, tag, date, title, desc, slug: ev ? eventSlug(ev) : null };
+      })
+    : FALLBACK_PANELS.map(fb => ({ ...fb, slug: null }));
 
   const [current,       setCurrent]       = useState(0);
   const [prevIdx,       setPrevIdx]       = useState<number | null>(null);
@@ -288,7 +307,8 @@ export default function Hero() {
                   {/* CTA */}
                   <button
                     key={`cta-${i}-${bigIdx}`}
-                    className="flex items-center gap-3 group/btn"
+                    onClick={() => router.push(p.slug ? `/events/${p.slug}` : "/events")}
+                    className="flex items-center gap-3 group/btn cursor-pointer"
                     style={{
                       opacity: isBig ? 1 : 0,
                       transition: "opacity 0.4s ease",

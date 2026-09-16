@@ -49,6 +49,8 @@ function ArtistFormInner() {
   const editing = editId ? artists.find(a => a.id === editId) ?? null : null;
 
   const [form, setForm] = useState<Omit<Artist, "id">>(EMPTY);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user && user.role !== "admin") router.replace("/admin");
@@ -92,15 +94,19 @@ function ArtistFormInner() {
   const set = (key: keyof Omit<Artist, "id">, val: unknown) =>
     setForm(prev => ({ ...prev, [key]: val }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    setError("");
     const finalForm = { ...form, name: form.stageName || form.name };
-    if (editing) {
-      updateArtist({ ...finalForm, id: editing.id });
+    const ok = editing ? await updateArtist({ ...finalForm, id: editing.id }) : await addArtist(finalForm);
+    if (ok) {
+      router.push("/admin/artists");
     } else {
-      addArtist(finalForm);
+      setSaving(false);
+      setError("Couldn't save — the server didn't respond. Your inputs are safe; please click again to retry.");
     }
-    router.push("/admin/artists");
   };
 
   if (user?.role !== "admin") return null;
@@ -322,13 +328,20 @@ function ArtistFormInner() {
 
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div style={{ marginTop: 20, padding: "12px 16px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+
         {/* Actions */}
         <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "flex-end" }}>
           <button type="button" onClick={() => router.push("/admin/artists")} style={{ padding: "11px 24px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             Cancel
           </button>
-          <button type="submit" style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            <Check size={14} /> {editing ? "Save Changes" : "Create Artist"}
+          <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            <Check size={14} /> {saving ? "Saving…" : editing ? "Save Changes" : "Create Artist"}
           </button>
         </div>
       </form>

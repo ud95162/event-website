@@ -191,9 +191,24 @@ async function createAndSeed(): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS banners (
       id INT PRIMARY KEY AUTO_INCREMENT,
-      url MEDIUMTEXT
+      url MEDIUMTEXT,
+      event_id INT NULL,
+      title VARCHAR(255) NULL,
+      description TEXT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  // Migration: add columns to pre-existing banners tables (idempotent).
+  for (const [name, ddl] of [
+    ["event_id", "event_id INT NULL"],
+    ["title", "title VARCHAR(255) NULL"],
+    ["description", "description TEXT NULL"],
+  ] as const) {
+    const [cols] = await pool.query<any[]>(
+      "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'banners' AND COLUMN_NAME = ?",
+      [name]
+    );
+    if (cols[0].c === 0) await pool.query(`ALTER TABLE banners ADD COLUMN ${ddl}`);
+  }
 
   // Analytics counters: page views + link clicks per event/organizer.
   await pool.query(`

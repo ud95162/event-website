@@ -50,6 +50,7 @@ import { useUserLocation, haversineKm, formatDistance } from "../../context/Loca
 import { eventSlug, artistSlug } from "../../lib/slug";
 import { fromPrice } from "../../lib/price";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
 
@@ -588,6 +589,7 @@ export default function ArtistDetailPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }
