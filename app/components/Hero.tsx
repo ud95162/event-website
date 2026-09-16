@@ -70,25 +70,26 @@ const FALLBACK_PANELS = [
 ];
 
 export default function Hero() {
-  const { banners, events } = useAdminData();
+  const { banners, events, loading } = useAdminData();
   const router = useRouter();
+  // Slides come ONLY from admin-added banners (no public-folder fallback flashing
+  // while data loads). Text defaults per index still reuse FALLBACK_PANELS.
   const panels: {
     image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null;
-  }[] = banners.length > 0
-    ? banners.map((b, i) => {
-        const fb = FALLBACK_PANELS[i % FALLBACK_PANELS.length];
-        const ev = b.eventId != null ? events.find(e => e.id === b.eventId) : null;
-        // Title & description come from the banner's own fields (falling back to the event, then the demo text).
-        const title = b.title ? splitTitle(b.title) : ev ? splitTitle(ev.title) : fb.title;
-        const rawDesc = b.description || ev?.description || "";
-        const desc = rawDesc ? rawDesc.slice(0, 120) + (rawDesc.length > 120 ? "…" : "") : fb.desc;
-        // Date & venue come from the linked event.
-        const venue = ev?.venue || ev?.location || "";
-        const date = ev ? `${ev.date}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
-        const tag = ev?.tag ? ev.tag.toUpperCase() : fb.tag;
-        return { image: b.url, tag, date, title, desc, slug: ev ? eventSlug(ev) : null };
-      })
-    : FALLBACK_PANELS.map(fb => ({ ...fb, slug: null }));
+  }[] = banners.map((b, i) => {
+    const fb = FALLBACK_PANELS[i % FALLBACK_PANELS.length];
+    const ev = b.eventId != null ? events.find(e => e.id === b.eventId) : null;
+    // Title & description come from the banner's own fields (falling back to the event, then the demo text).
+    const title = b.title ? splitTitle(b.title) : ev ? splitTitle(ev.title) : fb.title;
+    const rawDesc = b.description || ev?.description || "";
+    const desc = rawDesc ? rawDesc.slice(0, 120) + (rawDesc.length > 120 ? "…" : "") : fb.desc;
+    // Date & venue come from the linked event.
+    const venue = ev?.venue || ev?.location || "";
+    const date = ev ? `${ev.date}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
+    const tag = ev?.tag ? ev.tag.toUpperCase() : fb.tag;
+    return { image: b.url, tag, date, title, desc, slug: ev ? eventSlug(ev) : null };
+  });
+  const hasPanels = panels.length > 0;
 
   const [current,       setCurrent]       = useState(0);
   const [prevIdx,       setPrevIdx]       = useState<number | null>(null);
@@ -102,6 +103,7 @@ export default function Hero() {
   const ease = `${ANIM_MS}ms cubic-bezier(0.87, 0, 0.13, 1)`;
 
   const goTo = (dir: "left" | "right") => {
+    if (panels.length <= 1) return;
     const next = dir === "left"
       ? (currentRef.current + 1) % panels.length
       : (currentRef.current - 1 + panels.length) % panels.length;
@@ -160,8 +162,21 @@ export default function Hero() {
       <div className="flex-1 w-full min-h-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           className="h-full rounded-2xl"
-          style={{ position: "relative", overflow: "hidden" }}
+          style={{ position: "relative", overflow: "hidden", background: "#0d0d12" }}
         >
+          {/* Placeholder while banners load — avoids showing stale/public images */}
+          {!hasPanels && (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(110deg, #0d0d12 30%, #141420 50%, #0d0d12 70%)",
+                backgroundSize: "200% 100%",
+                animation: loading ? "hero-shimmer 1.4s ease-in-out infinite" : undefined,
+              }}
+            />
+          )}
+          <style>{`@keyframes hero-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
+
           {panels.map((p, i) => {
             const isCurrent = i === current;
             const isPrev    = i === prevIdx;

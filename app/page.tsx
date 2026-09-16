@@ -16,6 +16,7 @@ import StickySearchFilters from "./components/StickySearchFilters";
 import ThisWeekPopup from "./components/ThisWeekPopup";
 import StatsCounter from "./components/StatsCounter";
 import BrandMarquee from "./components/BrandMarquee";
+import { useAdminData } from "./context/AdminDataContext";
 import { hasPreloaderShown, markPreloaderShown } from "./preloaderState";
 
 // useLayoutEffect is skipped during SSR; useEffect is the server-safe fallback.
@@ -29,6 +30,29 @@ export default function Home() {
   // "exit"     = preloader animating out
   // "gone"     = preloader done / returning visitor
   const [preloaderPhase, setPreloaderPhase] = useState<"checking" | "idle" | "exit" | "gone">("checking");
+
+  // Preload the admin banner images so the hero is ready when the preloader ends
+  // (no flash of blank/stale banners). The preloader waits for `assetsReady`.
+  const { banners, loading } = useAdminData();
+  const [assetsReady, setAssetsReady] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;                       // wait until banners are fetched
+    const urls = banners.map(b => b.url).filter(Boolean);
+    if (urls.length === 0) { setAssetsReady(true); return; }
+    let done = 0;
+    let cancelled = false;
+    const tick = () => { if (!cancelled && ++done >= urls.length) setAssetsReady(true); };
+    urls.forEach(u => {
+      const img = new window.Image();
+      img.onload = tick;
+      img.onerror = tick;
+      img.src = u;
+    });
+    // Safety: never let the preloader hang if an image stalls.
+    const safety = setTimeout(() => { if (!cancelled) setAssetsReady(true); }, 8000);
+    return () => { cancelled = true; clearTimeout(safety); };
+  }, [loading, banners]);
 
   // Runs synchronously before the browser paints (skipped during SSR).
   // We only mount the Preloader AFTER we know this is a first-time visit,
@@ -48,7 +72,7 @@ export default function Home() {
       {preloaderPhase === "gone" && <ThisWeekPopup />}
       {/* Preloader — only mounted once we know it's a first-time visit */}
       {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
-        <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
+        <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} assetsReady={assetsReady} />
       )}
 
       {/* Layer 0a – dark gradient wave animation */}

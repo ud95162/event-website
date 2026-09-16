@@ -6,11 +6,13 @@ import { useEffect, useState, useRef, useCallback } from "react";
 interface PreloaderProps {
   phase: "idle" | "exit";
   setPhase: (phase: "idle" | "exit" | "gone") => void;
+  // When false, the preloader holds at ~95% and won't exit until assets finish loading.
+  assetsReady?: boolean;
 }
 
 
 /* ══════════════════════════════════════════════════════════════════════════ */
-export default function Preloader({ phase, setPhase }: PreloaderProps) {
+export default function Preloader({ phase, setPhase, assetsReady = true }: PreloaderProps) {
   const [progress, setProgress] = useState(0);
   const triggerRef = useRef(false);
   const grainRef   = useRef<HTMLCanvasElement>(null);
@@ -49,13 +51,13 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (progress >= 95 && e.deltaY > 5) triggerExit();
+      if (progress >= 95 && assetsReady && e.deltaY > 5) triggerExit();
     };
     let y0 = 0;
     const onTS = (e: TouchEvent) => { y0 = e.touches[0].clientY; };
     const onTM = (e: TouchEvent) => {
       e.preventDefault();
-      if (progress >= 95 && y0 - e.touches[0].clientY > 30) triggerExit();
+      if (progress >= 95 && assetsReady && y0 - e.touches[0].clientY > 30) triggerExit();
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -66,7 +68,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
       window.removeEventListener("touchstart", onTS);
       window.removeEventListener("touchmove", onTM);
     };
-  }, [phase, progress, triggerExit]);
+  }, [phase, progress, assetsReady, triggerExit]);
 
   /* ── Animated film grain (small canvas, redrawn ~12fps) ──────────────── */
   useEffect(() => {
@@ -93,7 +95,9 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
     return () => clearInterval(id);
   }, []);
 
-  const isLoaded = progress >= 100;
+  // Hold the bar at 95% until the assets (banner images) are ready.
+  const shownProgress = assetsReady ? progress : Math.min(progress, 95);
+  const isLoaded = progress >= 100 && assetsReady;
 
   /* ── Auto-exit 1 s after loading completes ───────────────────────────── */
   useEffect(() => {
@@ -391,7 +395,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
             <div
               className="absolute left-0 top-0 h-full rounded-full"
               style={{
-                width: `${progress}%`,
+                width: `${shownProgress}%`,
                 background: "#ffffff",
                 boxShadow: "0 0 8px rgba(255,255,255,0.6)",
                 transition: "width 0.05s linear",
@@ -399,7 +403,7 @@ export default function Preloader({ phase, setPhase }: PreloaderProps) {
             />
           </div>
           <p className="text-white/20 text-[9px] tracking-[0.45em] tabular-nums uppercase">
-            LOADING EXPERIENCE {Math.round(progress).toString().padStart(3, "0")}%
+            LOADING EXPERIENCE {Math.round(shownProgress).toString().padStart(3, "0")}%
           </p>
         </div>
       </div>
