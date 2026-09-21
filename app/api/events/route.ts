@@ -7,7 +7,10 @@ export async function GET() {
   await ensureSchema();
   const pool = getPool();
   const [rows] = await pool.query<any[]>("SELECT * FROM events ORDER BY id");
-  return NextResponse.json(rows.map(mapEventRow));
+  // Cache so repeat visits reuse the (image-heavy) response instantly; SWR keeps it fresh.
+  return NextResponse.json(rows.map(mapEventRow), {
+    headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
+  });
 }
 
 export async function POST(req: NextRequest) {

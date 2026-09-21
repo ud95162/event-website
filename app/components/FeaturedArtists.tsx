@@ -31,7 +31,7 @@ const ACCENT_COLOR = "#39BD69";
 const ACCENT_RGB   = "57,189,105";
 
 export default function FeaturedArtists() {
-  const { artists: allArtists } = useAdminData();
+  const { artists: allArtists, loading } = useAdminData();
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -111,6 +111,14 @@ export default function FeaturedArtists() {
             className="fa-row flex overflow-x-auto"
             style={{ gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
           >
+            {/* Skeleton placeholders while data is loading (no cached data yet) */}
+            {mounted && loading && artists.length === 0 && [...Array(5)].map((_, i) => (
+              <div key={`sk-${i}`} className="relative rounded-2xl overflow-hidden flex-shrink-0" style={{ width: CARD_W, height: CARD_H, background: "#0d0d12", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="absolute inset-0" style={{ background: "linear-gradient(110deg, #0d0d12 30%, #16161f 50%, #0d0d12 70%)", backgroundSize: "200% 100%", animation: "fa-skel 1.3s ease-in-out infinite" }} />
+              </div>
+            ))}
+            <style>{`@keyframes fa-skel { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
+
             {mounted && artists.map(card => {
               const hovered = hoveredCard === card.id;
               return (

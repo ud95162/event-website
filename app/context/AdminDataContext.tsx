@@ -82,6 +82,20 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// Lightweight client cache so repeat visits render instantly, then update when the
+// fresh data arrives. Guarded against SSR, private mode and quota limits.
+const CACHE_PREFIX = "adx_cache_";
+function readCache<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+  try { const s = localStorage.getItem(CACHE_PREFIX + key); return s ? (JSON.parse(s) as T) : null; }
+  catch { return null; }
+}
+function writeCache(key: string, data: unknown) {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(data)); }
+  catch { /* quota exceeded / private mode — fall back to network + HTTP cache */ }
+}
+
 export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -92,16 +106,26 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [popupSettings, setPopupSettings] = useState<PopupSettings>(DEFAULT_POPUP);
   const [loading, setLoading] = useState(true);
 
-  // Initial load from the API.
+  // Initial load: hydrate instantly from the last-good cache, then refresh from the API.
   useEffect(() => {
+    // 1) Show cached data immediately (no waiting on the network / big payloads).
+    const ce = readCache<Event[]>("events");     if (ce?.length) setEvents(ce);
+    const ca = readCache<Artist[]>("artists");    if (ca?.length) setArtists(ca);
+    const cb = readCache<Banner[]>("banners");    if (cb) setBanners(cb);
+    const co = readCache<Organizer[]>("organizers"); if (co) setOrganizers(co);
+    const cg = readCache<string[]>("genres");     if (cg) setGenres(cg);
+    const cbd = readCache<string[]>("badges");    if (cbd) setBadges(cbd);
+    const cp = readCache<PopupSettings>("popup"); if (cp) setPopupSettings({ ...DEFAULT_POPUP, ...cp });
+
+    // 2) Fetch fresh, update state, and refresh the cache.
     Promise.allSettled([
-      jsonFetch<Event[]>("/api/events").then(setEvents),
-      jsonFetch<Artist[]>("/api/artists").then(setArtists),
-      jsonFetch<Organizer[]>("/api/organizers").then(setOrganizers),
-      jsonFetch<string[]>("/api/genres").then(setGenres),
-      jsonFetch<string[]>("/api/badges").then(setBadges),
-      jsonFetch<Banner[]>("/api/banners").then(setBanners),
-      jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) setPopupSettings({ ...DEFAULT_POPUP, ...s }); }),
+      jsonFetch<Event[]>("/api/events").then((d) => { setEvents(d); writeCache("events", d); }),
+      jsonFetch<Artist[]>("/api/artists").then((d) => { setArtists(d); writeCache("artists", d); }),
+      jsonFetch<Organizer[]>("/api/organizers").then((d) => { setOrganizers(d); writeCache("organizers", d); }),
+      jsonFetch<string[]>("/api/genres").then((d) => { setGenres(d); writeCache("genres", d); }),
+      jsonFetch<string[]>("/api/badges").then((d) => { setBadges(d); writeCache("badges", d); }),
+      jsonFetch<Banner[]>("/api/banners").then((d) => { setBanners(d); writeCache("banners", d); }),
+      jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) { setPopupSettings({ ...DEFAULT_POPUP, ...s }); writeCache("popup", s); } }),
     ]).finally(() => setLoading(false));
   }, []);
 
