@@ -6,7 +6,12 @@ export async function GET() {
   await ensureSchema();
   const pool = getPool();
   const [rows] = await pool.query<any[]>("SELECT id, url, event_id AS eventId, title, description FROM banners ORDER BY id");
-  return NextResponse.json(rows);
+  // Let browsers/CDN reuse the (large, image-heavy) response so repeat visits are instant.
+  // Short freshness window keeps admin edits reflecting quickly; stale-while-revalidate
+  // serves the cached copy immediately and refreshes in the background.
+  return NextResponse.json(rows, {
+    headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
+  });
 }
 
 export async function POST(req: NextRequest) {

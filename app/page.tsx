@@ -31,28 +31,13 @@ export default function Home() {
   // "gone"     = preloader done / returning visitor
   const [preloaderPhase, setPreloaderPhase] = useState<"checking" | "idle" | "exit" | "gone">("checking");
 
-  // Preload the admin banner images so the hero is ready when the preloader ends
-  // (no flash of blank/stale banners). The preloader waits for `assetsReady`.
-  const { banners, loading } = useAdminData();
-  const [assetsReady, setAssetsReady] = useState(false);
-
+  // Warm the browser cache for the banner images in the background — but never block
+  // the preloader on them (some uploads are large and slow). The site opens on its own
+  // timing and the hero fills in with a placeholder until each image arrives.
+  const { banners } = useAdminData();
   useEffect(() => {
-    if (loading) return;                       // wait until banners are fetched
-    const urls = banners.map(b => b.url).filter(Boolean);
-    if (urls.length === 0) { setAssetsReady(true); return; }
-    let done = 0;
-    let cancelled = false;
-    const tick = () => { if (!cancelled && ++done >= urls.length) setAssetsReady(true); };
-    urls.forEach(u => {
-      const img = new window.Image();
-      img.onload = tick;
-      img.onerror = tick;
-      img.src = u;
-    });
-    // Safety: never let the preloader hang if an image stalls.
-    const safety = setTimeout(() => { if (!cancelled) setAssetsReady(true); }, 8000);
-    return () => { cancelled = true; clearTimeout(safety); };
-  }, [loading, banners]);
+    banners.forEach(b => { if (b.url) { const img = new window.Image(); img.src = b.url; } });
+  }, [banners]);
 
   // Runs synchronously before the browser paints (skipped during SSR).
   // We only mount the Preloader AFTER we know this is a first-time visit,
@@ -72,7 +57,7 @@ export default function Home() {
       {preloaderPhase === "gone" && <ThisWeekPopup />}
       {/* Preloader — only mounted once we know it's a first-time visit */}
       {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
-        <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} assetsReady={assetsReady} />
+        <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
       )}
 
       {/* Layer 0a – dark gradient wave animation */}

@@ -18,20 +18,53 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
 
+  // Downscale + compress the image before storing it. Uploads are kept as base64 in
+  // the DB and sent inline in API responses, so a raw 5 MB photo makes pages crawl.
+  // Capping the longest side and re-encoding as JPEG shrinks that to a few hundred KB.
+  const MAX_DIM = 1600;
+  const QUALITY = 0.82;
+
+  const compress = (dataUrl: string): Promise<string> =>
+    new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          const out = canvas.toDataURL("image/jpeg", QUALITY);
+          // Keep whichever is smaller (tiny PNGs/SVGs may already beat re-encoding).
+          resolve(out.length < dataUrl.length ? out : dataUrl);
+        } catch {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+
   const handleFile = (file: File) => {
     setError("");
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be under 5 MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Image must be under 15 MB.");
       return;
     }
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
       const result = e.target?.result as string;
-      onChange(result);
+      // GIFs/SVGs would lose animation/quality through canvas — store those as-is.
+      const skip = /^data:image\/(gif|svg\+xml)/i.test(result);
+      onChange(skip ? result : await compress(result));
     };
     reader.readAsDataURL(file);
   };
