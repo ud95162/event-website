@@ -216,10 +216,19 @@ export default function Hero() {
                   zIndex:    isCurrent ? 2 : 1,
                 }}
               >
+                {/* Blurred backdrop fills the frame behind the full (uncropped) banner */}
+                <img
+                  src={p.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ filter: "blur(28px) brightness(0.55)", transform: "scale(1.15)" }}
+                />
+                {/* The actual banner, shown in full (never cropped) */}
                 <img
                   src={p.image}
                   alt={p.tag}
-                  className="w-full h-full object-cover object-center"
+                  className="relative w-full h-full object-contain object-center"
                 />
 
                 {/* Gradient */}
