@@ -99,7 +99,10 @@ export default function ThisWeekPopup() {
           onClick={() => go(ev)}
           style={{ position: "relative", height: 420, cursor: "pointer", overflow: "hidden" }}
         >
-          <img key={ev.id} src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", animation: "twp-slide 0.35s ease" }} />
+          {/* Blurred backdrop fills the frame behind the full (uncropped) banner */}
+          <img key={`bg-${ev.id}`} src={ev.image} alt="" aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(26px) brightness(0.5)", transform: "scale(1.15)" }} />
+          {/* The actual banner, shown in full — never cropped */}
+          <img key={ev.id} src={ev.image} alt={ev.title} style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", animation: "twp-slide 0.35s ease" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(11,11,16,1) 0%, rgba(11,11,16,0.35) 45%, rgba(0,0,0,0.25) 100%)" }} />
 
           {/* Event info overlay */}

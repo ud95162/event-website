@@ -115,7 +115,9 @@ async function createAndSeed(): Promise<void> {
       booking_email VARCHAR(255),
       booking_phone VARCHAR(255),
       level VARCHAR(50),
-      featured TINYINT(1) DEFAULT 0
+      featured TINYINT(1) DEFAULT 0,
+      artist_type VARCHAR(20),
+      members JSON
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -133,6 +135,8 @@ async function createAndSeed(): Promise<void> {
   await addArtistCol("booking_phone", "booking_phone VARCHAR(255)");
   await addArtistCol("level", "level VARCHAR(50)");
   await addArtistCol("featured", "featured TINYINT(1) DEFAULT 0");
+  await addArtistCol("artist_type", "artist_type VARCHAR(20)");
+  await addArtistCol("members", "members JSON");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS organizers (

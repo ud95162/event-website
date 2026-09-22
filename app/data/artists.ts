@@ -3,8 +3,17 @@ export type SocialLink = {
   url:      string;
 };
 
+export type BandMember = {
+  name:       string;
+  image:      string;
+  instrument: string;   // instrument / role
+  bio:        string;
+};
+
 export type Artist = {
   id:              number;
+  artistType?:     "solo" | "band";   // "band" = live band with multiple members
+  members?:        BandMember[];       // band members (when artistType === "band")
   name:            string;   // kept for backward compat (used as stageName fallback)
   stageName?:      string;
   realName?:       string;

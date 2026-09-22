@@ -312,6 +312,39 @@ export default function ArtistDetailPage() {
                 <p className="text-white/65 text-sm leading-relaxed">{artist.bio}</p>
               </div>
 
+              {/* Band Members — only for live bands */}
+              {artist.artistType === "band" && (artist.members ?? []).length > 0 && (
+                <div>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-1">BAND MEMBERS</p>
+                  <p className="text-white/25 text-xs mb-4">{(artist.members ?? []).length} members</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {(artist.members ?? []).map((m, i) => (
+                      <div
+                        key={i}
+                        className="relative rounded-2xl overflow-hidden group"
+                        style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+                        title={m.bio || undefined}
+                      >
+                        <div className="relative w-full overflow-hidden" style={{ height: 140 }}>
+                          {m.image ? (
+                            <img src={m.image} alt={m.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(57,189,105,0.08)" }}>
+                              <span className="text-[#39BD69] font-black text-lg">{(m.name || "?").charAt(0).toUpperCase()}</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #080808 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
+                        </div>
+                        <div className="px-2.5 pb-2.5 pt-1.5 text-center">
+                          <h3 className="text-white font-black text-[11px] uppercase tracking-wide truncate">{m.name}</h3>
+                          {m.instrument && <p className="text-[#39BD69] text-[8px] font-bold tracking-[0.2em] uppercase truncate mt-0.5">{m.instrument}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Genres & Sub-genres */}
               {hasGenres && (
                 <div>

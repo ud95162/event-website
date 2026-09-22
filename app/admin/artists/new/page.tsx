@@ -18,6 +18,7 @@ const EMPTY: Omit<Artist, "id"> = {
   city: "", touringRegion: "",
   soundcloudUrl: "", spotifyUrl: "", beatportUrl: "",
   socialLinks: [], bookingEmail: "", bookingPhone: "", level: "", rating: 0,
+  artistType: "solo", members: [],
 };
 
 const inputStyle: React.CSSProperties = {
@@ -87,12 +88,21 @@ function ArtistFormInner() {
         bookingPhone: editing.bookingPhone ?? "",
         level: editing.level ?? "",
         rating: editing.rating ?? 0,
+        artistType: editing.artistType ?? "solo",
+        members: editing.members ?? [],
       });
     }
   }, [editing]);
 
   const set = (key: keyof Omit<Artist, "id">, val: unknown) =>
     setForm(prev => ({ ...prev, [key]: val }));
+
+  const isBand = (form.artistType ?? "solo") === "band";
+  const members = form.members ?? [];
+  const addMember = () => set("members", [...members, { name: "", image: "", instrument: "", bio: "" }]);
+  const updateMember = (i: number, patch: Partial<{ name: string; image: string; instrument: string; bio: string }>) =>
+    set("members", members.map((m, mi) => (mi === i ? { ...m, ...patch } : m)));
+  const removeMember = (i: number) => set("members", members.filter((_, mi) => mi !== i));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,10 +147,28 @@ function ArtistFormInner() {
           {/* BASIC INFO */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
             <p style={sectionHeadStyle}>Basic Info</p>
+
+            {/* Artist type toggle */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Artist Type</label>
+              <div style={{ display: "inline-flex", gap: 4, padding: 4, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                {([["solo", "Solo Artist"], ["band", "Live Band"]] as const).map(([t, lbl]) => {
+                  const active = (form.artistType ?? "solo") === t;
+                  return (
+                    <button key={t} type="button" onClick={() => set("artistType", t)}
+                      style={{ padding: "8px 20px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", transition: "all 0.15s",
+                        background: active ? "#39BD69" : "transparent", color: active ? "#000" : "rgba(255,255,255,0.55)" }}>
+                      {lbl}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
               <div>
-                <label style={labelStyle}>Stage Name *</label>
-                <input style={inputStyle} value={form.stageName ?? ""} onChange={e => set("stageName", e.target.value)} placeholder="e.g. DJ Nova" required />
+                <label style={labelStyle}>{isBand ? "Band Name *" : "Stage Name *"}</label>
+                <input style={inputStyle} value={form.stageName ?? ""} onChange={e => set("stageName", e.target.value)} placeholder={isBand ? "e.g. The Beat Crew" : "e.g. DJ Nova"} required />
               </div>
               <div>
                 <label style={{ ...labelStyle, color: "rgba(239,200,80,0.8)" }}>Real Name (Private — Internal Only)</label>
@@ -160,6 +188,50 @@ function ArtistFormInner() {
               </div>
             </div>
           </section>
+
+          {/* BAND MEMBERS — only for live bands */}
+          {isBand && (
+            <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8, marginBottom: 16, borderBottom: "1px solid rgba(57,189,105,0.2)" }}>
+                <p style={{ ...sectionHeadStyle, borderBottom: "none", paddingBottom: 0, marginBottom: 0 }}>Band Members</p>
+                <button type="button" onClick={addMember} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  <Plus size={13} /> Add Member
+                </button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {members.map((m, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 16, padding: 16, borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <ImageUpload label="Photo" value={m.image} onChange={val => updateMember(i, { image: val })} aspectRatio="square" hint="Square 1:1 · PNG, JPG" />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div>
+                          <label style={labelStyle}>Name *</label>
+                          <input style={inputStyle} value={m.name} onChange={e => updateMember(i, { name: e.target.value })} placeholder="Member name" />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Instrument / Role</label>
+                          <input style={inputStyle} value={m.instrument} onChange={e => updateMember(i, { instrument: e.target.value })} placeholder="Vocals / Guitar / Drums" />
+                        </div>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Bio</label>
+                        <textarea style={{ ...inputStyle, height: 64, resize: "vertical" }} value={m.bio} onChange={e => updateMember(i, { bio: e.target.value })} placeholder="Short bio…" />
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <button type="button" onClick={() => removeMember(i)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                          <Trash2 size={12} /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {members.length === 0 && (
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No members added yet. Click “Add Member” to add band members.</p>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* MEDIA */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>

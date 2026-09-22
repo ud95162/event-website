@@ -75,5 +75,7 @@ export function mapArtistRow(r: any) {
     bookingPhone: r.booking_phone ?? undefined,
     level: r.level ?? undefined,
     featured: !!r.featured,
+    artistType: r.artist_type ?? undefined,
+    members: parseJson(r.members, []),
   };
 }
