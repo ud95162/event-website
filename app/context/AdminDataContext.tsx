@@ -14,6 +14,12 @@ export type Banner = {
   description?: string | null; // banner's own description
 };
 
+export type Brand = {
+  id: number;
+  name: string;
+  logo: string;   // uploaded logo image (base64 / URL)
+};
+
 export type PopupSettings = {
   enabled: boolean;
   title: string;
@@ -42,6 +48,7 @@ type AdminDataContextType = {
   genres: string[];
   badges: string[];
   banners: Banner[];
+  brands: Brand[];
   popupSettings: PopupSettings;
   updatePopupSettings: (s: PopupSettings) => Promise<boolean>;
 
@@ -72,6 +79,10 @@ type AdminDataContextType = {
   addBanner: (data: Omit<Banner, "id">) => Promise<boolean>;
   updateBanner: (b: Banner) => Promise<boolean>;
   deleteBanner: (id: number) => void;
+
+  // Brands CRUD
+  addBrand: (data: Omit<Brand, "id">) => Promise<boolean>;
+  deleteBrand: (id: number) => void;
 };
 
 const AdminDataContext = createContext<AdminDataContextType | null>(null);
@@ -103,6 +114,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [genres, setGenres] = useState<string[]>([]);
   const [badges, setBadges] = useState<string[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [popupSettings, setPopupSettings] = useState<PopupSettings>(DEFAULT_POPUP);
   const [loading, setLoading] = useState(true);
 
@@ -112,6 +124,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     const ce = readCache<Event[]>("events");     if (ce?.length) setEvents(ce);
     const ca = readCache<Artist[]>("artists");    if (ca?.length) setArtists(ca);
     const cb = readCache<Banner[]>("banners");    if (cb) setBanners(cb);
+    const cbr = readCache<Brand[]>("brands");     if (cbr) setBrands(cbr);
     const co = readCache<Organizer[]>("organizers"); if (co) setOrganizers(co);
     const cg = readCache<string[]>("genres");     if (cg) setGenres(cg);
     const cbd = readCache<string[]>("badges");    if (cbd) setBadges(cbd);
@@ -125,6 +138,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       jsonFetch<string[]>("/api/genres").then((d) => { setGenres(d); writeCache("genres", d); }),
       jsonFetch<string[]>("/api/badges").then((d) => { setBadges(d); writeCache("badges", d); }),
       jsonFetch<Banner[]>("/api/banners").then((d) => { setBanners(d); writeCache("banners", d); }),
+      jsonFetch<Brand[]>("/api/brands").then((d) => { setBrands(d); writeCache("brands", d); }),
       jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) { setPopupSettings({ ...DEFAULT_POPUP, ...s }); writeCache("popup", s); } }),
     ]).finally(() => setLoading(false));
   }, []);
@@ -312,10 +326,29 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     fetch(`/api/banners/${id}`, { method: "DELETE" }).catch(() => {});
   };
 
+  // ---- Brands ----
+  const addBrand = async (data: Omit<Brand, "id">): Promise<boolean> => {
+    try {
+      const created = await jsonFetch<Brand>("/api/brands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      setBrands((prev) => [...prev, created]);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const deleteBrand = (id: number) => {
+    setBrands((prev) => prev.filter((b) => b.id !== id));
+    fetch(`/api/brands/${id}`, { method: "DELETE" }).catch(() => {});
+  };
+
   return (
     <AdminDataContext.Provider value={{
       loading,
-      events, artists, organizers, genres, badges, banners,
+      events, artists, organizers, genres, badges, banners, brands,
       popupSettings, updatePopupSettings,
       addEvent, updateEvent, deleteEvent,
       addArtist, updateArtist, deleteArtist,
@@ -323,6 +356,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       addGenre, deleteGenre,
       addBadge, deleteBadge,
       addBanner, updateBanner, deleteBanner,
+      addBrand, deleteBrand,
     }}>
       {children}
     </AdminDataContext.Provider>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAdminData } from "../context/AdminDataContext";
 
 /* ── Brand entries ────────────────────────────────────────────────────── */
-type Brand = { id: string; name: string; slug: string; color: string };
+type Brand = { id: string | number; name: string; logo?: string; slug?: string; color?: string };
 
 const row1Brands: Brand[] = [
   { id: "spotify",      name: "Spotify",      slug: "spotify",      color: "#1DB954" },
@@ -35,15 +36,15 @@ const row2Brands: Brand[] = [
 function BrandCard({ brand }: { brand: Brand }) {
   const [hovered, setHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const color = brand.color;
+  const color = brand.color || "#39BD69";
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 cursor-default rounded-xl px-6 py-4 flex flex-col items-center justify-center gap-2 backdrop-blur-md"
+      className="flex-shrink-0 cursor-default rounded-xl px-6 py-4 flex flex-col items-center justify-center gap-2.5 backdrop-blur-md"
       style={{
-        minWidth: 140,
+        minWidth: 150,
         background: hovered
           ? `linear-gradient(135deg, ${color}1A 0%, ${color}08 100%)`
           : "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
@@ -52,24 +53,21 @@ function BrandCard({ brand }: { brand: Brand }) {
           ? `inset 0 1px 0 ${color}22, 0 4px 24px rgba(0,0,0,0.3), 0 0 24px ${color}28`
           : "inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.2)",
         transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease",
-        filter: hovered ? "brightness(1.3)" : "brightness(1)",
+        filter: hovered ? "brightness(1.15)" : "brightness(1)",
       }}
     >
-      {!imgError ? (
-        <img
-          src={`https://cdn.simpleicons.org/${brand.slug}`}
-          alt={brand.name}
-          width={56}
-          height={56}
-          style={{ flexShrink: 0 }}
-          onError={() => setImgError(true)}
-        />
+      {brand.logo ? (
+        // Admin-uploaded logo
+        <img src={brand.logo} alt={brand.name} style={{ maxWidth: 90, maxHeight: 52, objectFit: "contain", flexShrink: 0 }} />
+      ) : !imgError && brand.slug ? (
+        // Fallback demo icon (simpleicons)
+        <img src={`https://cdn.simpleicons.org/${brand.slug}`} alt={brand.name} width={52} height={52} style={{ flexShrink: 0 }} onError={() => setImgError(true)} />
       ) : (
-        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[13px] font-black"
-          style={{ background: color + "33", color }} >
+        <div className="w-13 h-13 rounded-full flex items-center justify-center text-[13px] font-black" style={{ width: 52, height: 52, background: color + "33", color }}>
           {brand.name[0]}
         </div>
       )}
+      <span className="text-white/45 text-[11px] font-semibold tracking-wide whitespace-nowrap">{brand.name}</span>
     </div>
   );
 }
@@ -112,6 +110,21 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
 
 /* ── Section ──────────────────────────────────────────────────────────── */
 export default function BrandMarquee() {
+  const { brands } = useAdminData();
+
+  // Use admin-managed brands when any exist; otherwise fall back to the demo set.
+  let r1: Brand[], r2: Brand[];
+  if (brands.length > 0) {
+    const all: Brand[] = brands.map(b => ({ id: b.id, name: b.name, logo: b.logo }));
+    const mid = Math.ceil(all.length / 2);
+    r1 = all.slice(0, mid);
+    r2 = all.slice(mid);
+    if (r2.length === 0) r2 = r1;   // only a couple of brands — reuse for the second row
+  } else {
+    r1 = row1Brands;
+    r2 = row2Brands;
+  }
+
   return (
     <section className="snap-section overflow-hidden flex flex-col items-center justify-evenly">
       {/* Header */}
@@ -124,8 +137,8 @@ export default function BrandMarquee() {
         </h2>
       </div>
 
-      <MarqueeRow brands={row1Brands} direction="left" />
-      <MarqueeRow brands={row2Brands} direction="right" />
+      <MarqueeRow brands={r1} direction="left" />
+      <MarqueeRow brands={r2} direction="right" />
     </section>
   );
 }

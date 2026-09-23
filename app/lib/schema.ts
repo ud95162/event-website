@@ -214,6 +214,15 @@ async function createAndSeed(): Promise<void> {
     if (cols[0].c === 0) await pool.query(`ALTER TABLE banners ADD COLUMN ${ddl}`);
   }
 
+  // Brand / sponsor logos shown in the home "Trusted By" marquee.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS brands (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(255),
+      logo MEDIUMTEXT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   // Analytics counters: page views + link clicks per event/organizer.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS analytics (
