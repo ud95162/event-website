@@ -683,21 +683,28 @@ export default function CalendarPage() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            className="rounded-3xl overflow-hidden"
+            className="rounded-3xl overflow-hidden flex flex-col sm:flex-row"
             style={{
-              width: "min(520px, 90vw)",
+              width: "min(860px, 92vw)",
+              maxHeight: "90dvh",
               background: "#0d0d1a",
               border: "1px solid rgba(255,255,255,0.1)",
               boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.08)",
             }}
           >
-            {/* Image */}
-            <div className="relative" style={{ height: 220 }}>
-              <img src={selectedEvent.image} alt={selectedEvent.title} className="w-full h-full object-cover object-top" />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0d0d1a 0%, transparent 60%)" }} />
+            {/* Poster — full 4:5 image */}
+            <div
+              className="relative shrink-0 w-full sm:w-[42%]"
+              style={{ aspectRatio: "4 / 5", background: "#08080c" }}
+            >
+              <img
+                src={selectedEvent.image}
+                alt={selectedEvent.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white transition-all"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white transition-all sm:hidden"
                 style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}
               >
                 <X size={13} className="text-white hover:text-black" />
@@ -711,8 +718,15 @@ export default function CalendarPage() {
             </div>
 
             {/* Info */}
-            <div className="p-6">
-              <h2 className="text-white font-black text-xl uppercase tracking-tight mb-4 leading-tight">
+            <div className="relative flex-1 min-w-0 p-6 overflow-y-auto">
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="hidden sm:flex absolute top-4 right-4 w-8 h-8 rounded-full items-center justify-center hover:bg-white transition-all z-10"
+                style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}
+              >
+                <X size={13} className="text-white hover:text-black" />
+              </button>
+              <h2 className="text-white font-black text-xl uppercase tracking-tight mb-4 leading-tight sm:pr-10">
                 {selectedEvent.title}
               </h2>
               <div className="flex flex-col gap-2.5 mb-5">

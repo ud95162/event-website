@@ -75,10 +75,11 @@ export default function ThisWeekPopup() {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: 720,
+          width: "100%", maxWidth: 480, maxHeight: "94dvh",
           background: "#0b0b10", border: "1px solid rgba(57,189,105,0.25)", borderRadius: 24,
           boxShadow: "0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.06)", overflow: "hidden",
           animation: "twp-pop 0.3s ease", position: "relative",
+          display: "flex", flexDirection: "column",
         }}
       >
         {/* Eyebrow header */}
@@ -97,7 +98,7 @@ export default function ThisWeekPopup() {
         {/* Banner carousel */}
         <div
           onClick={() => go(ev)}
-          style={{ position: "relative", height: 420, cursor: "pointer", overflow: "hidden" }}
+          style={{ position: "relative", aspectRatio: "4 / 5", width: "100%", minHeight: 0, flex: "1 1 auto", cursor: "pointer", overflow: "hidden" }}
         >
           {/* Blurred backdrop fills the frame behind the full (uncropped) banner */}
           <img key={`bg-${ev.id}`} src={ev.image} alt="" aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(26px) brightness(0.5)", transform: "scale(1.15)" }} />
