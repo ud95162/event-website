@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#080808",
+      minHeight: "100vh", background: "#0F1116",
       display: "flex", alignItems: "center", justifyContent: "center",
       fontFamily: "system-ui, -apple-system, sans-serif",
     }}>

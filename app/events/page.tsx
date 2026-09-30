@@ -403,8 +403,8 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
         onMouseLeave={() => { pausedRef.current = false; }}
       >
         {/* Fade edges */}
-        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to right, #080808, transparent)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to left, #080808, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to right, #0F1116, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to left, #0F1116, transparent)", pointerEvents: "none" }} />
 
         {/* Centered arrow buttons */}
         <button onClick={() => slideTo(CARD_STEP)} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 40, height: 40, borderRadius: "50%", cursor: "pointer", background: "rgba(10,10,14,0.85)", border: "1px solid rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.8)", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="#fff"; (e.currentTarget as HTMLElement).style.color="#000"; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="rgba(10,10,14,0.85)"; (e.currentTarget as HTMLElement).style.color="rgba(255,255,255,0.8)"; }}><ChevronLeft size={18} /></button>
@@ -595,7 +595,7 @@ export default function EventsPage() {
   }, []);
 
   return (
-    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
+    <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
       )}

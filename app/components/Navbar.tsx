@@ -237,7 +237,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[300] bg-black/80 backdrop-blur-md border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-[300] bg-[#0F1116]/90 backdrop-blur-md border-b border-white/10">
       <style>{`
         .nav-active-border {
           border-radius: 0.75rem;
@@ -256,14 +256,11 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0">
-            <div className="leading-none flex items-baseline gap-0.5">
-              <span className="text-white font-black text-2xl tracking-[0.2em] uppercase">EVENTS</span>
-              <span className="text-white/40 text-base tracking-[0.15em] uppercase">.LK</span>
-            </div>
+            <img src="/logo.png" alt="Events.lk" className="w-auto object-contain" style={{ height: 40 }} />
           </Link>
 
           {/* All nav items — equal gap between every item */}
-          <div className="hidden lg:flex items-center justify-between flex-1 ml-24">
+          <div className="hidden lg:flex items-center justify-between flex-1 ml-10">
             {navLinks.map((l) => (
               isActive(l.href) ? (
                 <div key={l.label} className="nav-active-border">

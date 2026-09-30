@@ -413,7 +413,7 @@ export default function CalendarPage() {
     `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
   return (
-    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflow: "hidden" }}>
+    <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflow: "hidden" }}>
 
       <style>{`
         @keyframes cal-spin {

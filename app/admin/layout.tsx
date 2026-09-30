@@ -42,7 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Not yet hydrated or not authed — show nothing to prevent flash
   if (!mounted || !user) {
     return (
-      <div style={{ background: "#080808", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "#0F1116", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Loading…</span>
       </div>
     );

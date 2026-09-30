@@ -31,7 +31,7 @@ export default function EventDetailPage() {
 
   if (loading && !event) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
         <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
         <p className="text-white/30 text-xs tracking-widest uppercase">Loading event…</p>
       </main>
@@ -40,7 +40,7 @@ export default function EventDetailPage() {
 
   if (!event) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
         <p className="text-white/40 text-sm mb-4">Event not found.</p>
         <button onClick={() => router.push("/")} className="btn-outline text-xs px-8 py-3 rounded-full">
           GO HOME
@@ -95,7 +95,7 @@ export default function EventDetailPage() {
   const organizer = organizers.find(o => o.name === event.organizer);
 
   return (
-    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
+    <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       <ParticleField />
       <Navbar />
       <div className="pt-16 relative z-10">
@@ -169,7 +169,7 @@ export default function EventDetailPage() {
               {/* Top semicircle notch */}
               <div
                 className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-4 rounded-b-full"
-                style={{ background: "#080808" }}
+                style={{ background: "#0F1116" }}
               />
               {/* Dashed line */}
               <div
@@ -181,7 +181,7 @@ export default function EventDetailPage() {
               {/* Bottom semicircle notch */}
               <div
                 className="absolute -bottom-px left-1/2 -translate-x-1/2 w-8 h-4 rounded-t-full"
-                style={{ background: "#080808" }}
+                style={{ background: "#0F1116" }}
               />
             </div>
 
@@ -394,7 +394,7 @@ export default function EventDetailPage() {
                         />
                         <div
                           className="absolute inset-0"
-                          style={{ background: "linear-gradient(to top, #080808 0%, rgba(8,8,8,0.3) 55%, transparent 100%)" }}
+                          style={{ background: "linear-gradient(to top, #0F1116 0%, rgba(8,8,8,0.3) 55%, transparent 100%)" }}
                         />
                         <div
                           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"

@@ -122,8 +122,8 @@ export default function StatsCounter() {
           backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px),
                             repeating-linear-gradient(90deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px)`,
         }} />
-        <div className="absolute top-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to bottom, #080808, transparent)" }} />
-        <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #080808, transparent)" }} />
+        <div className="absolute top-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to bottom, #0F1116, transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #0F1116, transparent)" }} />
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

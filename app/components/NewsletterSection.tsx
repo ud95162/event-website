@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function NewsletterSection() {
   return (
-    <section className="relative px-4 text-center overflow-hidden flex-1 flex flex-col justify-center" style={{ background: "#080808", padding: "clamp(8px, 2vh, 24px) 16px" }}>
+    <section className="relative px-4 text-center overflow-hidden flex-1 flex flex-col justify-center" style={{ background: "#0F1116", padding: "clamp(8px, 2vh, 24px) 16px" }}>
 
       {/* Keyframe styles */}
       <style>{`
@@ -54,7 +54,7 @@ export default function NewsletterSection() {
 
       {/* Fade edges to black */}
       <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 110% 100% at 50% 50%, transparent 35%, #080808 80%)",
+        background: "radial-gradient(ellipse 110% 100% at 50% 50%, transparent 35%, #0F1116 80%)",
       }} />
 
       <div className="relative z-10 max-w-2xl mx-auto">

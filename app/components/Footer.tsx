@@ -36,7 +36,7 @@ const navLinks = [
 
 export default function Footer() {
   return (
-    <footer id="contact" className="bg-black flex-1 flex flex-col justify-center py-6">
+    <footer id="contact" className="bg-[#0F1116] flex-1 flex flex-col justify-center py-6">
 
       {/* ── Main grid ─────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10">
@@ -44,19 +44,8 @@ export default function Footer() {
 
           {/* Logo */}
           <div className="md:col-span-1 flex flex-col gap-4">
-            <a href="/" className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 40 40" fill="none" width={28} height={28}>
-                  <path d="M20 5 C20 5 28 10 28 20 C28 28 22 33 20 35 C18 33 12 28 12 20 C12 10 20 5 20 5Z" stroke="white" strokeWidth="1.5" fill="none"/>
-                  <circle cx="20" cy="20" r="4" fill="white"/>
-                  <path d="M14 16 Q20 8 26 16" stroke="white" strokeWidth="1.2" fill="none"/>
-                </svg>
-              </div>
-              <div className="leading-none">
-                <span className="text-white font-black text-xl tracking-[0.15em] uppercase">EVENTS</span>
-                <br />
-                <span className="text-white/50 text-[13px] tracking-[0.3em] uppercase">Company</span>
-              </div>
+            <a href="/" className="flex items-center shrink-0">
+              <img src="/logo.png" alt="Events.lk" className="object-contain" style={{ width: 200, height: "auto" }} />
             </a>
 
             {/* Follow Us + social icons */}

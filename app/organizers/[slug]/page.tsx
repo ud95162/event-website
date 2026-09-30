@@ -30,7 +30,7 @@ export default function OrganizerDetailPage() {
 
   if (loading && !organizer) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
         <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
         <p className="text-white/30 text-xs tracking-widest uppercase">Loading organizer…</p>
       </main>
@@ -39,7 +39,7 @@ export default function OrganizerDetailPage() {
 
   if (!organizer) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
         <p className="text-white/40 text-sm mb-4">Organizer not found.</p>
         <button onClick={() => router.push("/events")} className="btn-outline text-xs px-8 py-3 rounded-full">
           BROWSE EVENTS
@@ -98,7 +98,7 @@ export default function OrganizerDetailPage() {
   };
 
   return (
-    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
+    <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       <ParticleField />
       <Navbar />
 

@@ -130,7 +130,7 @@ export default function ArtistDetailPage() {
 
   if (loading && !artist) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
         <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
         <p className="text-white/30 text-xs tracking-widest uppercase">Loading artist…</p>
       </main>
@@ -139,7 +139,7 @@ export default function ArtistDetailPage() {
 
   if (!artist) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#080808]">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
         <p className="text-white/40 text-sm mb-4">Artist not found.</p>
         <button onClick={() => router.push("/artists")} className="btn-outline text-xs px-8 py-3 rounded-full">
           GO BACK
@@ -189,7 +189,7 @@ export default function ArtistDetailPage() {
     .map(x => x.a);
 
   return (
-    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
+    <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       <ParticleField />
       <Navbar />
 
@@ -333,7 +333,7 @@ export default function ArtistDetailPage() {
                               <span className="text-[#39BD69] font-black text-lg">{(m.name || "?").charAt(0).toUpperCase()}</span>
                             </div>
                           )}
-                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #080808 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
+                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0F1116 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
                         </div>
                         <div className="px-2.5 pb-2.5 pt-1.5 text-center">
                           <h3 className="text-white font-black text-[11px] uppercase tracking-wide truncate">{m.name}</h3>
@@ -444,7 +444,7 @@ export default function ArtistDetailPage() {
                       >
                         <div className="relative w-full overflow-hidden" style={{ height: 140 }}>
                           <img src={rec.image} alt={rec.stageName || rec.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
-                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #080808 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
+                          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0F1116 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
                         </div>
                         <div className="px-2.5 pb-2.5 pt-1.5 text-center">
                           <h3 className="text-white font-black text-[11px] uppercase tracking-wide truncate">{rec.stageName || rec.name}</h3>

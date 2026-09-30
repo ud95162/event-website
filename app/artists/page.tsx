@@ -176,8 +176,8 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
         onMouseEnter={() => { pausedRef.current = true; }}
         onMouseLeave={() => { pausedRef.current = false; }}
       >
-        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to right, #080808, transparent)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to left, #080808, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to right, #0F1116, transparent)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, zIndex: 2, background: "linear-gradient(to left, #0F1116, transparent)", pointerEvents: "none" }} />
 
         <ArrowBtn side="left"  onClick={() => slideTo(CARD_STEP)}><ChevronLeft size={18} /></ArrowBtn>
         <ArrowBtn side="right" onClick={() => slideTo(-CARD_STEP)}><ChevronRight size={18} /></ArrowBtn>
@@ -274,7 +274,7 @@ export default function ArtistsPage() {
   }, []);
 
   return (
-    <main className="bg-[#080808] relative" style={{ height: "100dvh", overflowY: "auto" }}>
+    <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       {(preloaderPhase === "idle" || preloaderPhase === "exit") && (
         <Preloader phase={preloaderPhase === "idle" ? "idle" : "exit"} setPhase={setPreloaderPhase} />
       )}

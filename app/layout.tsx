@@ -18,6 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Preload the logo first so it's ready when the preloader shows it */}
+        <link rel="preload" as="image" href="/preloader-logo.png" fetchPriority="high" />
         {["/events/event1.png", "/events/event2.png", "/events/event3.png", "/events/event4.png",
           "/artists/1.png", "/artists/2.png", "/artists/3.png", "/artists/4.png"].map(src => (
           <link key={src} rel="preload" as="image" href={src} />

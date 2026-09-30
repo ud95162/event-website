@@ -190,7 +190,7 @@ export default function AboutPage() {
   };
 
   return (
-    <div style={{ background: "#080808", color: "#fff", height: "100dvh", overflowX: "hidden" }}>
+    <div style={{ background: "#0F1116", color: "#fff", height: "100dvh", overflowX: "hidden" }}>
       <ParticleField />
       <Navbar />
 

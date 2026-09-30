@@ -96,8 +96,8 @@ export default function FeaturedEvents() {
           <style>{`.fe-row::-webkit-scrollbar{display:none}`}</style>
 
           {/* Fade edges */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to right, #080808, transparent)" }} />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to left, #080808, transparent)" }} />
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to right, #0F1116, transparent)" }} />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to left, #0F1116, transparent)" }} />
 
           {/* Prev arrow */}
           <button
@@ -135,7 +135,7 @@ export default function FeaturedEvents() {
                     width: CARD_W,
                     height: CARD_H,
                     scrollSnapAlign: "start",
-                    background: hovered ? "#0d2318" : "#080808",
+                    background: hovered ? "#0d2318" : "#0F1116",
                     border: "1px solid rgba(255,255,255,0.08)",
                     boxShadow: hovered ? "0 0 40px rgba(57,189,105,0.15)" : "none",
                     transform: hovered ? "translateY(-6px)" : "translateY(0)",
@@ -149,7 +149,7 @@ export default function FeaturedEvents() {
                         transform: hovered ? "scale(1.08)" : "scale(1)",
                         transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                       }} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F1116] via-transparent to-transparent" />
                     {card.badge && (
                       <div className="absolute top-3 left-3 z-10">
                         <span className="bg-white text-black text-[10px] font-black px-2.5 py-1 rounded-full tracking-[0.18em] uppercase">

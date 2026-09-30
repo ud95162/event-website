@@ -72,8 +72,8 @@ export default function FeaturedArtists() {
           backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px),
                             repeating-linear-gradient(90deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px)`,
         }} />
-        <div className="absolute top-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to bottom, #080808, transparent)" }} />
-        <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #080808, transparent)" }} />
+        <div className="absolute top-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to bottom, #0F1116, transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #0F1116, transparent)" }} />
       </div>
 
       <div className="flex flex-col items-center justify-center w-full">
@@ -93,8 +93,8 @@ export default function FeaturedArtists() {
           <style>{`.fa-row::-webkit-scrollbar{display:none}`}</style>
 
           {/* Fade edges */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to right, #080808, transparent)" }} />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to left, #080808, transparent)" }} />
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to right, #0F1116, transparent)" }} />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to left, #0F1116, transparent)" }} />
 
           {/* Prev arrow */}
           <button
@@ -132,7 +132,7 @@ export default function FeaturedArtists() {
                     width: CARD_W,
                     height: CARD_H,
                     scrollSnapAlign: "start",
-                    background: hovered ? "#0d1f2d" : "#080808",
+                    background: hovered ? "#0d1f2d" : "#0F1116",
                     border: "1px solid rgba(255,255,255,0.08)",
                     boxShadow: hovered ? `0 0 40px rgba(${ACCENT_RGB},0.15)` : "none",
                     transform: hovered ? "translateY(-6px)" : "translateY(0)",
@@ -153,7 +153,7 @@ export default function FeaturedArtists() {
                         transition: "transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), filter 0.5s ease",
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F1116] via-transparent to-transparent" />
 
                     {/* Follow button */}
                     <button

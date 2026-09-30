@@ -14,6 +14,7 @@ interface PreloaderProps {
 /* ══════════════════════════════════════════════════════════════════════════ */
 export default function Preloader({ phase, setPhase, assetsReady = true }: PreloaderProps) {
   const [progress, setProgress] = useState(0);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const triggerRef = useRef(false);
   const grainRef   = useRef<HTMLCanvasElement>(null);
 
@@ -51,13 +52,13 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (progress >= 95 && assetsReady && e.deltaY > 5) triggerExit();
+      if (progress >= 95 && assetsReady && logoLoaded && e.deltaY > 5) triggerExit();
     };
     let y0 = 0;
     const onTS = (e: TouchEvent) => { y0 = e.touches[0].clientY; };
     const onTM = (e: TouchEvent) => {
       e.preventDefault();
-      if (progress >= 95 && assetsReady && y0 - e.touches[0].clientY > 30) triggerExit();
+      if (progress >= 95 && assetsReady && logoLoaded && y0 - e.touches[0].clientY > 30) triggerExit();
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -68,7 +69,7 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
       window.removeEventListener("touchstart", onTS);
       window.removeEventListener("touchmove", onTM);
     };
-  }, [phase, progress, assetsReady, triggerExit]);
+  }, [phase, progress, assetsReady, logoLoaded, triggerExit]);
 
   /* ── Animated film grain (small canvas, redrawn ~12fps) ──────────────── */
   useEffect(() => {
@@ -95,14 +96,20 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
     return () => clearInterval(id);
   }, []);
 
+  // Safety: never hang if the logo image fails to load.
+  useEffect(() => {
+    const id = setTimeout(() => setLogoLoaded(true), 3500);
+    return () => clearTimeout(id);
+  }, []);
+
   // Hold the bar at 95% until the assets (banner images) are ready.
   const shownProgress = assetsReady ? progress : Math.min(progress, 95);
-  const isLoaded = progress >= 100 && assetsReady;
+  const isLoaded = progress >= 100 && assetsReady && logoLoaded;
 
-  /* ── Auto-exit 1 s after loading completes ───────────────────────────── */
+  /* ── Auto-exit shortly after loading + logo are ready ────────────────── */
   useEffect(() => {
     if (!isLoaded) return;
-    const id = setTimeout(() => triggerExit(), 300);
+    const id = setTimeout(() => triggerExit(), 650);
     return () => clearTimeout(id);
   }, [isLoaded, triggerExit]);
 
@@ -110,31 +117,14 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
   const [showEmblem, setShowEmblem] = useState(false);
   const [bloomPhase, setBloomPhase] = useState(false);
   const [startFill, setStartFill]     = useState(false);
-  const [animationConfig, setAnimationConfig] = useState<{
-    all: { delay: number; duration: number; dashOffsetStart: number }[];
-  } | null>(null);
 
-  const animStarted = useRef(false);
-
+  // Reveal the logo on mount. (No animStarted ref guard — under React Strict Mode
+  // that would cancel these timers on the first cleanup and never reschedule them,
+  // leaving the logo stuck at opacity 0.)
   useEffect(() => {
-    if (animStarted.current) return;
-    animStarted.current = true;
-
-    // Generate random drawing parameters on client side to avoid hydration mismatch
-    const allConfigs = ["E","V","E","N","T","S",".",  "L",  "K"].map((_, i) => {
-      const isSmall = i >= 6;
-      const dashOffset = isSmall ? 150 : 450;
-      return {
-        delay:            i < 6 ? Math.random() * 300          : 350 + Math.random() * 250,
-        duration:         i < 6 ? 1000 + Math.random() * 400   : 900  + Math.random() * 350,
-        dashOffsetStart:  Math.random() > 0.5 ? dashOffset : -dashOffset,
-      };
-    });
-    setAnimationConfig({ all: allConfigs });
-
-    const t0 = setTimeout(() => setShowEmblem(true), 250);
-    const t2 = setTimeout(() => setStartFill(true), 1400);
-    const t3 = setTimeout(() => setBloomPhase(true), 2200);
+    const t0 = setTimeout(() => setShowEmblem(true), 80);
+    const t2 = setTimeout(() => setStartFill(true), 600);
+    const t3 = setTimeout(() => setBloomPhase(true), 900);
 
     return () => {
       clearTimeout(t0);
@@ -150,7 +140,7 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
       onClick={isLoaded ? triggerExit : undefined}
       style={{
         zIndex: 200,
-        background: "#050505",
+        background: "#0F1116",
         animation: phase === "exit"
           ? "pl-exit 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards"
           : undefined,
@@ -231,155 +221,30 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, #050505 100%)",
+          background: "radial-gradient(ellipse 60% 60% at 50% 50%, transparent 20%, #0F1116 100%)",
         }}
       />
 
       {/* ── Content: Emblem + Text ─────────────────────────────────────── */}
       <div className="relative flex flex-col items-center select-none z-10">
 
-        {/* ── EC Emblem ───────────────────────────────────────────────── */}
-        <div
+        {/* ── Logo ─────────────────────────────────────────────────────── */}
+        <img
+          src="/preloader-logo.png"
+          alt="Events.lk"
+          onLoad={() => setLogoLoaded(true)}
+          onError={() => setLogoLoaded(true)}
           style={{
-            marginBottom: 32,
+            width: "clamp(320px, 80vw, 760px)",
+            height: "auto",
             opacity: showEmblem ? 1 : 0,
-            transform: showEmblem ? "scale(1)" : "scale(0.5)",
+            transform: showEmblem ? (bloomPhase ? "scale(1.03)" : "scale(1)") : "scale(0.85)",
             filter: showEmblem
-              ? bloomPhase ? "blur(0px) drop-shadow(0 0 15px rgba(255,255,255,0.15))" : "blur(0px)"
+              ? bloomPhase ? "blur(0px) drop-shadow(0 0 26px rgba(255,255,255,0.18))" : "blur(0px)"
               : "blur(6px)",
-            transition: "all 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            transition: "opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease",
           }}
-        >
-          <svg viewBox="0 0 120 120" style={{ width: 90, height: 90, overflow: "visible" }}>
-            {/* Outer circle */}
-            <circle
-              cx="60" cy="60" r="48"
-              fill="none"
-              stroke="rgba(255,255,255,0.55)"
-              strokeWidth="1.2"
-            />
-            {/* Inner decorative circle */}
-            <circle
-              cx="60" cy="60" r="42"
-              fill="none"
-              stroke="rgba(255,255,255,0.12)"
-              strokeWidth="0.5"
-            />
-            {/* EC initials */}
-            <text
-              x="60" y="67"
-              textAnchor="middle"
-              fontSize="30"
-              fontWeight="700"
-              fontFamily="'Century Gothic', sans-serif"
-              letterSpacing="5"
-              fill="white"
-              fillOpacity="0.85"
-            >
-              EC
-            </text>
-          </svg>
-        </div>
-
-        {/* ── Brand Name Container (Outline & Fill Animations) ───────── */}
-        <div className="relative select-none flex flex-col items-center justify-center" style={{ width: "clamp(320px, 80vw, 800px)" }}>
-          
-          {/* Injecting drawing keyframes */}
-          <style>{`
-            @keyframes draw-forward {
-              from { stroke-dashoffset: 450; }
-              to { stroke-dashoffset: 0; }
-            }
-            @keyframes draw-backward {
-              from { stroke-dashoffset: -450; }
-              to { stroke-dashoffset: 0; }
-            }
-            @keyframes draw-forward-small {
-              from { stroke-dashoffset: 150; }
-              to { stroke-dashoffset: 0; }
-            }
-            @keyframes draw-backward-small {
-              from { stroke-dashoffset: -150; }
-              to { stroke-dashoffset: 0; }
-            }
-          `}</style>
-
-          {/* EVENTS.LK — single line */}
-          {(() => {
-            const LETTERS  = ["E","V","E","N","T","S",".", "L", "K"];
-            const X_POS    = [146, 221, 296, 371, 446, 521, 561, 607, 653];
-            const SIZES    = [100, 100, 100, 100, 100, 100,  62,  62,  62];
-            const DASH_ARR = [450, 450, 450, 450, 450, 450, 150, 150, 150];
-            const STROKE_C = ["rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.75)","rgba(255,255,255,0.45)","rgba(255,255,255,0.45)","rgba(255,255,255,0.45)"];
-            const FILL_C   = ["#fff","#fff","#fff","#fff","#fff","#fff","rgba(255,255,255,0.6)","rgba(255,255,255,0.6)","rgba(255,255,255,0.6)"];
-            const SW       = [1.8,1.8,1.8,1.8,1.8,1.8,1.2,1.2,1.2];
-            return (
-              <div className="relative overflow-visible w-full h-[130px] flex justify-center items-center">
-                {/* Outline layer */}
-                <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-                  <svg viewBox="0 0 800 130" className="w-full h-full overflow-visible">
-                    {LETTERS.map((letter, i) => {
-                      const config = animationConfig?.all[i];
-                      const anim = DASH_ARR[i] === 450
-                        ? (config?.dashOffsetStart ?? 0) > 0 ? "draw-forward" : "draw-backward"
-                        : (config?.dashOffsetStart ?? 0) > 0 ? "draw-forward-small" : "draw-backward-small";
-                      return (
-                        <text
-                          key={`outline-${i}`}
-                          x={X_POS[i]} y="95"
-                          textAnchor="middle"
-                          fontSize={SIZES[i]}
-                          fontWeight="100"
-                          fontFamily="'Century Gothic', sans-serif"
-                          fill="none"
-                          stroke={STROKE_C[i]}
-                          strokeWidth={SW[i]}
-                          style={config ? {
-                            strokeDasharray: DASH_ARR[i],
-                            strokeDashoffset: config.dashOffsetStart,
-                            animationName: anim,
-                            animationDuration: `${config.duration}ms`,
-                            animationDelay: `${config.delay}ms`,
-                            animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-                            animationFillMode: "forwards",
-                          } : {}}
-                        >{letter}</text>
-                      );
-                    })}
-                  </svg>
-                </div>
-                {/* Fill layer */}
-                <div
-                  className="absolute inset-0 flex justify-center items-center pointer-events-none"
-                  style={{
-                    clipPath: startFill ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
-                    transition: "clip-path 1.4s cubic-bezier(0.22, 1, 0.36, 1)",
-                  }}
-                >
-                  <svg viewBox="0 0 800 130" className="w-full h-full overflow-visible">
-                    {LETTERS.map((letter, i) => (
-                      <text
-                        key={`fill-${i}`}
-                        x={X_POS[i]} y="95"
-                        textAnchor="middle"
-                        fontSize={SIZES[i]}
-                        fontWeight="100"
-                        fontFamily="'Century Gothic', sans-serif"
-                        fill={FILL_C[i]}
-                        stroke="none"
-                        style={{
-                          filter: bloomPhase ? "drop-shadow(0 0 12px rgba(255,255,255,0.2))" : "none",
-                          transition: "filter 1s ease",
-                        }}
-                      >{letter}</text>
-                    ))}
-                  </svg>
-                </div>
-              </div>
-            );
-          })()}
-
-        </div>
+        />
       </div>
 
       {/* ── Progress / CTA ──────────────────────────────────────────── */}

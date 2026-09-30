@@ -425,7 +425,7 @@ export default function StickySearchFilters() {
   };
 
   return (
-    <div className="relative z-[290] bg-[#080808]/95 backdrop-blur-md border-b border-white/10 py-4 shadow-lg">
+    <div className="relative z-[290] bg-[#0F1116]/95 backdrop-blur-md border-b border-white/10 py-4 shadow-lg">
 
       {/* Search bar */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-3">

@@ -97,8 +97,8 @@ function MarqueeRow({ brands, direction }: { brands: Brand[]; direction: "left" 
 
   return (
     <div className="relative overflow-hidden w-full">
-      <div className="absolute left-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to right, #080808, transparent)" }} />
-      <div className="absolute right-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to left, #080808, transparent)" }} />
+      <div className="absolute left-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to right, #0F1116, transparent)" }} />
+      <div className="absolute right-0 top-0 bottom-0 w-28 z-10" style={{ background: "linear-gradient(to left, #0F1116, transparent)" }} />
       <div ref={trackRef} className="flex items-center gap-16 whitespace-nowrap w-max will-change-transform">
         {items.map((brand, i) => (
           <BrandCard key={`${brand.id}-${i}`} brand={brand} />
