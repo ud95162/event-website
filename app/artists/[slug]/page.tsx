@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Heart, ChevronLeft, MapPin, Calendar, Music2, ArrowRight,
   Star, Mail, Phone,
@@ -127,6 +127,20 @@ export default function ArtistDetailPage() {
   const { userLocation } = useUserLocation();
 
   const [followed, setFollowed] = useState(false);
+
+  // `members` (base64 band photos) is omitted from the shared list payload to keep it
+  // small; fetch the full record here so the band roster still renders.
+  const artistId = artist?.id;
+  const [members, setMembers] = useState<NonNullable<typeof artist>["members"]>([]);
+  useEffect(() => {
+    if (artistId == null) { setMembers([]); return; }
+    let cancelled = false;
+    fetch(`/api/artists/${artistId}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(full => { if (!cancelled && full?.members) setMembers(full.members); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [artistId]);
 
   if (loading && !artist) {
     return (
@@ -313,12 +327,12 @@ export default function ArtistDetailPage() {
               </div>
 
               {/* Band Members — only for live bands */}
-              {artist.artistType === "band" && (artist.members ?? []).length > 0 && (
+              {artist.artistType === "band" && (members ?? []).length > 0 && (
                 <div>
                   <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-1">BAND MEMBERS</p>
-                  <p className="text-white/25 text-xs mb-4">{(artist.members ?? []).length} members</p>
+                  <p className="text-white/25 text-xs mb-4">{(members ?? []).length} members</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {(artist.members ?? []).map((m, i) => (
+                    {(members ?? []).map((m, i) => (
                       <div
                         key={i}
                         className="relative rounded-2xl overflow-hidden group"

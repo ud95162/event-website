@@ -47,11 +47,26 @@ function ArtistFormInner() {
   const { artists, addArtist, updateArtist } = useAdminData();
 
   const editId = searchParams.get("id") ? Number(searchParams.get("id")) : null;
-  const editing = editId ? artists.find(a => a.id === editId) ?? null : null;
+  const listEditing = editId ? artists.find(a => a.id === editId) ?? null : null;
 
   const [form, setForm] = useState<Omit<Artist, "id">>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // The list omits `members` (base64 photos) for payload size, so fetch the full record
+  // when editing — otherwise saving a band would wipe its members.
+  const [fullEditing, setFullEditing] = useState<Artist | null>(null);
+  useEffect(() => {
+    if (editId == null) { setFullEditing(null); return; }
+    let cancelled = false;
+    fetch(`/api/artists/${editId}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(full => { if (!cancelled && full?.id) setFullEditing(full as Artist); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [editId]);
+
+  const editing = fullEditing ?? listEditing;
 
   useEffect(() => {
     if (user && user.role !== "admin") router.replace("/admin");

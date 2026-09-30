@@ -3,6 +3,21 @@ import { getPool } from "../../../lib/db";
 import { ensureSchema } from "../../../lib/schema";
 import { mapArtistRow } from "../../../lib/mappers";
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await ensureSchema();
+  const { id } = await params;
+  const pool = getPool();
+  // Full record including `members` (omitted from the list endpoint for payload size).
+  const [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE id = ?", [id]);
+  if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(mapArtistRow(rows[0]), {
+    headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
+  });
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

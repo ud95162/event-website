@@ -6,9 +6,17 @@ import { mapArtistRow } from "../../lib/mappers";
 export async function GET() {
   await ensureSchema();
   const pool = getPool();
+  // Exclude `members` from the list: it holds base64 band-member photos (the bulk of
+  // the payload) that only the artist detail page uses. Dropping it keeps this shared
+  // response small so the home "Featured Artists" section loads instantly. The detail
+  // page fetches the full record (with members) from /api/artists/[id].
   const [rows] = await pool.query<any[]>("SELECT * FROM artists ORDER BY id");
-  // Cache so repeat visits reuse the (image-heavy) response instantly; SWR keeps it fresh.
-  return NextResponse.json(rows.map(mapArtistRow), {
+  const list = rows.map((r) => {
+    const { members, ...rest } = mapArtistRow(r);
+    void members;
+    return rest;
+  });
+  return NextResponse.json(list, {
     headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
   });
 }
