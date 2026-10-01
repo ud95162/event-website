@@ -125,7 +125,9 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   // /events listing (uses /api/events/category + /search + /all) and event detail (use
   // /api/events/by-slug). The small artists list is skipped only where it isn't needed
   // (home + /events listing) — event detail still loads it to resolve the lineup.
-  const skipEvents = pathname === "/" || pathname.startsWith("/events");
+  // /calendar fetches its events per-month, but still needs the (small) artists list for
+  // its artist filter options, so only events are skipped there.
+  const skipEvents = pathname === "/" || pathname.startsWith("/events") || pathname === "/calendar";
   const skipArtists = pathname === "/" || pathname === "/events";
 
   const [events, setEvents] = useState<Event[]>([]);

@@ -360,13 +360,7 @@ function FilterDropdown({ label, icon, options, selected, onToggle, multi = true
   );
 }
 
-const GENRE_FILTERS = [
-  { label: "Electronic", value: "electronic", color: "#39BD69" },
-  { label: "Sinhala",    value: "sinhala",    color: "#f59e0b" },
-  { label: "Tamil",      value: "tamil",      color: "#a855f7" },
-  { label: "Hindi",      value: "hindi",      color: "#f43f5e" },
-];
-
+// Cities for the City filter (genre/artist/organizer options come from real data).
 const LOCATION_FILTERS = [
   { label: "Colombo",  value: "Colombo"  },
   { label: "Kandy",    value: "Kandy"    },
@@ -374,20 +368,19 @@ const LOCATION_FILTERS = [
   { label: "Negombo",  value: "Negombo"  },
 ];
 
-const ARTIST_FILTERS = [
-  "DJ Nova", "Randhir Witana", "Maya Perera", "Ashanthi Dias",
-  "Kasun Silva", "Nadia Fernando", "The Beat Crew", "Hiruni De Silva",
-];
-
-const ORGANIZER_FILTERS = [
-  "Rhythm Nation LK", "Colombo Live Events", "Stage One Entertainment",
-  "Bass Nation LK", "Eventide Productions", "Sunset Events",
-];
+// Per-month event cache (keyed "year-month"); survives client-side navigation so
+// revisiting a month doesn't refetch.
+const monthCache = new Map<string, Event[]>();
 
 export default function CalendarPage() {
   const router = useRouter();
-  const { events } = useAdminData();
   const today  = new Date();
+
+  // Real filter options from the data (genres/organizers/artists), not sample values.
+  const { genres, organizers, artists } = useAdminData();
+  const genreOptions     = genres;
+  const organizerOptions = useMemo(() => Array.from(new Set(organizers.map(o => o.name).filter(Boolean))).sort(), [organizers]);
+  const artistOptions    = useMemo(() => Array.from(new Set(artists.map(a => a.stageName || a.name).filter(Boolean))).sort(), [artists]);
 
   const [viewDate,       setViewDate]       = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedEvent,  setSelectedEvent]  = useState<Event | null>(null);
@@ -399,6 +392,23 @@ export default function CalendarPage() {
 
   const year  = viewDate.getFullYear();
   const month = viewDate.getMonth();
+
+  // Fetch only the selected month's events (not the whole table). Cached per month so
+  // flipping back and forth is instant; revalidates quietly in the background.
+  const monthKey = `${year}-${month}`;
+  const [events, setEvents] = useState<Event[]>(() => monthCache.get(monthKey) ?? []);
+  const [eventsLoading, setEventsLoading] = useState(!monthCache.has(monthKey));
+  useEffect(() => {
+    const cached = monthCache.get(monthKey);
+    let cancelled = false;
+    if (cached) { setEvents(cached); setEventsLoading(false); }
+    else { setEvents([]); setEventsLoading(true); }
+    fetch(`/api/events/month?year=${year}&month=${month}`)
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => { const arr = Array.isArray(d) ? d : []; monthCache.set(monthKey, arr); if (!cancelled) { setEvents(arr); setEventsLoading(false); } })
+      .catch(() => { if (!cancelled) setEventsLoading(false); });
+    return () => { cancelled = true; };
+  }, [year, month, monthKey]);
 
   const toggle = (set: string[], setFn: (v: string[]) => void, v: string) =>
     setFn(set.includes(v) ? set.filter(x => x !== v) : [...set, v]);
@@ -420,9 +430,11 @@ export default function CalendarPage() {
 
   /* ── Filter events ──────────────────────────────────────────────── */
   const filteredEvents = useMemo(() => events.filter(ev => {
-    if (activeGenres.length > 0    && !activeGenres.some(g => ev.genres.includes(g))) return false;
+    const evGenres = ev.genres.map(g => g.toLowerCase());
+    const evLineup = ev.lineup.map(a => a.toLowerCase());
+    if (activeGenres.length > 0    && !activeGenres.some(g => evGenres.includes(g.toLowerCase()))) return false;
     if (activeLocations.length > 0 && !activeLocations.includes(ev.location)) return false;
-    if (activeArtists.length > 0   && !activeArtists.some(a => ev.lineup.includes(a))) return false;
+    if (activeArtists.length > 0   && !activeArtists.some(a => evLineup.includes(a.toLowerCase()))) return false;
     if (activeOrganizers.length > 0&& !activeOrganizers.includes(ev.organizer)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -508,9 +520,9 @@ export default function CalendarPage() {
             <FilterDropdown
               label="Genre"
               icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>}
-              options={GENRE_FILTERS.map(g => g.label)}
-              selected={activeGenres.map(v => GENRE_FILTERS.find(g => g.value === v)?.label ?? v)}
-              onToggle={label => { const g = GENRE_FILTERS.find(f => f.label === label); if (g) toggle(activeGenres, setActiveGenres, g.value); }}
+              options={genreOptions}
+              selected={activeGenres}
+              onToggle={val => toggle(activeGenres, setActiveGenres, val)}
             />
           </div>
 
@@ -530,7 +542,7 @@ export default function CalendarPage() {
             <FilterDropdown
               label="Artist"
               icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>}
-              options={ARTIST_FILTERS}
+              options={artistOptions}
               selected={activeArtists}
               onToggle={val => toggle(activeArtists, setActiveArtists, val)}
             />
@@ -541,7 +553,7 @@ export default function CalendarPage() {
             <FilterDropdown
               label="Organizer"
               icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8l-2 4h12l-2-4z"/></svg>}
-              options={ORGANIZER_FILTERS}
+              options={organizerOptions}
               selected={activeOrganizers}
               onToggle={val => toggle(activeOrganizers, setActiveOrganizers, val)}
             />
@@ -606,15 +618,15 @@ export default function CalendarPage() {
           {hasFilters && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {activeGenres.map(g => {
-                const genre = GENRE_FILTERS.find(f => f.value === g);
                 return (
                   <span key={g} style={{
                     display: "inline-flex", alignItems: "center", gap: 6,
                     padding: "4px 10px 4px 12px", borderRadius: 999,
                     background: "rgba(192,192,192,0.1)", border: "1px solid rgba(192,192,192,0.35)",
                     fontSize: 11, fontWeight: 700, color: "#C0C0C0",
+                    textTransform: "capitalize",
                   }}>
-                    {genre?.label ?? g}
+                    {g}
                     <button onClick={() => toggle(activeGenres, setActiveGenres, g)} style={{ display: "flex", alignItems: "center", background: "none", border: "none", cursor: "pointer", color: "inherit", padding: 0, opacity: 0.7 }}>
                       <X size={11} />
                     </button>
@@ -714,7 +726,7 @@ export default function CalendarPage() {
             <div className="flex items-center gap-2">
               <Music2 size={10} className="text-white/30" />
               <span className="text-white/30 text-[10px] font-bold tracking-widest uppercase">
-                {filteredEvents.length} events shown
+                {eventsLoading ? "Loading…" : `${filteredEvents.length} events shown`}
               </span>
             </div>
           </div>
