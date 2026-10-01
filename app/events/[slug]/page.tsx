@@ -542,6 +542,9 @@ export default function EventDetailPage() {
 function EventMedia({ image, title, trailer }: { image: string; title: string; trailer: string }) {
   const yt    = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
   const vimeo = trailer.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  const instaM = trailer.match(/instagram\.com\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+  // Instagram embeds via its own iframe player (no autoplay/sound control); reels are vertical.
+  const insta = instaM ? { type: instaM[1] === "reels" ? "reel" : instaM[1], code: instaM[2] } : null;
   const hasVideo = !!trailer;
 
   const [slide, setSlide] = useState(0);   // 0 = flyer, 1 = video
@@ -611,8 +614,23 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
         style={{ opacity: showVideo ? 0 : 1 }}
       />
 
+      {/* Instagram reel/post — embedded in Instagram's own vertical player */}
+      {showVideo && insta && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ padding: 12 }}>
+          <iframe
+            src={`https://www.instagram.com/${insta.type}/${insta.code}/embed`}
+            title="Event trailer"
+            className="h-full"
+            style={{ border: 0, width: "min(100%, 400px)", borderRadius: 12, background: "#000" }}
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            allowFullScreen
+            scrolling="no"
+          />
+        </div>
+      )}
+
       {/* Video (16:9, autoplays with sound when it becomes active) */}
-      {showVideo && (
+      {showVideo && !insta && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
             {embed ? (
@@ -641,8 +659,9 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
         </div>
       )}
 
-      {/* Sound toggle — prominent "tap for sound" while muted */}
-      {showVideo && (
+      {/* Sound toggle — prominent "tap for sound" while muted (not for Instagram, which
+          has its own in-player controls) */}
+      {showVideo && !insta && (
         <button
           onClick={() => setMuted(m => !m)}
           aria-label={muted ? "Unmute" : "Mute"}
