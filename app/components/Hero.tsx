@@ -70,7 +70,7 @@ const FALLBACK_PANELS = [
 ];
 
 export default function Hero() {
-  const { banners, events, loading } = useAdminData();
+  const { banners, loading } = useAdminData();
   const router = useRouter();
   // Slides come ONLY from admin-added banners (no public-folder fallback flashing
   // while data loads). Text defaults per index still reuse FALLBACK_PANELS.
@@ -78,16 +78,17 @@ export default function Hero() {
     image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null;
   }[] = banners.map((b, i) => {
     const fb = FALLBACK_PANELS[i % FALLBACK_PANELS.length];
-    const ev = b.eventId != null ? events.find(e => e.id === b.eventId) : null;
+    // The linked event's metadata is joined into the banner by the API (no events list needed).
+    const hasEvent = b.eventId != null && !!b.eventTitle;
     // Title & description come from the banner's own fields (falling back to the event, then the demo text).
-    const title = b.title ? splitTitle(b.title) : ev ? splitTitle(ev.title) : fb.title;
-    const rawDesc = b.description || ev?.description || "";
+    const title = b.title ? splitTitle(b.title) : hasEvent ? splitTitle(b.eventTitle!) : fb.title;
+    const rawDesc = b.description || b.eventDescription || "";
     const desc = rawDesc ? rawDesc.slice(0, 120) + (rawDesc.length > 120 ? "…" : "") : fb.desc;
     // Date & venue come from the linked event.
-    const venue = ev?.venue || ev?.location || "";
-    const date = ev ? `${ev.date}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
-    const tag = ev?.tag ? ev.tag.toUpperCase() : fb.tag;
-    return { image: b.url, tag, date, title, desc, slug: ev ? eventSlug(ev) : null };
+    const venue = b.eventVenue || b.eventLocation || "";
+    const date = hasEvent ? `${b.eventDate}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
+    const tag = b.eventTag ? b.eventTag.toUpperCase() : fb.tag;
+    return { image: b.url, tag, date, title, desc, slug: hasEvent ? eventSlug({ title: b.eventTitle! }) : null };
   });
   const hasPanels = panels.length > 0;
 

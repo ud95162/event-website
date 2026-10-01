@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Event } from "../data/events";
 import { Artist } from "../data/artists";
 
@@ -12,6 +13,13 @@ export type Banner = {
   eventId?: number | null;   // event the banner's "Explore Event" CTA links to (date/venue come from it)
   title?: string | null;     // banner's own headline
   description?: string | null; // banner's own description
+  // Linked event's metadata, joined by the API so the Hero needs no full events list.
+  eventTitle?: string | null;
+  eventDescription?: string | null;
+  eventDate?: string | null;
+  eventVenue?: string | null;
+  eventLocation?: string | null;
+  eventTag?: string | null;
 };
 
 export type Brand = {
@@ -44,6 +52,10 @@ type AdminDataContextType = {
   loading: boolean;
   events: Event[];
   artists: Artist[];
+  // Small home-page subsets, loaded eagerly on every route (the full `events`/`artists`
+  // lists are only fetched off the home page to keep the landing payload tiny).
+  featuredEvents: Event[];
+  featuredArtists: Artist[];
   organizers: Organizer[];
   genres: string[];
   badges: string[];
@@ -108,8 +120,13 @@ function writeCache(key: string, data: unknown) {
 }
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   const [events, setEvents] = useState<Event[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
+  const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+  const [featuredArtists, setFeaturedArtists] = useState<Artist[]>([]);
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
   const [badges, setBadges] = useState<string[]>([]);
@@ -118,30 +135,58 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [popupSettings, setPopupSettings] = useState<PopupSettings>(DEFAULT_POPUP);
   const [loading, setLoading] = useState(true);
 
-  // Initial load: hydrate instantly from the last-good cache, then refresh from the API.
+  const lightStarted = useRef(false);
+  const catalogStarted = useRef(false);
+
+  // Hydrate instantly from the last-good cache (once), so repeat visits render immediately.
   useEffect(() => {
-    // 1) Show cached data immediately (no waiting on the network / big payloads).
     const ce = readCache<Event[]>("events");     if (ce?.length) setEvents(ce);
     const ca = readCache<Artist[]>("artists");    if (ca?.length) setArtists(ca);
+    const cfe = readCache<Event[]>("featuredEvents");   if (cfe?.length) setFeaturedEvents(cfe);
+    const cfa = readCache<Artist[]>("featuredArtists");  if (cfa?.length) setFeaturedArtists(cfa);
     const cb = readCache<Banner[]>("banners");    if (cb) setBanners(cb);
     const cbr = readCache<Brand[]>("brands");     if (cbr) setBrands(cbr);
     const co = readCache<Organizer[]>("organizers"); if (co) setOrganizers(co);
     const cg = readCache<string[]>("genres");     if (cg) setGenres(cg);
     const cbd = readCache<string[]>("badges");    if (cbd) setBadges(cbd);
     const cp = readCache<PopupSettings>("popup"); if (cp) setPopupSettings({ ...DEFAULT_POPUP, ...cp });
-
-    // 2) Fetch fresh, update state, and refresh the cache.
-    Promise.allSettled([
-      jsonFetch<Event[]>("/api/events").then((d) => { setEvents(d); writeCache("events", d); }),
-      jsonFetch<Artist[]>("/api/artists").then((d) => { setArtists(d); writeCache("artists", d); }),
-      jsonFetch<Organizer[]>("/api/organizers").then((d) => { setOrganizers(d); writeCache("organizers", d); }),
-      jsonFetch<string[]>("/api/genres").then((d) => { setGenres(d); writeCache("genres", d); }),
-      jsonFetch<string[]>("/api/badges").then((d) => { setBadges(d); writeCache("badges", d); }),
-      jsonFetch<Banner[]>("/api/banners").then((d) => { setBanners(d); writeCache("banners", d); }),
-      jsonFetch<Brand[]>("/api/brands").then((d) => { setBrands(d); writeCache("brands", d); }),
-      jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) { setPopupSettings({ ...DEFAULT_POPUP, ...s }); writeCache("popup", s); } }),
-    ]).finally(() => setLoading(false));
   }, []);
+
+  // Load data for the current view. Light collections + the small home subsets load on
+  // every route; the FULL events/artists lists (heavy base64 images) load only once the
+  // user is off the home page — so the landing page never pulls the whole events table.
+  useEffect(() => {
+    const jobs: Promise<unknown>[] = [];
+
+    if (!lightStarted.current) {
+      lightStarted.current = true;
+      jobs.push(
+        jsonFetch<Event[]>("/api/events/featured").then((d) => { setFeaturedEvents(d); writeCache("featuredEvents", d); }),
+        jsonFetch<Artist[]>("/api/artists/featured").then((d) => { setFeaturedArtists(d); writeCache("featuredArtists", d); }),
+        jsonFetch<Organizer[]>("/api/organizers").then((d) => { setOrganizers(d); writeCache("organizers", d); }),
+        jsonFetch<string[]>("/api/genres").then((d) => { setGenres(d); writeCache("genres", d); }),
+        jsonFetch<string[]>("/api/badges").then((d) => { setBadges(d); writeCache("badges", d); }),
+        jsonFetch<Banner[]>("/api/banners").then((d) => { setBanners(d); writeCache("banners", d); }),
+        jsonFetch<Brand[]>("/api/brands").then((d) => { setBrands(d); writeCache("brands", d); }),
+        jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) { setPopupSettings({ ...DEFAULT_POPUP, ...s }); writeCache("popup", s); } }),
+      );
+    }
+
+    if (!isHome && !catalogStarted.current) {
+      catalogStarted.current = true;
+      jobs.push(
+        jsonFetch<Event[]>("/api/events").then((d) => { setEvents(d); writeCache("events", d); }),
+        jsonFetch<Artist[]>("/api/artists").then((d) => { setArtists(d); writeCache("artists", d); }),
+      );
+    }
+
+    if (jobs.length) {
+      setLoading(true);
+      let active = true;
+      Promise.allSettled(jobs).finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }
+  }, [isHome]);
 
   const updatePopupSettings = async (s: PopupSettings): Promise<boolean> => {
     setPopupSettings(s);
@@ -348,7 +393,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   return (
     <AdminDataContext.Provider value={{
       loading,
-      events, artists, organizers, genres, badges, banners, brands,
+      events, artists, featuredEvents, featuredArtists,
+      organizers, genres, badges, banners, brands,
       popupSettings, updatePopupSettings,
       addEvent, updateEvent, deleteEvent,
       addArtist, updateArtist, deleteArtist,

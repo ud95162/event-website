@@ -31,7 +31,7 @@ const ACCENT_COLOR = "#39BD69";
 const ACCENT_RGB   = "57,189,105";
 
 export default function FeaturedArtists() {
-  const { artists: allArtists, loading } = useAdminData();
+  const { featuredArtists: allArtists, loading } = useAdminData();
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

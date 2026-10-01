@@ -20,7 +20,8 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
 
   // Downscale + compress the image before storing it. Uploads are kept as base64 in
   // the DB and sent inline in API responses, so a raw 5 MB photo makes pages crawl.
-  // Capping the longest side and re-encoding as JPEG shrinks that to a few hundred KB.
+  // Capping the longest side and re-encoding as WebP shrinks that to a few hundred KB
+  // (WebP is ~25-35% smaller than JPEG at the same quality).
   const MAX_DIM = 1600;
   const QUALITY = 0.82;
 
@@ -38,7 +39,10 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
         if (!ctx) return resolve(dataUrl);
         ctx.drawImage(img, 0, 0, w, h);
         try {
-          const out = canvas.toDataURL("image/jpeg", QUALITY);
+          // Prefer WebP; fall back to JPEG if the browser can't encode it (toDataURL
+          // silently returns PNG when the requested type is unsupported).
+          let out = canvas.toDataURL("image/webp", QUALITY);
+          if (!out.startsWith("data:image/webp")) out = canvas.toDataURL("image/jpeg", QUALITY);
           // Keep whichever is smaller (tiny PNGs/SVGs may already beat re-encoding).
           resolve(out.length < dataUrl.length ? out : dataUrl);
         } catch {

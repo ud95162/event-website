@@ -35,7 +35,7 @@ function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
 
 export default function FeaturedEvents() {
   const { userLocation } = useUserLocation();
-  const { events: allEvents, loading } = useAdminData();
+  const { featuredEvents: allEvents, loading } = useAdminData();
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

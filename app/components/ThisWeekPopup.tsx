@@ -8,7 +8,9 @@ import { eventSlug } from "../lib/slug";
 
 export default function ThisWeekPopup() {
   const router = useRouter();
-  const { events, loading, popupSettings } = useAdminData();
+  // Uses the small home subset (featured + popup-flagged + this-week events), not the
+  // full events table, so the popup never forces the landing page to load everything.
+  const { featuredEvents: events, loading, popupSettings } = useAdminData();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
