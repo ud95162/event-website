@@ -196,7 +196,9 @@ export default function EventDetailPage() {
       return;
     }
     const hrefs: Record<string, string> = {
-      whatsapp: `https://wa.me/?text=${enc(full)}`,
+      // api.whatsapp.com/send preserves emoji; the wa.me shortener mangles 4-byte
+      // emojis into replacement characters during its redirect.
+      whatsapp: `https://api.whatsapp.com/send?text=${enc(full)}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`,
       x: `https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`,
       email: `mailto:?subject=${enc(event.title)}&body=${enc(full)}`,
