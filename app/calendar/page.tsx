@@ -17,7 +17,8 @@ const MONTHS = [
   "July","August","September","October","November","December",
 ];
 
-/* ── Day card with horizontal tiles ─────────────────────────────── */
+/* ── Day card: one clean cover + an "N events" badge; multi-event days open a
+      readable list popup on click instead of stacking unreadable slivers ───── */
 function DayCard({
   date, dayEvents, isToday: todayCell, onSelect,
 }: {
@@ -26,40 +27,80 @@ function DayCard({
   isToday: boolean;
   onSelect: (ev: Event) => void;
 }) {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const [popupPos,   setPopupPos]   = useState<{ top: number; left: number } | null>(null);
-  const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const hasEvents = dayEvents.length > 0;
   const n = dayEvents.length;
+  const hasEvents = n > 0;
+  const multi = n > 1;
+  const cover = dayEvents[0];
+  const cellRef = useRef<HTMLDivElement>(null);
 
-  // Font size scales down as more events are added
-  const titleFontSize = n <= 1 ? 10 : n === 2 ? 9 : 8;
+  const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
+  const [listOpen, setListOpen] = useState(false);
+  const [listPos, setListPos] = useState<{ top: number; left: number } | null>(null);
 
-  const handleTileEnter = (idx: number, el: HTMLDivElement) => {
-    setHoveredIdx(idx);
+  // Position a popup to the side of the cell, flipping/clamping to stay on screen.
+  const place = (w: number, h: number) => {
+    const el = cellRef.current;
+    if (!el) return null;
     const r = el.getBoundingClientRect();
-    const popupW = 240, popupH = 260;
     let left = r.right + 8;
-    if (left + popupW > window.innerWidth - 8) left = r.left - popupW - 8;
+    if (left + w > window.innerWidth - 8) left = r.left - w - 8;
+    if (left < 8) left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8);
     let top = r.top;
-    if (top + popupH > window.innerHeight - 8) top = window.innerHeight - popupH - 8;
-    setPopupPos({ top, left });
+    if (top + h > window.innerHeight - 8) top = Math.max(8, window.innerHeight - h - 8);
+    return { top, left };
   };
 
-  const hoveredEvent = hoveredIdx !== null ? dayEvents[hoveredIdx] : null;
+  const onCellEnter = () => { if (!multi && hasEvents) { const p = place(240, 280); if (p) setPreview(p); } };
+  const onCellLeave = () => setPreview(null);
+  const onCellClick = () => {
+    if (!hasEvents) return;
+    if (multi) { const p = place(268, 340); if (p) { setListPos(p); setListOpen(true); } }
+    else onSelect(cover);
+  };
+
+  // Close the list popup on outside click / scroll / resize.
+  useEffect(() => {
+    if (!listOpen) return;
+    const close = () => setListOpen(false);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    const t = setTimeout(() => document.addEventListener("mousedown", close), 0);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      document.removeEventListener("mousedown", close);
+    };
+  }, [listOpen]);
 
   return (
     <div style={{ aspectRatio: "1/1", position: "relative", borderRadius: "0.75rem", overflow: "hidden" }}>
-      {/* Outer border */}
-      <div style={{
-        position: "absolute", inset: 0, borderRadius: "0.75rem", overflow: "hidden",
-        border: todayCell ? "2px solid #C0C0C0" : hasEvents ? "1px solid rgba(192,192,192,0.3)" : "1px solid rgba(192,192,192,0.2)",
-        background: hasEvents ? "#0a0a0a" : "rgb(26,26,30)",
-        boxShadow: todayCell ? "0 0 16px rgba(192,192,192,0.2)" : "none",
-        display: "flex", flexDirection: "column",
-        zIndex: 1,
-      }}>
-        {/* Date number — overlaid top-left */}
+      <div
+        ref={cellRef}
+        onClick={onCellClick}
+        onMouseEnter={onCellEnter}
+        onMouseLeave={onCellLeave}
+        style={{
+          position: "absolute", inset: 0, borderRadius: "0.75rem", overflow: "hidden",
+          border: todayCell ? "2px solid #C0C0C0" : hasEvents ? "1px solid rgba(192,192,192,0.3)" : "1px solid rgba(192,192,192,0.2)",
+          background: hasEvents ? "#0a0a0a" : "rgb(26,26,30)",
+          boxShadow: todayCell ? "0 0 16px rgba(192,192,192,0.2)" : "none",
+          cursor: hasEvents ? "pointer" : "default",
+          zIndex: 1,
+        }}
+      >
+        {/* Cover (first event) fills the whole cell */}
+        {hasEvents && (
+          <>
+            <img
+              src={cover.image} alt={cover.title}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
+            />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.4) 100%)" }} />
+          </>
+        )}
+
+        {/* Date number */}
         <div style={{
           position: "absolute", top: 6, left: 6, zIndex: 10,
           width: 28, height: 28, borderRadius: "50%",
@@ -73,70 +114,41 @@ function DayCard({
           </span>
         </div>
 
-        {/* Event tiles — stacked, equal height */}
-        {hasEvents ? dayEvents.map((ev, idx) => {
-          const isHov = hoveredIdx === idx;
-          return (
-            <div
-              key={ev.id}
-              ref={el => { tileRefs.current[idx] = el; }}
-              onClick={() => onSelect(ev)}
-              onMouseEnter={() => handleTileEnter(idx, tileRefs.current[idx]!)}
-              onMouseLeave={() => { setHoveredIdx(null); setPopupPos(null); }}
-              style={{
-                flex: 1, position: "relative", overflow: "hidden",
-                cursor: "pointer",
-                borderTop: idx > 0 ? "1px solid rgba(0,0,0,0.4)" : "none",
-                transition: "flex 0.3s ease",
-              }}
-            >
-              {/* Image */}
-              <img
-                src={ev.image} alt={ev.title}
-                style={{
-                  position: "absolute", inset: 0, width: "100%", height: "100%",
-                  objectFit: "cover", objectPosition: "top",
-                  transform: isHov ? "scale(1.06)" : "scale(1)",
-                  transition: "transform 0.4s ease",
-                }}
-              />
-              {/* Gradient */}
-              <div style={{
-                position: "absolute", inset: 0,
-                background: isHov
-                  ? "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)"
-                  : "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 100%)",
-                transition: "background 0.3s",
-              }} />
-              {/* Title — left-aligned, only when tall enough */}
-              {n <= 4 && (
-                <div style={{
-                  position: "absolute", inset: 0,
-                  display: "flex", alignItems: "center",
-                  paddingLeft: idx === 0 ? 36 : 8, paddingRight: 6,
-                }}>
-                  <p style={{
-                    fontSize: titleFontSize, fontWeight: 800, color: "#fff",
-                    textTransform: "uppercase", letterSpacing: "0.04em",
-                    lineHeight: 1.2, overflow: "hidden",
-                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
-                  }}>
-                    {ev.title}
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-        }) : (
-          // Empty cell spacer
-          <div style={{ flex: 1 }} />
+        {/* Count badge for multi-event days */}
+        {multi && (
+          <div style={{
+            position: "absolute", top: 6, right: 6, zIndex: 10,
+            padding: "3px 8px", borderRadius: 999,
+            background: "rgba(255,255,255,0.92)", color: "#000",
+            fontSize: 9, fontWeight: 900, letterSpacing: "0.02em",
+          }}>
+            {n} EVENTS
+          </div>
+        )}
+
+        {/* Title (+N more) at the bottom */}
+        {hasEvents && (
+          <div style={{ position: "absolute", left: 8, right: 8, bottom: 7, zIndex: 10 }}>
+            <p style={{
+              fontSize: 10, fontWeight: 800, color: "#fff",
+              textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.2,
+              overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
+            }}>
+              {cover.title}
+            </p>
+            {multi && (
+              <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>
+                +{n - 1} more
+              </p>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Hover popup */}
-      {hoveredEvent && popupPos && typeof document !== "undefined" && createPortal(
+      {/* Single-event hover preview */}
+      {!multi && preview && hasEvents && typeof document !== "undefined" && createPortal(
         <div style={{
-          position: "fixed", top: popupPos.top, left: popupPos.left,
+          position: "fixed", top: preview.top, left: preview.left,
           width: 240, borderRadius: 16, overflow: "hidden",
           background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.1)",
           boxShadow: "0 20px 60px rgba(0,0,0,0.7)", zIndex: 9999, pointerEvents: "none",
@@ -144,28 +156,65 @@ function DayCard({
         }}>
           <style>{`@keyframes fadeInPopup { from { opacity:0; transform:translateY(6px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }`}</style>
           <div style={{ position: "relative", height: 120 }}>
-            <img src={hoveredEvent.image} alt={hoveredEvent.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+            <img src={cover.image} alt={cover.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0a0a0a 0%, transparent 60%)" }} />
-            <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#fff", background: "#39BD69", borderRadius: 999, padding: "2px 8px" }}>{hoveredEvent.tag}</span>
-            {n > 1 && <span style={{ position: "absolute", top: 8, right: 8, fontSize: 8, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.55)", borderRadius: 999, padding: "2px 7px" }}>{hoveredIdx! + 1}/{n}</span>}
+            <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#000", background: "#fff", borderRadius: 999, padding: "2px 8px" }}>{cover.tag}</span>
           </div>
           <div style={{ padding: "10px 12px 12px" }}>
-            <p style={{ fontSize: 13, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, lineHeight: 1.25 }}>{hoveredEvent.title}</p>
+            <p style={{ fontSize: 13, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, lineHeight: 1.25 }}>{cover.title}</p>
             {[
-              { Icon: Calendar, text: hoveredEvent.date },
-              { Icon: MapPin,   text: hoveredEvent.location },
-              { Icon: Ticket,   text: fromPrice(hoveredEvent.tickets, hoveredEvent.price) },
+              { Icon: Calendar, text: cover.date },
+              { Icon: MapPin,   text: cover.location },
+              { Icon: Ticket,   text: fromPrice(cover.tickets, cover.price) },
             ].map(({ Icon, text }) => (
               <div key={text} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                <Icon size={9} style={{ color: "#39BD69", flexShrink: 0 }} />
+                <Icon size={9} style={{ color: "#C0C0C0", flexShrink: 0 }} />
                 <span style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{text}</span>
               </div>
             ))}
             <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontSize: 9, color: "#39BD69", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Click to view</span>
-              <ArrowRight size={8} style={{ color: "#39BD69" }} />
+              <span style={{ fontSize: 9, color: "#C0C0C0", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Click to view</span>
+              <ArrowRight size={8} style={{ color: "#C0C0C0" }} />
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Multi-event click list popup */}
+      {multi && listOpen && listPos && typeof document !== "undefined" && createPortal(
+        <div
+          onClick={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+          style={{
+            position: "fixed", top: listPos.top, left: listPos.left,
+            width: 268, maxHeight: 340, overflowY: "auto",
+            borderRadius: 16, background: "#0b0b10", border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 24px 60px rgba(0,0,0,0.75)", zIndex: 9999, padding: 8,
+            animation: "fadeInPopup 0.16s ease",
+          }}
+        >
+          <style>{`@keyframes fadeInPopup { from { opacity:0; transform:translateY(6px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }`}</style>
+          <p style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", padding: "4px 6px 8px" }}>
+            {MONTHS[date.getMonth()].slice(0, 3)} {date.getDate()} · {n} events
+          </p>
+          {dayEvents.map(ev => (
+            <div
+              key={ev.id}
+              onClick={() => { onSelect(ev); setListOpen(false); }}
+              style={{ display: "flex", gap: 10, padding: 8, borderRadius: 10, cursor: "pointer", transition: "background 0.15s" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              <img src={ev.image} alt={ev.title} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", objectPosition: "top", flexShrink: 0 }} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ fontSize: 11, fontWeight: 800, color: "#fff", textTransform: "uppercase", lineHeight: 1.2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{ev.title}</p>
+                <p style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                  <MapPin size={9} style={{ flexShrink: 0 }} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.location}</span>
+                </p>
+              </div>
+            </div>
+          ))}
         </div>,
         document.body
       )}
