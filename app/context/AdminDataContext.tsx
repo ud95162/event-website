@@ -121,11 +121,12 @@ function writeCache(key: string, data: unknown) {
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  // Routes that render their own data from dedicated capped endpoints instead of the full
-  // events/artists catalog — so they never trigger the heavy (base64-image) full fetch.
-  // Note: this is the exact listing route; detail routes like /events/[slug] are NOT
-  // matched here and still load the catalog so they can resolve an item by slug.
-  const skipCatalog = pathname === "/" || pathname === "/events";
+  // The full events list is the heavy one (base64 images). Skip it on the home page, the
+  // /events listing (uses /api/events/category + /search + /all) and event detail (use
+  // /api/events/by-slug). The small artists list is skipped only where it isn't needed
+  // (home + /events listing) — event detail still loads it to resolve the lineup.
+  const skipEvents = pathname === "/" || pathname.startsWith("/events");
+  const skipArtists = pathname === "/" || pathname === "/events";
 
   const [events, setEvents] = useState<Event[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -140,7 +141,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const lightStarted = useRef(false);
-  const catalogStarted = useRef(false);
+  const eventsStarted = useRef(false);
+  const artistsStarted = useRef(false);
 
   // Hydrate instantly from the last-good cache (once), so repeat visits render immediately.
   useEffect(() => {
@@ -176,12 +178,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    if (!skipCatalog && !catalogStarted.current) {
-      catalogStarted.current = true;
-      jobs.push(
-        jsonFetch<Event[]>("/api/events").then((d) => { setEvents(d); writeCache("events", d); }),
-        jsonFetch<Artist[]>("/api/artists").then((d) => { setArtists(d); writeCache("artists", d); }),
-      );
+    if (!skipEvents && !eventsStarted.current) {
+      eventsStarted.current = true;
+      jobs.push(jsonFetch<Event[]>("/api/events").then((d) => { setEvents(d); writeCache("events", d); }));
+    }
+
+    if (!skipArtists && !artistsStarted.current) {
+      artistsStarted.current = true;
+      jobs.push(jsonFetch<Artist[]>("/api/artists").then((d) => { setArtists(d); writeCache("artists", d); }));
     }
 
     if (jobs.length) {
@@ -190,7 +194,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       Promise.allSettled(jobs).finally(() => { if (active) setLoading(false); });
       return () => { active = false; };
     }
-  }, [skipCatalog]);
+  }, [skipEvents, skipArtists]);
 
   const updatePopupSettings = async (s: PopupSettings): Promise<boolean> => {
     setPopupSettings(s);

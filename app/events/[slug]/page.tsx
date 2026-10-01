@@ -5,9 +5,9 @@ import { useState, useEffect, useRef } from "react";
 import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
-import { slugify, eventSlug, artistSlug, organizerSlug } from "../../lib/slug";
+import { artistSlug, organizerSlug } from "../../lib/slug";
 import { track } from "../../lib/track";
-import { statusColor } from "../../data/events";
+import { statusColor, Event } from "../../data/events";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
@@ -17,12 +17,26 @@ export default function EventDetailPage() {
   const params   = useParams();
   const router   = useRouter();
   const slug     = String(params.slug);
-  const { events, artists, organizers, loading } = useAdminData();
-  const event    = events.find(e => eventSlug(e) === slug) ?? null;
+  // Lineup artists and organizers still come from context; the event itself is fetched
+  // by slug so this page never loads the whole events table just to find one.
+  const { artists, organizers } = useAdminData();
   const { userLocation } = useUserLocation();
 
+  const [event,   setEvent]   = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
   const [liked,  setLiked]  = useState(false);
   const [shared, setShared] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/events/by-slug/${encodeURIComponent(slug)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!cancelled) setEvent(d && d.id ? (d as Event) : null); })
+      .catch(() => { if (!cancelled) setEvent(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [slug]);
 
   // Track a page view once per event load.
   useEffect(() => {

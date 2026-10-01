@@ -429,10 +429,130 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
 /* ══════════════════════════════════════════════════════════════════════
    Inner content
    ══════════════════════════════════════════════════════════════════════ */
-type SectionsData = {
-  rows: { title: string; subtitle: string; ids: number[] }[];
-  events: Record<number, Event>;
-};
+/* ── Skeleton row shown while category data loads ─────────────────── */
+function SkeletonRow() {
+  return (
+    <div style={{ margin: "0 0 40px" }}>
+      <style>{`@keyframes evt-skel { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
+      <div style={{ padding: "0 56px", marginBottom: 16 }}>
+        <div style={{ width: 90, height: 9, borderRadius: 4, background: "rgba(255,255,255,0.06)", marginBottom: 10 }} />
+        <div style={{ width: 220, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.08)" }} />
+      </div>
+      <div style={{ display: "flex", gap: 20, padding: "0 56px", overflow: "hidden" }}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} style={{ flexShrink: 0, width: 230, height: 320, borderRadius: 16, overflow: "hidden", background: "#0d0d12", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ width: "100%", height: "100%", background: "linear-gradient(110deg, #0d0d12 30%, #16161f 50%, #0d0d12 70%)", backgroundSize: "200% 100%", animation: "evt-skel 1.3s ease-in-out infinite" }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── "All Events" — paginated grid (loads 6 at a time) ────────────── */
+function AllEventsSection({ liked, shared, onLike, onShare }: {
+  liked: Set<number>;
+  shared: Set<number>;
+  onLike: (id: number, e: React.MouseEvent) => void;
+  onShare: (id: number, title: string, e: React.MouseEvent) => void;
+}) {
+  const PAGE = 6;
+  const [items, setItems]     = useState<Event[]>([]);
+  const [total, setTotal]     = useState(0);
+  const [loading, setLoading] = useState(false);
+  const started = useRef(false);
+
+  const load = (offset: number) => {
+    setLoading(true);
+    fetch(`/api/events/all?offset=${offset}&limit=${PAGE}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (!d) return;
+        setItems(prev => (offset === 0 ? d.events : [...prev, ...d.events]));
+        setTotal(d.total);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { if (started.current) return; started.current = true; load(0); }, []);
+
+  const hasMore = items.length < total;
+  if (!items.length && !loading) return null;
+
+  return (
+    <div style={{ padding: "8px 56px 0" }}>
+      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#39BD69", marginBottom: 6 }}>Browse Everything</p>
+      <h2 style={{ fontSize: "clamp(1.2rem,2.4vw,1.8rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.01em", marginBottom: 20 }}>All Events</h2>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
+        {items.map(ev => (
+          <EventCard key={ev.id} event={ev} liked={liked.has(ev.id)} shared={shared.has(ev.id)}
+            onLike={e => onLike(ev.id, e)} onShare={e => onShare(ev.id, ev.title, e)} />
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 28 }}>
+        {hasMore ? (
+          <button
+            onClick={() => load(items.length)}
+            disabled={loading}
+            style={{ padding: "12px 30px", borderRadius: 999, cursor: loading ? "default" : "pointer", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}
+          >
+            {loading ? "Loading…" : "Load More"}
+          </button>
+        ) : (
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase" }}>That&apos;s all {total} events</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── One category row — fetches its own data lazily when scrolled near ── */
+function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLike, onShare }: {
+  title: string;
+  subtitle: string;
+  endpoint: string;
+  direction: "left" | "right";
+  liked: Set<number>;
+  shared: Set<number>;
+  onLike: (id: number, e: React.MouseEvent) => void;
+  onShare: (id: number, title: string, e: React.MouseEvent) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [data, setData] = useState<Event[] | null>(null); // null = not fetched yet
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some(e => e.isIntersecting) && !started.current) {
+        started.current = true;
+        io.disconnect();
+        fetch(endpoint)
+          .then(r => (r.ok ? r.json() : []))
+          .then(d => setData(Array.isArray(d) ? d : []))
+          .catch(() => setData([]));
+      }
+    }, { rootMargin: "300px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [endpoint]);
+
+  // Loaded but empty → render nothing (keeps empty categories off the page).
+  if (data && data.length === 0) return <div ref={ref} />;
+
+  return (
+    <div ref={ref}>
+      {data === null ? (
+        <SkeletonRow />
+      ) : (
+        <EventRow title={title} subtitle={subtitle} events={data}
+          liked={liked} shared={shared} onLike={onLike} onShare={onShare} direction={direction} />
+      )}
+    </div>
+  );
+}
 
 function EventsContent() {
   const router = useRouter();
@@ -448,10 +568,8 @@ function EventsContent() {
   const categoryParam = searchParams.get("category") ?? "";
   const isFiltered = !!genreParam || !!dateParam || !!queryParam;
 
-  // Category rows (default view) and search results (filtered view) are fetched from
-  // dedicated, capped endpoints — the page never downloads the whole events table.
-  const [sections, setSections] = useState<SectionsData | null>(null);
-  const [sectionsLoading, setSectionsLoading] = useState(true);
+  // Search results for the filtered view. (The default view's category rows each fetch
+  // themselves lazily via <CategoryRow>, so the page never downloads the whole table.)
   const [results, setResults] = useState<Event[]>([]);
   const [resultsLoading, setResultsLoading] = useState(false);
 
@@ -467,21 +585,6 @@ function EventsContent() {
     setShared(prev => { const s = new Set(prev); s.add(id); return s; });
     setTimeout(() => setShared(prev => { const s = new Set(prev); s.delete(id); return s; }), 1500);
   };
-
-  // Default view: fetch the capped category rows. Refetch when the user's location
-  // resolves so the server can add the "Near You" row.
-  useEffect(() => {
-    if (isFiltered) return;
-    let cancelled = false;
-    setSectionsLoading(true);
-    const qs = userLocation ? `?lat=${userLocation.lat}&lon=${userLocation.lon}` : "";
-    fetch(`/api/events/sections${qs}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!cancelled && d) setSections(d); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setSectionsLoading(false); });
-    return () => { cancelled = true; };
-  }, [isFiltered, userLocation]);
 
   // Filtered view: fetch server-side search results for the active filters.
   useEffect(() => {
@@ -529,33 +632,44 @@ function EventsContent() {
     );
   }
 
-  /* ── Default view: category rows ──────────────────────────────── */
-  const rows = (sections?.rows ?? []).map(r => ({
-    title: r.title,
-    subtitle: r.subtitle,
-    data: r.ids.map(id => sections!.events[id]).filter(Boolean) as Event[],
-  }));
+  /* ── Default view: each category row loads itself lazily ──────────── */
+  const rowDefs: { title: string; subtitle: string; type: string; value?: string }[] = [
+    { title: "Hot & Trending",   subtitle: "Don't Miss Out",         type: "hot" },
+    ...(userLocation ? [{ title: "Near You", subtitle: "Based on Your Location", type: "near-you" }] : []),
+    { title: "Upcoming Events",  subtitle: "Coming Soon",            type: "upcoming" },
+    { title: "Electronic / EDM", subtitle: "Genre",                  type: "genre", value: "electronic" },
+    { title: "Sinhala Music",    subtitle: "Genre",                  type: "genre", value: "sinhala" },
+    { title: "DJ Nights",        subtitle: "Night Life",             type: "dj" },
+    { title: "Colombo Events",   subtitle: "By City",                type: "city", value: "Colombo" },
+    { title: "Coming Soon",      subtitle: "Save the Date",          type: "coming-soon" },
+  ];
+
+  const buildUrl = (def: { type: string; value?: string }) => {
+    const p = new URLSearchParams({ type: def.type });
+    if (def.value) p.set("value", def.value);
+    if (def.type === "near-you" && userLocation) {
+      p.set("lat", String(userLocation.lat));
+      p.set("lon", String(userLocation.lon));
+    }
+    return `/api/events/category?${p.toString()}`;
+  };
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
-      {rows.map((row, i) => (
-        <EventRow
-          key={row.title}
-          title={row.title}
-          subtitle={row.subtitle}
-          events={row.data}
+      {rowDefs.map((def, i) => (
+        <CategoryRow
+          key={def.title}
+          title={def.title}
+          subtitle={def.subtitle}
+          endpoint={buildUrl(def)}
+          direction={i % 2 === 0 ? "left" : "right"}
           liked={liked}
           shared={shared}
           onLike={toggleLike}
           onShare={handleShare}
-          direction={i % 2 === 0 ? "left" : "right"}
         />
       ))}
-      {sectionsLoading && rows.length === 0 && (
-        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", padding: "40px 0" }}>
-          Loading events…
-        </p>
-      )}
+      <AllEventsSection liked={liked} shared={shared} onLike={toggleLike} onShare={handleShare} />
     </div>
   );
 }
