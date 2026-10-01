@@ -4,36 +4,39 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Calendar, MapPin, ArrowRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
+import type { Event } from "../data/events";
 import { eventSlug } from "../lib/slug";
 
 export default function ThisWeekPopup() {
   const router = useRouter();
-  // Uses the small home subset (featured + popup-flagged + this-week events), not the
-  // full events table, so the popup never forces the landing page to load everything.
-  const { featuredEvents: events, loading, popupSettings } = useAdminData();
+  // Only the enabled flag + title come from context; the events come from a dedicated
+  // endpoint that returns exactly the popup's events (filtered by mode server-side).
+  const { popupSettings } = useAdminData();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  // Which events the popup shows depends on the admin's chosen mode:
-  //   manual → the events flagged in the admin "Week Popup" page
-  //   auto   → events happening in the next 7 days (default)
-  const now = new Date(); now.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
-  const weekEvents =
-    popupSettings.mode === "manual"
-      ? events.filter(ev => ev.popup)
-      : events
-          .filter(ev => { const d = new Date(ev.date); return !isNaN(d.getTime()) && d >= now && d < weekEnd; })
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const [weekEvents, setWeekEvents] = useState<Event[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
+    if (!popupSettings.enabled) return;
+    let cancelled = false;
+    fetch("/api/events/popup")
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => { if (!cancelled) setWeekEvents(Array.isArray(d) ? d : []); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoaded(true); });
+    return () => { cancelled = true; };
+  }, [popupSettings.enabled]);
+
+  useEffect(() => {
+    if (!loaded) return;
     if (!popupSettings.enabled) return;
     if (weekEvents.length === 0) return;
     const t = setTimeout(() => setOpen(true), 700);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, popupSettings.enabled, weekEvents.length]);
+  }, [loaded, popupSettings.enabled, weekEvents.length]);
 
   const count = weekEvents.length;
   const prev = () => setIndex(i => (i - 1 + count) % count);
@@ -53,7 +56,7 @@ export default function ThisWeekPopup() {
   }, [open, count]);
 
   const close = () => setOpen(false);
-  const go = (ev: typeof events[number]) => { close(); router.push(`/events/${eventSlug(ev)}`); };
+  const go = (ev: Event) => { close(); router.push(`/events/${eventSlug(ev)}`); };
 
   if (!open || count === 0) return null;
   const ev = weekEvents[Math.min(index, count - 1)];

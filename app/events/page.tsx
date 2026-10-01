@@ -507,7 +507,7 @@ function AllEventsSection({ liked, shared, onLike, onShare }: {
   );
 }
 
-/* ── One category row — fetches its own data lazily when scrolled near ── */
+/* ── One category row — fetches its own data on mount (all rows in parallel) ── */
 function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLike, onShare }: {
   title: string;
   subtitle: string;
@@ -518,39 +518,26 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
   onLike: (id: number, e: React.MouseEvent) => void;
   onShare: (id: number, title: string, e: React.MouseEvent) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<Event[] | null>(null); // null = not fetched yet
-  const started = useRef(false);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some(e => e.isIntersecting) && !started.current) {
-        started.current = true;
-        io.disconnect();
-        fetch(endpoint)
-          .then(r => (r.ok ? r.json() : []))
-          .then(d => setData(Array.isArray(d) ? d : []))
-          .catch(() => setData([]));
-      }
-    }, { rootMargin: "300px" });
-    io.observe(el);
-    return () => io.disconnect();
+    let cancelled = false;
+    setData(null);
+    fetch(endpoint)
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => { if (!cancelled) setData(Array.isArray(d) ? d : []); })
+      .catch(() => { if (!cancelled) setData([]); });
+    return () => { cancelled = true; };
   }, [endpoint]);
 
   // Loaded but empty → render nothing (keeps empty categories off the page).
-  if (data && data.length === 0) return <div ref={ref} />;
+  if (data && data.length === 0) return null;
 
-  return (
-    <div ref={ref}>
-      {data === null ? (
-        <SkeletonRow />
-      ) : (
-        <EventRow title={title} subtitle={subtitle} events={data}
-          liked={liked} shared={shared} onLike={onLike} onShare={onShare} direction={direction} />
-      )}
-    </div>
+  return data === null ? (
+    <SkeletonRow />
+  ) : (
+    <EventRow title={title} subtitle={subtitle} events={data}
+      liked={liked} shared={shared} onLike={onLike} onShare={onShare} direction={direction} />
   );
 }
 
