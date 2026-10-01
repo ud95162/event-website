@@ -198,6 +198,44 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     }
   }, [skipEvents, skipArtists]);
 
+  // Background prefetch: once the first view is interactive, quietly warm the browser's
+  // HTTP cache for the endpoints other pages use, so navigating to them is instant.
+  // Runs once per app load, after idle, so it never competes with the critical data.
+  const prefetchStarted = useRef(false);
+  useEffect(() => {
+    if (prefetchStarted.current) return;
+    prefetchStarted.current = true;
+
+    const warm = () => {
+      const now = new Date();
+      const y = now.getFullYear(), m = now.getMonth();
+      const urls = [
+        // /events category rows + first "All Events" page
+        "/api/events/category?type=hot",
+        "/api/events/category?type=upcoming",
+        "/api/events/category?type=coming-soon",
+        "/api/events/category?type=dj",
+        "/api/events/category?type=genre&value=electronic",
+        "/api/events/category?type=genre&value=sinhala",
+        "/api/events/category?type=city&value=Colombo",
+        "/api/events/all?offset=0&limit=6",
+        // /calendar (current month)
+        `/api/events/month?year=${y}&month=${m}`,
+        // artists list used by /artists and the detail pages
+        "/api/artists",
+      ];
+      // Note: the full /api/events (heavy base64 images) is intentionally NOT prefetched
+      // here — only the organizer/detail event-lists need it, and they load it on demand.
+      urls.forEach((u) => { fetch(u).catch(() => {}); });
+    };
+
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    if (typeof w.requestIdleCallback === "function") w.requestIdleCallback(warm, { timeout: 4000 });
+    else setTimeout(warm, 2500);
+  }, []);
+
   const updatePopupSettings = async (s: PopupSettings): Promise<boolean> => {
     setPopupSettings(s);
     try {
