@@ -46,7 +46,7 @@ export default function EventDetailPage() {
   if (loading && !event) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
-        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#ffffff] animate-spin mb-4" />
         <p className="text-white/30 text-xs tracking-widest uppercase">Loading event…</p>
       </main>
     );
@@ -135,7 +135,7 @@ export default function EventDetailPage() {
           <div
             className="w-full flex items-stretch rounded-3xl overflow-hidden relative"
             style={{
-              background: "#0d0d1f",
+              background: "#18181b",
               border: "1px solid rgba(255,255,255,0.08)",
               boxShadow: "0 40px 80px rgba(0,0,0,0.6)",
             }}
@@ -161,7 +161,7 @@ export default function EventDetailPage() {
               {/* Right-side fade blends the panel edge into the ticket */}
               <div
                 className="absolute inset-0 pointer-events-none"
-                style={{ background: "linear-gradient(to right, transparent 78%, #0d0d1f 100%)" }}
+                style={{ background: "linear-gradient(to right, transparent 78%, #18181b 100%)" }}
               />
 
               {/* Badge */}
@@ -230,8 +230,8 @@ export default function EventDetailPage() {
                       onClick={handleShare}
                       className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
                       style={{
-                        background: shared ? "rgba(57,189,105,0.85)" : "rgba(255,255,255,0.06)",
-                        border: shared ? "1px solid rgba(57,189,105,0.5)" : "1px solid rgba(255,255,255,0.12)",
+                        background: shared ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.06)",
+                        border: shared ? "1px solid rgba(255,255,255,0.5)" : "1px solid rgba(255,255,255,0.12)",
                       }}
                     >
                       <Share2 size={13} className="text-white" />
@@ -264,9 +264,9 @@ export default function EventDetailPage() {
                     <div key={label} className="flex items-center gap-3">
                       <div
                         className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)" }}
+                        style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}
                       >
-                        <Icon size={11} className="text-[#39BD69]" />
+                        <Icon size={11} className="text-[#ffffff]" />
                       </div>
                       <div>
                         <p className="text-white/30 text-[8px] tracking-[0.3em] uppercase leading-none mb-0.5">{label}</p>
@@ -276,8 +276,8 @@ export default function EventDetailPage() {
                   ))}
                   {distance !== null && (
                     <div className="flex items-center gap-2 mt-1">
-                      <MapPin size={10} className="text-[#39BD69]" />
-                      <span className="text-[#39BD69] text-[11px] font-semibold">{formatDistance(distance)}</span>
+                      <MapPin size={10} className="text-[#ffffff]" />
+                      <span className="text-[#ffffff] text-[11px] font-semibold">{formatDistance(distance)}</span>
                     </div>
                   )}
                 </div>
@@ -295,10 +295,10 @@ export default function EventDetailPage() {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <Ticket size={12} className="text-[#39BD69] flex-shrink-0" />
+                              <Ticket size={12} className="text-[#ffffff] flex-shrink-0" />
                               <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
                             </div>
-                            <span className="text-[#39BD69] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
+                            <span className="text-[#ffffff] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
                           </div>
                           {t.desc && <p className="text-white/40 text-[10px] leading-snug mt-1.5 pl-[22px]">{t.desc}</p>}
                         </div>
@@ -315,7 +315,7 @@ export default function EventDetailPage() {
                       <span
                         key={artist.id}
                         className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide"
-                        style={{ background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}
+                        style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)", color: "#ffffff" }}
                       >
                         {artist.name}
                       </span>
@@ -348,7 +348,7 @@ export default function EventDetailPage() {
                       <span
                         key={g}
                         className="text-[10px] font-bold tracking-wide uppercase px-3 py-1.5 rounded-full"
-                        style={{ background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}
+                        style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)", color: "#ffffff" }}
                       >
                         {g}
                       </span>
@@ -364,19 +364,19 @@ export default function EventDetailPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {event.ageRestriction && (
                       <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><ShieldAlert size={11} className="text-[#39BD69]" /> Age</p>
+                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><ShieldAlert size={11} className="text-[#ffffff]" /> Age</p>
                         <p className="text-white/85 text-sm font-semibold">{event.ageRestriction}</p>
                       </div>
                     )}
                     {event.capacity != null && event.capacity > 0 && (
                       <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><Users size={11} className="text-[#39BD69]" /> Capacity</p>
+                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><Users size={11} className="text-[#ffffff]" /> Capacity</p>
                         <p className="text-white/85 text-sm font-semibold">{event.capacity.toLocaleString()} max</p>
                       </div>
                     )}
                     {event.venueType && (
                       <div className="rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><Building2 size={11} className="text-[#39BD69]" /> Setting</p>
+                        <p className="flex items-center gap-1.5 text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1"><Building2 size={11} className="text-[#ffffff]" /> Setting</p>
                         <p className="text-white/85 text-sm font-semibold">{event.venueType}</p>
                       </div>
                     )}
@@ -388,7 +388,7 @@ export default function EventDetailPage() {
                       rel="noopener noreferrer"
                       onClick={() => track("event", event.id, "link_click")}
                       className="inline-flex items-center gap-2 mt-4 py-2.5 px-4 rounded-xl text-[11px] font-bold tracking-widest uppercase transition-all"
-                      style={{ background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69" }}
+                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.3)", color: "#ffffff" }}
                     >
                       <ExternalLink size={13} /> Event Website / More Info
                     </a>
@@ -419,14 +419,14 @@ export default function EventDetailPage() {
                         />
                         <div
                           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                          style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(57,189,105,0.15) 0%, transparent 70%)" }}
+                          style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.15) 0%, transparent 70%)" }}
                         />
                       </div>
                       <div className="px-3 pb-3 pt-2 text-center">
                         <p className="text-white/30 text-[8px] font-bold tracking-[0.3em] uppercase mb-0.5">{artist.role}</p>
                         <h3 className="text-white font-black text-xs uppercase tracking-wide">{artist.name}</h3>
                         <div className="flex justify-center mt-2">
-                          <div className="h-[2px] w-8 rounded-full" style={{ background: "#39BD69" }} />
+                          <div className="h-[2px] w-8 rounded-full" style={{ background: "#ffffff" }} />
                         </div>
                       </div>
                     </div>
@@ -446,7 +446,7 @@ export default function EventDetailPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
-                  onMouseEnter={e => { (e.currentTarget.closest('div') as HTMLElement).style.borderColor = "rgba(57,189,105,0.35)"; }}
+                  onMouseEnter={e => { (e.currentTarget.closest('div') as HTMLElement).style.borderColor = "rgba(255,255,255,0.35)"; }}
                   onMouseLeave={e => { (e.currentTarget.closest('div') as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"; }}
                 >
                   <p className="text-white/30 text-[9px] font-bold tracking-[0.35em] uppercase mb-2">VENUE</p>
@@ -471,7 +471,7 @@ export default function EventDetailPage() {
                   href={mapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-[#39BD69] hover:gap-2.5 transition-all"
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-[#ffffff] hover:gap-2.5 transition-all"
                 >
                   <MapPin size={11} /> Open in Google Maps
                 </a>
@@ -483,7 +483,7 @@ export default function EventDetailPage() {
                   onClick={() => router.push(`/organizers/${organizerSlug(organizer)}`)}
                   className="rounded-2xl p-5 cursor-pointer group transition-all"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(57,189,105,0.35)"; }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.35)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.08)"; }}
                 >
                   <p className="text-white/30 text-[9px] font-bold tracking-[0.35em] uppercase mb-3">ORGANIZED BY</p>
@@ -495,11 +495,11 @@ export default function EventDetailPage() {
                       {organizer.logo ? (
                         <img src={organizer.logo} alt={organizer.name} className="w-full h-full object-cover" />
                       ) : (
-                        <span style={{ fontSize: 18, fontWeight: 900, color: "#39BD69" }}>{organizer.name.charAt(0)}</span>
+                        <span style={{ fontSize: 18, fontWeight: 900, color: "#ffffff" }}>{organizer.name.charAt(0)}</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-white font-semibold text-sm leading-snug truncate group-hover:text-[#39BD69] transition-colors">{organizer.name}</p>
+                      <p className="text-white font-semibold text-sm leading-snug truncate group-hover:text-[#ffffff] transition-colors">{organizer.name}</p>
                       <p className="text-white/35 text-[10px] tracking-wide uppercase mt-0.5">View organizer →</p>
                     </div>
                   </div>
@@ -518,9 +518,9 @@ export default function EventDetailPage() {
                         className="flex items-center gap-3 cursor-pointer group"
                       >
                         <div className="flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center" style={{ width: 34, height: 34, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)" }}>
-                          {co.logo ? <img src={co.logo} alt={co.name} className="w-full h-full object-cover" /> : <span style={{ fontSize: 13, fontWeight: 800, color: "#39BD69" }}>{co.name.charAt(0)}</span>}
+                          {co.logo ? <img src={co.logo} alt={co.name} className="w-full h-full object-cover" /> : <span style={{ fontSize: 13, fontWeight: 800, color: "#ffffff" }}>{co.name.charAt(0)}</span>}
                         </div>
-                        <p className="text-white/80 text-xs font-semibold truncate group-hover:text-[#39BD69] transition-colors">{co.name}</p>
+                        <p className="text-white/80 text-xs font-semibold truncate group-hover:text-[#ffffff] transition-colors">{co.name}</p>
                       </div>
                     ))}
                   </div>
@@ -678,7 +678,7 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
             width: muted ? "auto" : 36,
             height: 36,
             justifyContent: "center",
-            background: muted ? "#39BD69" : "rgba(0,0,0,0.55)",
+            background: muted ? "#ffffff" : "rgba(0,0,0,0.55)",
             border: muted ? "none" : "1px solid rgba(255,255,255,0.25)",
             backdropFilter: "blur(6px)",
           }}
@@ -706,8 +706,8 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
               style={{
                 width: slide === i ? 40 : 13,
                 height: 13,
-                background: slide === i ? "#39BD69" : "rgba(255,255,255,0.45)",
-                boxShadow: slide === i ? "0 0 12px rgba(57,189,105,0.5)" : "none",
+                background: slide === i ? "#ffffff" : "rgba(255,255,255,0.45)",
+                boxShadow: slide === i ? "0 0 12px rgba(255,255,255,0.5)" : "none",
                 border: "1px solid rgba(0,0,0,0.25)",
               }}
             />
@@ -793,8 +793,8 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
 
   return (
     <div className="mb-6 rounded-xl p-4"
-      style={{ background: "rgba(57,189,105,0.06)", border: "1px solid rgba(57,189,105,0.2)" }}>
-      <p className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.3em] uppercase mb-3" style={{ color: "#39BD69" }}>
+      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.2)" }}>
+      <p className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.3em] uppercase mb-3" style={{ color: "#ffffff" }}>
         <Clock size={11} /> Starts In
       </p>
       <div className="grid grid-cols-4 gap-2">
