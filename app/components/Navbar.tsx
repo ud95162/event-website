@@ -101,7 +101,7 @@ function LocationPill() {
           border: isSet ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.18)",
           background: isSet ? "rgba(57,189,105,0.08)" : "rgba(255,255,255,0.04)",
           boxShadow: isSet ? "0 0 14px rgba(57,189,105,0.25)" : "none",
-          minWidth: 360,
+          minWidth: 220,
         }}
       >
         {detecting ? (
@@ -264,13 +264,13 @@ export default function Navbar() {
             {navLinks.map((l) => (
               isActive(l.href) ? (
                 <div key={l.label} className="nav-active-border">
-                  <Link href={l.href} className="nav-active-inner text-base tracking-widest uppercase font-bold px-4 py-1.5">
+                  <Link href={l.href} className="nav-active-inner text-lg tracking-widest uppercase font-bold px-4 py-1.5">
                     <span style={{ color: "#C0C0C0" }}>{l.label}</span>
                   </Link>
                 </div>
               ) : (
                 <Link key={l.label} href={l.href}
-                  className="text-base tracking-widest uppercase font-bold transition-all duration-300 px-4 py-1.5 rounded-xl"
+                  className="text-lg tracking-widest uppercase font-bold transition-all duration-300 px-4 py-1.5 rounded-xl"
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
