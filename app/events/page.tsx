@@ -19,6 +19,15 @@ import { hasPreloaderShown, markPreloaderShown } from "../preloaderState";
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+/* ── In-memory cache for /events data ──────────────────────────────
+   Survives client-side navigation (the module stays loaded), so returning to the
+   events page shows the last data instantly instead of refetching from scratch.
+   Cleared on a full page reload; the HTTP Cache-Control on these endpoints covers
+   that case. We still revalidate in the background after serving the cached copy. */
+const eventsCache = new Map<string, unknown>();
+const getCache = <T,>(key: string): T | undefined => eventsCache.get(key) as T | undefined;
+const setCache = (key: string, val: unknown) => { eventsCache.set(key, val); };
+
 /* ── Horizontal scroll row ─────────────────────────────────────── */
 function EventCard({ event, liked, shared, onLike, onShare }: {
   event: Event;
@@ -477,8 +486,9 @@ function AllEventsSection({ liked, shared, onLike, onShare }: {
   onShare: (id: number, title: string, e: React.MouseEvent) => void;
 }) {
   const PAGE = 6;
-  const [items, setItems]     = useState<Event[]>([]);
-  const [total, setTotal]     = useState(0);
+  // Hydrate instantly from cache so returning to the page keeps the already-loaded grid.
+  const [items, setItems]     = useState<Event[]>(() => getCache<Event[]>("__all_items") ?? []);
+  const [total, setTotal]     = useState(() => getCache<number>("__all_total") ?? 0);
   const [loading, setLoading] = useState(false);
   const started = useRef(false);
 
@@ -488,14 +498,24 @@ function AllEventsSection({ liked, shared, onLike, onShare }: {
       .then(r => (r.ok ? r.json() : null))
       .then(d => {
         if (!d) return;
-        setItems(prev => (offset === 0 ? d.events : [...prev, ...d.events]));
+        setItems(prev => {
+          const next = offset === 0 ? d.events : [...prev, ...d.events];
+          setCache("__all_items", next);
+          return next;
+        });
         setTotal(d.total);
+        setCache("__all_total", d.total);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { if (started.current) return; started.current = true; load(0); }, []);
+  // First page only on a cold cache; a warm cache already shows the grid.
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    if (!(getCache<Event[]>("__all_items")?.length)) load(0);
+  }, []);
 
   const hasMore = items.length < total;
   if (!items.length && !loading) return null;
@@ -538,15 +558,18 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
   onLike: (id: number, e: React.MouseEvent) => void;
   onShare: (id: number, title: string, e: React.MouseEvent) => void;
 }) {
-  const [data, setData] = useState<Event[] | null>(null); // null = not fetched yet
+  // Hydrate instantly from cache (if we've loaded this row before this session).
+  const [data, setData] = useState<Event[] | null>(() => getCache<Event[]>(endpoint) ?? null);
 
   useEffect(() => {
     let cancelled = false;
-    setData(null);
+    const cached = getCache<Event[]>(endpoint);
+    setData(cached ?? null); // show cached rows immediately, or skeleton on first load
+    // Fetch fresh and update the cache (background revalidate when already cached).
     fetch(endpoint)
       .then(r => (r.ok ? r.json() : []))
-      .then(d => { if (!cancelled) setData(Array.isArray(d) ? d : []); })
-      .catch(() => { if (!cancelled) setData([]); });
+      .then(d => { const arr = Array.isArray(d) ? d : []; setCache(endpoint, arr); if (!cancelled) setData(arr); })
+      .catch(() => { if (!cancelled && !cached) setData([]); });
     return () => { cancelled = true; };
   }, [endpoint]);
 
@@ -597,16 +620,19 @@ function EventsContent() {
   useEffect(() => {
     if (!isFiltered) return;
     let cancelled = false;
-    setResultsLoading(true);
     const sp = new URLSearchParams();
     if (genreParam) sp.set("genre", genreParam);
     if (dateParam) sp.set("date", dateParam);
     if (queryParam) sp.set("q", queryParam);
     if (categoryParam) sp.set("category", categoryParam);
-    fetch(`/api/events/search?${sp.toString()}`)
+    const url = `/api/events/search?${sp.toString()}`;
+    // Show cached results for this exact query immediately, then revalidate.
+    const cached = getCache<Event[]>(url);
+    if (cached) { setResults(cached); setResultsLoading(false); } else { setResults([]); setResultsLoading(true); }
+    fetch(url)
       .then(r => (r.ok ? r.json() : []))
-      .then(d => { if (!cancelled) setResults(Array.isArray(d) ? d : []); })
-      .catch(() => { if (!cancelled) setResults([]); })
+      .then(d => { const arr = Array.isArray(d) ? d : []; setCache(url, arr); if (!cancelled) setResults(arr); })
+      .catch(() => { if (!cancelled && !cached) setResults([]); })
       .finally(() => { if (!cancelled) setResultsLoading(false); });
     return () => { cancelled = true; };
   }, [isFiltered, genreParam, dateParam, queryParam, categoryParam]);

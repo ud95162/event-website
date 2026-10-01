@@ -13,6 +13,52 @@ import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
 
+// Build a Google Calendar "create event" link pre-filled from the event. Dates are sent
+// as naive wall-clock times with ctz=Asia/Colombo so they land correctly in any viewer's
+// calendar. Events without a start time are added as all-day.
+function buildGoogleCalUrl(ev: {
+  title: string; date: string; startTime?: string; endDate?: string; endTime?: string;
+  venue?: string; location?: string; description?: string;
+}): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: Date, withTime: boolean) =>
+    `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}` +
+    (withTime ? `T${pad(d.getHours())}${pad(d.getMinutes())}00` : "");
+  const parse = (dateStr: string, timeStr?: string): Date | null => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    if (timeStr) { const [h, m] = timeStr.split(":").map(Number); d.setHours(h || 0, m || 0, 0, 0); }
+    else d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const start = parse(ev.date, ev.startTime);
+  const hasTime = !!ev.startTime;
+  let dates = "";
+  if (start) {
+    if (hasTime) {
+      let end = parse(ev.endDate || ev.date, ev.endTime || ev.startTime);
+      if (!end || end <= start) end = new Date(start.getTime() + 3 * 3600 * 1000);
+      dates = `${fmt(start, true)}/${fmt(end, true)}`;
+    } else {
+      // All-day: Google treats the end date as exclusive, so add a day.
+      const base = parse(ev.endDate || ev.date) || start;
+      const endDay = new Date(base.getTime() + 24 * 3600 * 1000);
+      dates = `${fmt(start, false)}/${fmt(endDay, false)}`;
+    }
+  }
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: ev.title,
+    details: ev.description || "",
+    location: [ev.venue, ev.location].filter(Boolean).join(", "),
+    ctz: "Asia/Colombo",
+  });
+  if (dates) params.set("dates", dates);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export default function EventDetailPage() {
   const params   = useParams();
   const router   = useRouter();
@@ -281,6 +327,18 @@ export default function EventDetailPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Add to Google Calendar */}
+                <a
+                  href={buildGoogleCalUrl(event)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track("event", event.id, "link_click")}
+                  className="flex items-center justify-center gap-2 w-full mb-6 rounded-xl py-3 text-xs font-bold tracking-widest uppercase transition-all hover:brightness-90 active:scale-[0.98]"
+                  style={{ background: "#ffffff", color: "#000" }}
+                >
+                  <Calendar size={14} /> Add to Calendar
+                </a>
 
                 {/* Ticket types */}
                 {(event.tickets ?? []).filter(t => t.name || t.price).length > 0 && (
