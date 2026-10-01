@@ -54,15 +54,22 @@ function MarqueeRow({ reviews, direction }: { reviews: Review[]; direction: "lef
   const pausedRef = useRef(false);
   const posRef = useRef(0);
   const rafRef = useRef<number>(0);
-  const items = [...reviews, ...reviews];
+
+  // Repeat the list until one "set" is wider than any common screen, then duplicate that
+  // set. This guarantees the row always fills the viewport, so the loop never shows a gap
+  // between the last and first card.
+  const BASE_MIN = 4000;
+  const copies = Math.max(2, Math.ceil(BASE_MIN / Math.max(1, reviews.length * STEP)));
+  const base = Array.from({ length: copies }, () => reviews).flat();
+  const items = [...base, ...base];
+  const setCount = reviews.length * copies;
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
     const speed = 0.35;
-    // Width of one full set, incl. the trailing gap on every card — so the duplicated
-    // set lines up exactly and the loop has no gap/jump at the seam.
-    const setWidth = reviews.length * STEP;
+    // Width of one full (repeated) set — the duplicate lines up exactly after it.
+    const setWidth = setCount * STEP;
     posRef.current = direction === "right" ? -setWidth : 0;
     const step = () => {
       if (!pausedRef.current) {
