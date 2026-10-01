@@ -696,14 +696,20 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
 
       {/* Slider dots (flyer / video) */}
       {hasVideo && (
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex gap-2.5">
           {[0, 1].map(i => (
             <button
               key={i}
               onClick={() => setSlide(i)}
               aria-label={i === 0 ? "Show flyer" : "Play trailer"}
               className="rounded-full transition-all"
-              style={{ width: slide === i ? 22 : 7, height: 7, background: slide === i ? "#39BD69" : "rgba(255,255,255,0.4)" }}
+              style={{
+                width: slide === i ? 40 : 13,
+                height: 13,
+                background: slide === i ? "#39BD69" : "rgba(255,255,255,0.45)",
+                boxShadow: slide === i ? "0 0 12px rgba(57,189,105,0.5)" : "none",
+                border: "1px solid rgba(0,0,0,0.25)",
+              }}
             />
           ))}
         </div>
