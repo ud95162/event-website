@@ -169,9 +169,11 @@ export default function EventDetailPage() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     const lines = [
       event.title,
-      whenText && `🗓 ${whenText}`,
-      (event.venue || event.location) && `📍 ${event.venue || event.location}`,
-      (event.price || "").trim() && `🎟 ${event.price}`,
+      // Emojis built from code points (not raw literals) so they survive the production
+      // build/transport without being mangled into replacement characters.
+      whenText && `\u{1F4C5} ${whenText}`,
+      (event.venue || event.location) && `\u{1F4CD} ${event.venue || event.location}`,
+      (event.price || "").trim() && `\u{1F39F}\u{FE0F} ${event.price}`,
     ].filter(Boolean) as string[];
     const text = lines.join("\n");
     return { url, text, full: `${text}\n\n${url}` };
