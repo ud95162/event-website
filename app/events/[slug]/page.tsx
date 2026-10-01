@@ -89,6 +89,9 @@ export default function EventDetailPage() {
 
   // Raw trailer URL (the media slider builds the right embed / plays the file).
   const trailer = (event.videoTrailer || "").trim();
+  // Instagram reels are vertical, so the media panel needs extra height to show the
+  // full video instead of the usual ~16:9 crop.
+  const trailerIsInstagram = /instagram\.com\/(?:p|reel|reels|tv)\//i.test(trailer);
 
   // Co-organizers resolved to organizer records (for logo + link).
   const coOrgs = (event.coOrganizers ?? [])
@@ -137,8 +140,12 @@ export default function EventDetailPage() {
               boxShadow: "0 40px 80px rgba(0,0,0,0.6)",
             }}
           >
-            {/* ── Left: media panel — trailer plays at exact 16:9 (YouTube size) ── */}
-            <div className="relative flex-shrink-0 overflow-hidden" style={{ width: "62%" }}>
+            {/* ── Left: media panel — trailer plays at exact 16:9 (YouTube size);
+                   taller for vertical Instagram reels so the full video is visible ── */}
+            <div
+              className="relative flex-shrink-0 overflow-hidden"
+              style={{ width: "62%", ...(trailerIsInstagram ? { minHeight: "min(680px, 82vh)" } : {}) }}
+            >
               {/* Ambient blurred backdrop fills the whole panel behind the media */}
               <img
                 src={event.image}
