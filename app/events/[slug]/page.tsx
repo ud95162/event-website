@@ -169,11 +169,12 @@ export default function EventDetailPage() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     const lines = [
       event.title,
-      // Emojis built from code points (not raw literals) so they survive the production
-      // build/transport without being mangled into replacement characters.
-      whenText && `\u{1F4C5} ${whenText}`,
-      (event.venue || event.location) && `\u{1F4CD} ${event.venue || event.location}`,
-      (event.price || "").trim() && `\u{1F39F}\u{FE0F} ${event.price}`,
+      // Emojis built at runtime from code points via String.fromCodePoint — stays a
+      // numeric call in the bundle (no multibyte bytes in the served JS), so it can't be
+      // mangled into replacement characters regardless of the server's charset.
+      whenText && `${String.fromCodePoint(0x1f4c5)} ${whenText}`,
+      (event.venue || event.location) && `${String.fromCodePoint(0x1f4cd)} ${event.venue || event.location}`,
+      (event.price || "").trim() && `${String.fromCodePoint(0x1f39f, 0xfe0f)} ${event.price}`,
     ].filter(Boolean) as string[];
     const text = lines.join("\n");
     return { url, text, full: `${text}\n\n${url}` };
