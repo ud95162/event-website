@@ -209,7 +209,7 @@ export default function AboutPage() {
             </span>{" "}Platform
           </h1>
           <p style={{ fontSize: "clamp(0.9rem, 1.4vw, 1.15rem)", color: "rgba(255,255,255,0.5)", maxWidth: 580, lineHeight: 1.7, marginBottom: "clamp(20px,4vh,40px)" }}>
-            Events.lk was born from a simple belief — that great music and unforgettable live experiences should be accessible to everyone. We connect passionate fans with the events that move them.
+            DiscoverEvents.lk was born from a simple belief — that great music and unforgettable live experiences should be accessible to everyone. We connect passionate fans with the events that move them.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
             <button onClick={() => router.push("/events")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 26px", borderRadius: 999, background: "#39BD69", color: "#000", fontWeight: 800, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", border: "none" }}>
@@ -228,7 +228,7 @@ export default function AboutPage() {
               <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: "clamp(8px,1.5vh,16px)" }}>OUR MISSION</p>
               <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900, lineHeight: 1.15, marginBottom: "clamp(12px,2vh,24px)" }}>Making Live Music<br />Accessible to All</h2>
               <p style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.8, fontSize: "clamp(0.85rem, 1.1vw, 1rem)", marginBottom: "clamp(8px,1.5vh,16px)" }}>
-                We started Events.lk because we noticed a gap — amazing events happening across Sri Lanka, but no single place to discover them all. We set out to change that.
+                We started DiscoverEvents.lk because we noticed a gap — amazing events happening across Sri Lanka, but no single place to discover them all. We set out to change that.
               </p>
               <p style={{ color: "rgba(255,255,255,0.4)", lineHeight: 1.8, fontSize: "clamp(0.85rem, 1.1vw, 1rem)", marginBottom: "clamp(20px,3vh,36px)" }}>
                 Today, we partner with hundreds of venues, promoters, and artists to bring you the most comprehensive event listing platform in the country.

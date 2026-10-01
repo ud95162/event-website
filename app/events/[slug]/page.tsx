@@ -545,10 +545,11 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
   const hasVideo = !!trailer;
 
   const [slide, setSlide] = useState(0);   // 0 = flyer, 1 = video
-  // Start muted so the video reliably auto-plays (browsers block unmuted autoplay);
-  // one tap on the sound button unmutes it.
-  const [muted, setMuted] = useState(true);
+  // Play with sound by default. (Browsers may still block unmuted autoplay when the user
+  // hasn't interacted with the page — the effects below fall back to muted if so.)
+  const [muted, setMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const ytRef = useRef<HTMLIFrameElement>(null);
 
   // Auto-advance from the flyer to the video 5 seconds after the page loads.
   useEffect(() => {
@@ -572,11 +573,33 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
   const showVideo = hasVideo && slide === 1;
 
   // YouTube / Vimeo embed with autoplay + sound (mute toggled by state).
+  // vq=hd1080 asks YouTube to start in 1080p (a hint — YouTube may still adapt to
+  // bandwidth / player size); the IFrame API call below reinforces it.
   const embed = yt
-    ? `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1`
+    ? `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`
     : vimeo
-    ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${muted ? 1 : 0}&playsinline=1`
+    ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${muted ? 1 : 0}&playsinline=1&quality=1080p`
     : "";
+
+  // Once the YouTube player is ready, request 1080p and (if unmuted) turn the sound on.
+  const applyYtPrefs = () => {
+    const w = ytRef.current?.contentWindow;
+    if (!w) return;
+    const cmd = (func: string, args: unknown[] = []) =>
+      w.postMessage(JSON.stringify({ event: "command", func, args }), "*");
+    cmd("setPlaybackQualityRange", ["hd1080", "hd1080"]);
+    cmd("setPlaybackQuality", ["hd1080"]);
+    if (!muted) { cmd("unMute"); cmd("setVolume", [100]); }
+    cmd("playVideo");
+  };
+
+  useEffect(() => {
+    if (!showVideo || !yt) return;
+    // The player isn't ready the instant the iframe loads — nudge it a few times.
+    const timers = [400, 1200, 2500].map(ms => window.setTimeout(applyYtPrefs, ms));
+    return () => timers.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showVideo, muted]);
 
   return (
     <>
@@ -595,12 +618,14 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
             {embed ? (
               <iframe
                 key={muted ? "m" : "u"}
+                ref={ytRef}
                 src={embed}
                 title="Event trailer"
                 className="absolute inset-0 w-full h-full"
                 style={{ border: 0 }}
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 allowFullScreen
+                onLoad={applyYtPrefs}
               />
             ) : (
               <video

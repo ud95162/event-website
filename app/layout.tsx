@@ -5,7 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { AdminDataProvider } from "./context/AdminDataContext";
 
 export const metadata: Metadata = {
-  title: "Events.lk — Experience the Biggest Music Festivals",
+  title: "DiscoverEvents.lk — Experience the Biggest Music Festivals",
   description:
     "Discover the best concerts, festivals, DJ nights, and live events in Sri Lanka. Browse featured events, artists, and upcoming experiences.",
 };

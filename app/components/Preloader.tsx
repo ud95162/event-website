@@ -231,7 +231,7 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
         {/* ── Logo ─────────────────────────────────────────────────────── */}
         <img
           src="/preloader-logo.png"
-          alt="Events.lk"
+          alt="DiscoverEvents.lk"
           onLoad={() => setLogoLoaded(true)}
           onError={() => setLogoLoaded(true)}
           style={{

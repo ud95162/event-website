@@ -256,7 +256,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0">
-            <img src="/logo.png" alt="Events.lk" className="w-auto object-contain" style={{ height: 40 }} />
+            <img src="/logo.png" alt="DiscoverEvents.lk" className="w-auto object-contain" style={{ height: 40 }} />
           </Link>
 
           {/* All nav items — equal gap between every item */}

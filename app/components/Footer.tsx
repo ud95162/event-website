@@ -45,7 +45,7 @@ export default function Footer() {
           {/* Logo */}
           <div className="md:col-span-1 flex flex-col gap-4">
             <a href="/" className="flex items-center shrink-0">
-              <img src="/logo.png" alt="Events.lk" className="object-contain" style={{ width: 200, height: "auto" }} />
+              <img src="/logo.png" alt="DiscoverEvents.lk" className="object-contain" style={{ width: 200, height: "auto" }} />
             </a>
 
             {/* Follow Us + social icons */}
@@ -105,13 +105,13 @@ export default function Footer() {
           <div className="md:col-span-1 flex flex-col gap-5 text-white/55 text-base leading-relaxed">
             <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase">Contact</p>
             <p>
-              Event Company (Pvt) Ltd.<br />
+              DiscoverEvents.lk<br />
               Colombo, Sri Lanka
             </p>
             <p>
               Email:{" "}
-              <a href="mailto:info@eventcompany.lk" className="text-white font-semibold hover:underline">
-                info@eventcompany.lk
+              <a href="mailto:info@discoverevents.lk" className="text-white font-semibold hover:underline">
+                info@discoverevents.lk
               </a>
             </p>
             <p>
@@ -124,10 +124,14 @@ export default function Footer() {
           <div className="md:col-span-1 flex flex-col gap-5">
             <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase">Legal</p>
             <ul className="flex flex-col gap-5 -mt-1">
-              {["Privacy Policy", "Terms and Conditions", "Site Map"].map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-white font-semibold text-base hover:text-white/70 transition-colors">
-                    {item}
+              {[
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms and Conditions", href: "#" },
+                { label: "Site Map", href: "#" },
+              ].map((item) => (
+                <li key={item.label}>
+                  <a href={item.href} className="text-white font-semibold text-base hover:text-white/70 transition-colors">
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -141,7 +145,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-0 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-white/35 text-sm">
-            &copy; 2026 Event Company (Pvt) Ltd. All Rights Reserved.
+            &copy; 2026 DiscoverEvents.lk. All Rights Reserved.
           </p>
           <p className="text-white/35 text-sm">
             Designed and Developed by <span className="text-white/60 font-semibold">HWC</span>

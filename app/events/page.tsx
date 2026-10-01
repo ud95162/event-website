@@ -40,6 +40,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
   const cardRef = useRef<HTMLDivElement>(null);
   const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
   const showTimer = useRef<number | null>(null);
+  const hideTimer = useRef<number | null>(null);
   const PREVIEW_W = 330;
   const PREVIEW_H = 450;
 
@@ -47,7 +48,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
     const el = cardRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const gap = 16;
+    const gap = 8;
     let left = r.right + gap;                                   // prefer to the right
     if (left + PREVIEW_W > window.innerWidth - 8) left = r.left - gap - PREVIEW_W; // else left
     if (left < 8) left = Math.min(Math.max(8, r.left + r.width / 2 - PREVIEW_W / 2), window.innerWidth - PREVIEW_W - 8);
@@ -56,18 +57,34 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
     setPreview({ top, left });
   };
 
+  const cancelHide = () => {
+    if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
+  };
+  // Delay closing so the cursor can cross the gap into the preview without it vanishing.
+  const scheduleHide = () => {
+    cancelHide();
+    hideTimer.current = window.setTimeout(() => { setPreview(null); setHovered(false); }, 180);
+  };
+
   const enter = () => {
     setHovered(true);
+    cancelHide();
     if (showTimer.current) clearTimeout(showTimer.current);
     showTimer.current = window.setTimeout(openPreview, 320);
   };
   const leave = () => {
-    setHovered(false);
     if (showTimer.current) { clearTimeout(showTimer.current); showTimer.current = null; }
-    setPreview(null);
+    scheduleHide();
   };
 
-  useEffect(() => () => { if (showTimer.current) clearTimeout(showTimer.current); }, []);
+  // Keep the preview open while the cursor is over it; close when it leaves.
+  const previewEnter = () => { cancelHide(); setHovered(true); };
+  const previewLeave = () => scheduleHide();
+
+  useEffect(() => () => {
+    if (showTimer.current) clearTimeout(showTimer.current);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  }, []);
 
   // Hide the preview if anything scrolls or the window resizes (its anchor would drift).
   useEffect(() => {
@@ -256,9 +273,12 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
     {/* ── Enlarged preview popup, rendered in a portal ───────────── */}
     {preview && typeof document !== "undefined" && createPortal(
       <div
+        onMouseEnter={previewEnter}
+        onMouseLeave={previewLeave}
+        onClick={() => router.push(`/events/${eventSlug(event)}`)}
         style={{
           position: "fixed", top: preview.top, left: preview.left,
-          width: PREVIEW_W, zIndex: 9999, pointerEvents: "none",
+          width: PREVIEW_W, zIndex: 9999, pointerEvents: "auto", cursor: "pointer",
           borderRadius: 18, overflow: "hidden",
           background: "#0b0b10", border: "1px solid rgba(57,189,105,0.35)",
           boxShadow: "0 30px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.05)",
