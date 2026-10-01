@@ -45,6 +45,10 @@ function ReviewCard({ review }: { review: Review }) {
 }
 
 /* ── Auto-scrolling marquee row (pauses on hover) ─────────────────────── */
+const CARD_W = 340;
+const CARD_GAP = 20;
+const STEP = CARD_W + CARD_GAP; // each card occupies exactly this width (incl. trailing gap)
+
 function MarqueeRow({ reviews, direction }: { reviews: Review[]; direction: "left" | "right" }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
@@ -56,13 +60,15 @@ function MarqueeRow({ reviews, direction }: { reviews: Review[]; direction: "lef
     const el = trackRef.current;
     if (!el) return;
     const speed = 0.35;
-    posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
+    // Width of one full set, incl. the trailing gap on every card — so the duplicated
+    // set lines up exactly and the loop has no gap/jump at the seam.
+    const setWidth = reviews.length * STEP;
+    posRef.current = direction === "right" ? -setWidth : 0;
     const step = () => {
       if (!pausedRef.current) {
         posRef.current += direction === "left" ? -speed : speed;
-        const half = el.scrollWidth / 2;
-        if (direction === "left" && posRef.current <= -half) posRef.current += half;
-        if (direction === "right" && posRef.current >= 0) posRef.current -= half;
+        if (direction === "left" && posRef.current <= -setWidth) posRef.current += setWidth;
+        if (direction === "right" && posRef.current >= 0) posRef.current -= setWidth;
         el.style.transform = `translateX(${posRef.current}px)`;
       }
       rafRef.current = requestAnimationFrame(step);
@@ -79,8 +85,14 @@ function MarqueeRow({ reviews, direction }: { reviews: Review[]; direction: "lef
     >
       <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[2]" style={{ width: 80, background: "linear-gradient(to right, #0F1116, transparent)" }} />
       <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[2]" style={{ width: 80, background: "linear-gradient(to left, #0F1116, transparent)" }} />
-      <div ref={trackRef} className="flex" style={{ gap: 20, width: "max-content" }}>
-        {items.map((r, i) => <ReviewCard key={`${r.id}-${i}`} review={r} />)}
+      <div ref={trackRef} className="flex" style={{ width: "max-content" }}>
+        {items.map((r, i) => (
+          // marginRight (not flex gap) so every card — including the last of each set —
+          // carries the same trailing space, making the loop seamless.
+          <div key={`${r.id}-${i}`} style={{ marginRight: CARD_GAP, flexShrink: 0 }}>
+            <ReviewCard review={r} />
+          </div>
+        ))}
       </div>
     </div>
   );
