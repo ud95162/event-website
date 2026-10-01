@@ -1,0 +1,30 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getPool } from "../../lib/db";
+import { ensureSchema } from "../../lib/schema";
+
+function clampRating(r: unknown): number {
+  const n = Math.round(Number(r));
+  return Math.min(5, Math.max(1, isNaN(n) ? 5 : n));
+}
+
+export async function GET() {
+  await ensureSchema();
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>("SELECT id, name, image, review, rating FROM reviews ORDER BY id DESC");
+  return NextResponse.json(rows, {
+    headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
+  });
+}
+
+export async function POST(req: NextRequest) {
+  await ensureSchema();
+  const pool = getPool();
+  const { name, image, review, rating } = await req.json();
+  if (!name || !review) return NextResponse.json({ error: "Name and review required" }, { status: 400 });
+  const r = clampRating(rating);
+  const [result] = await pool.query<any>(
+    "INSERT INTO reviews (name, image, review, rating) VALUES (?, ?, ?, ?)",
+    [name, image ?? null, review, r]
+  );
+  return NextResponse.json({ id: result.insertId, name, image: image ?? null, review, rating: r }, { status: 201 });
+}

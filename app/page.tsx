@@ -15,7 +15,7 @@ import Preloader from "./components/Preloader";
 import StickySearchFilters from "./components/StickySearchFilters";
 import ThisWeekPopup from "./components/ThisWeekPopup";
 import StatsCounter from "./components/StatsCounter";
-import BrandMarquee from "./components/BrandMarquee";
+import ReviewsSection from "./components/ReviewsSection";
 import { useAdminData } from "./context/AdminDataContext";
 import { hasPreloaderShown, markPreloaderShown } from "./preloaderState";
 
@@ -104,7 +104,7 @@ export default function Home() {
         <StatsCounter />
         <FeaturedEvents />
         <FeaturedArtists />
-        <BrandMarquee />
+        <ReviewsSection />
 
         <div className="snap-section flex flex-col">
           <NewsletterSection />

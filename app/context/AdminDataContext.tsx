@@ -28,6 +28,14 @@ export type Brand = {
   logo: string;   // uploaded logo image (base64 / URL)
 };
 
+export type Review = {
+  id: number;
+  name: string;
+  image?: string | null;  // reviewer photo (base64 / URL)
+  review: string;
+  rating: number;         // 1–5
+};
+
 export type PopupSettings = {
   enabled: boolean;
   title: string;
@@ -61,6 +69,7 @@ type AdminDataContextType = {
   badges: string[];
   banners: Banner[];
   brands: Brand[];
+  reviews: Review[];
   popupSettings: PopupSettings;
   updatePopupSettings: (s: PopupSettings) => Promise<boolean>;
 
@@ -95,6 +104,11 @@ type AdminDataContextType = {
   // Brands CRUD
   addBrand: (data: Omit<Brand, "id">) => Promise<boolean>;
   deleteBrand: (id: number) => void;
+
+  // Reviews CRUD
+  addReview: (data: Omit<Review, "id">) => Promise<boolean>;
+  updateReview: (r: Review) => Promise<boolean>;
+  deleteReview: (id: number) => void;
 };
 
 const AdminDataContext = createContext<AdminDataContextType | null>(null);
@@ -139,6 +153,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [badges, setBadges] = useState<string[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [popupSettings, setPopupSettings] = useState<PopupSettings>(DEFAULT_POPUP);
   const [loading, setLoading] = useState(true);
 
@@ -154,6 +169,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     const cfa = readCache<Artist[]>("featuredArtists");  if (cfa?.length) setFeaturedArtists(cfa);
     const cb = readCache<Banner[]>("banners");    if (cb) setBanners(cb);
     const cbr = readCache<Brand[]>("brands");     if (cbr) setBrands(cbr);
+    const crv = readCache<Review[]>("reviews");   if (crv) setReviews(crv);
     const co = readCache<Organizer[]>("organizers"); if (co) setOrganizers(co);
     const cg = readCache<string[]>("genres");     if (cg) setGenres(cg);
     const cbd = readCache<string[]>("badges");    if (cbd) setBadges(cbd);
@@ -176,6 +192,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         jsonFetch<string[]>("/api/badges").then((d) => { setBadges(d); writeCache("badges", d); }),
         jsonFetch<Banner[]>("/api/banners").then((d) => { setBanners(d); writeCache("banners", d); }),
         jsonFetch<Brand[]>("/api/brands").then((d) => { setBrands(d); writeCache("brands", d); }),
+        jsonFetch<Review[]>("/api/reviews").then((d) => { setReviews(d); writeCache("reviews", d); }),
         jsonFetch<PopupSettings | null>("/api/settings/popup").then((s) => { if (s) { setPopupSettings({ ...DEFAULT_POPUP, ...s }); writeCache("popup", s); } }),
       );
     }
@@ -438,11 +455,45 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     fetch(`/api/brands/${id}`, { method: "DELETE" }).catch(() => {});
   };
 
+  // ---- Reviews ----
+  const addReview = async (data: Omit<Review, "id">): Promise<boolean> => {
+    try {
+      const created = await jsonFetch<Review>("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      setReviews((prev) => [created, ...prev]);
+      writeCache("reviews", [created, ...reviews]);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const updateReview = async (r: Review): Promise<boolean> => {
+    setReviews((prev) => prev.map((x) => (x.id === r.id ? r : x)));
+    try {
+      const updated = await jsonFetch<Review>(`/api/reviews/${r.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(r),
+      });
+      setReviews((prev) => { const next = prev.map((x) => (x.id === updated.id ? updated : x)); writeCache("reviews", next); return next; });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const deleteReview = (id: number) => {
+    setReviews((prev) => { const next = prev.filter((x) => x.id !== id); writeCache("reviews", next); return next; });
+    fetch(`/api/reviews/${id}`, { method: "DELETE" }).catch(() => {});
+  };
+
   return (
     <AdminDataContext.Provider value={{
       loading,
       events, artists, featuredEvents, featuredArtists,
-      organizers, genres, badges, banners, brands,
+      organizers, genres, badges, banners, brands, reviews,
       popupSettings, updatePopupSettings,
       addEvent, updateEvent, deleteEvent,
       addArtist, updateArtist, deleteArtist,
@@ -451,6 +502,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       addBadge, deleteBadge,
       addBanner, updateBanner, deleteBanner,
       addBrand, deleteBrand,
+      addReview, updateReview, deleteReview,
     }}>
       {children}
     </AdminDataContext.Provider>

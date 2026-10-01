@@ -223,6 +223,17 @@ async function createAndSeed(): Promise<void> {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  // Customer reviews shown in the home reviews section (managed from the admin panel).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(255),
+      image MEDIUMTEXT,
+      review TEXT,
+      rating TINYINT DEFAULT 5
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   // Analytics counters: page views + link clicks per event/organizer.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS analytics (

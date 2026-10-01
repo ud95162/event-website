@@ -14,22 +14,22 @@ const row1Brands: Brand[] = [
   { id: "cocacola",     name: "Coca-Cola",    slug: "cocacola",     color: "#FF1A1A" },
   { id: "jbl",          name: "JBL",          slug: "jbl",          color: "#FF8C00" },
   { id: "nike",         name: "Nike",         slug: "nike",         color: "#F5492E" },
-  { id: "heineken",     name: "Heineken",     slug: "heineken",     color: "#00A651" },
+  { id: "soundcloud",   name: "SoundCloud",   slug: "soundcloud",   color: "#FF5500" },
   { id: "visa",         name: "Visa",         slug: "visa",         color: "#F7B600" },
-  { id: "livenation",   name: "Live Nation",  slug: "livenation",   color: "#E01A2C" },
+  { id: "beatport",     name: "Beatport",     slug: "beatport",     color: "#A8E00F" },
 ];
 
 const row2Brands: Brand[] = [
-  { id: "monster",      name: "Monster",      slug: "monsterenergy", color: "#A0D200" },
+  { id: "deezer",       name: "Deezer",       slug: "deezer",        color: "#A238FF" },
   { id: "bose",         name: "Bose",         slug: "bose",          color: "#FFFFFF" },
   { id: "sennheiser",   name: "Sennheiser",   slug: "sennheiser",    color: "#3399FF" },
   { id: "ticketmaster", name: "Ticketmaster", slug: "ticketmaster",  color: "#0088FF" },
   { id: "pioneer",      name: "Pioneer",      slug: "pioneerdj",     color: "#E02020" },
   { id: "sony",         name: "Sony",         slug: "sony",          color: "#6699FF" },
-  { id: "yamaha",       name: "Yamaha",       slug: "yamaha",        color: "#CF0A2C" },
+  { id: "tidal",        name: "Tidal",        slug: "tidal",         color: "#FFFFFF" },
   { id: "adidas",       name: "Adidas",       slug: "adidas",        color: "#FFFFFF" },
   { id: "mastercard",   name: "Mastercard",   slug: "mastercard",    color: "#F79E1B" },
-  { id: "pepsi",        name: "Pepsi",        slug: "pepsi",         color: "#4D88FF" },
+  { id: "applemusic",   name: "Apple Music",  slug: "applemusic",    color: "#FA243C" },
 ];
 
 /* ── Single brand card ────────────────────────────────────────────────── */
