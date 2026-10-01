@@ -121,7 +121,11 @@ function writeCache(key: string, data: unknown) {
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  // Routes that render their own data from dedicated capped endpoints instead of the full
+  // events/artists catalog — so they never trigger the heavy (base64-image) full fetch.
+  // Note: this is the exact listing route; detail routes like /events/[slug] are NOT
+  // matched here and still load the catalog so they can resolve an item by slug.
+  const skipCatalog = pathname === "/" || pathname === "/events";
 
   const [events, setEvents] = useState<Event[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -172,7 +176,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    if (!isHome && !catalogStarted.current) {
+    if (!skipCatalog && !catalogStarted.current) {
       catalogStarted.current = true;
       jobs.push(
         jsonFetch<Event[]>("/api/events").then((d) => { setEvents(d); writeCache("events", d); }),
@@ -186,7 +190,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       Promise.allSettled(jobs).finally(() => { if (active) setLoading(false); });
       return () => { active = false; };
     }
-  }, [isHome]);
+  }, [skipCatalog]);
 
   const updatePopupSettings = async (s: PopupSettings): Promise<boolean> => {
     setPopupSettings(s);

@@ -18,6 +18,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Preload the font weights the header/hero use so text doesn't flash in a
+            fallback then reflow. crossOrigin is required even same-origin — fonts are
+            always fetched in CORS mode, so the preload must match. */}
+        {["Regular", "Bold", "ExtraBold", "Black"].map((w) => (
+          <link
+            key={w}
+            rel="preload"
+            as="font"
+            type="font/ttf"
+            href={`/Century-Gothic-Sans-Font/CenturyGothicPaneuropean${w}.ttf`}
+            crossOrigin="anonymous"
+          />
+        ))}
         {/* Preload the logo first so it's ready when the preloader shows it */}
         <link rel="preload" as="image" href="/preloader-logo.png" fetchPriority="high" />
         {["/events/event1.png", "/events/event2.png", "/events/event3.png", "/events/event4.png",

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2, Search, Sparkles } from "lucide-react";
 import Navbar from "../components/Navbar";
 import ParticleField from "../components/ParticleField";
 import { Event } from "../data/events";
@@ -674,96 +674,80 @@ export default function CalendarPage() {
       </div>{/* end calendar area */}
       </div>{/* end full-width layout */}
 
-      {/* ── Event detail modal ───────────────────────────────────── */}
+      {/* ── Event detail modal (matches the "This Week" popup styling) ─── */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 flex items-center justify-center"
-          style={{ zIndex: 500, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(16px)" }}
           onClick={() => setSelectedEvent(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 500,
+            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+            animation: "cal-twp-fade 0.25s ease",
+          }}
         >
+          <style>{`
+            @keyframes cal-twp-fade { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes cal-twp-pop { from { opacity: 0; transform: translateY(14px) scale(0.98) } to { opacity: 1; transform: none } }
+          `}</style>
+
           <div
             onClick={e => e.stopPropagation()}
-            className="rounded-3xl overflow-hidden flex flex-col sm:flex-row"
             style={{
-              width: "min(860px, 92vw)",
-              maxHeight: "90dvh",
-              background: "#0d0d1a",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.08)",
+              width: "100%", maxWidth: 480, maxHeight: "94dvh",
+              background: "#0b0b10", border: "1px solid rgba(57,189,105,0.25)", borderRadius: 24,
+              boxShadow: "0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.06)", overflow: "hidden",
+              animation: "cal-twp-pop 0.3s ease", position: "relative",
+              display: "flex", flexDirection: "column",
             }}
           >
-            {/* Poster — full 4:5 image */}
-            <div
-              className="relative shrink-0 w-full sm:w-[42%]"
-              style={{ aspectRatio: "4 / 5", background: "#08080c" }}
-            >
-              <img
-                src={selectedEvent.image}
-                alt={selectedEvent.title}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+            {/* Eyebrow header */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 3, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <p style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}>
+                <Sparkles size={12} style={{ color: "#39BD69" }} /> Event Details
+              </p>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white transition-all sm:hidden"
-                style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}
+                style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)" }}
               >
-                <X size={13} className="text-white hover:text-black" />
+                <X size={14} />
               </button>
-              <span
-                className="absolute top-4 left-4 text-[9px] font-bold tracking-[0.3em] uppercase px-3 py-1.5 rounded-full"
-                style={{ background: "rgba(57,189,105,0.15)", border: "1px solid rgba(57,189,105,0.4)", color: "#39BD69", backdropFilter: "blur(8px)" }}
-              >
-                {selectedEvent.tag}
-              </span>
             </div>
 
-            {/* Info */}
-            <div className="relative flex-1 min-w-0 p-6 overflow-y-auto">
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="hidden sm:flex absolute top-4 right-4 w-8 h-8 rounded-full items-center justify-center hover:bg-white transition-all z-10"
-                style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}
-              >
-                <X size={13} className="text-white hover:text-black" />
-              </button>
-              <h2 className="text-white font-black text-xl uppercase tracking-tight mb-4 leading-tight sm:pr-10">
-                {selectedEvent.title}
-              </h2>
-              <div className="flex flex-col gap-2.5 mb-5">
-                {[
-                  { Icon: Calendar, text: selectedEvent.date },
-                  { Icon: MapPin,   text: selectedEvent.venue },
-                  { Icon: Ticket,   text: selectedEvent.price },
-                ].map(({ Icon, text }) => (
-                  <div key={text} className="flex items-start gap-2.5">
-                    <Icon size={12} className="text-[#39BD69] flex-shrink-0 mt-0.5" />
-                    <span className="text-white/50 text-sm leading-snug">{text}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Banner — full (uncropped) 4:5 image over a blurred backdrop */}
+            <div
+              onClick={() => router.push(`/events/${eventSlug(selectedEvent)}`)}
+              style={{ position: "relative", aspectRatio: "4 / 5", width: "100%", minHeight: 0, flex: "1 1 auto", cursor: "pointer", overflow: "hidden" }}
+            >
+              <img src={selectedEvent.image} alt="" aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(26px) brightness(0.5)", transform: "scale(1.15)" }} />
+              <img src={selectedEvent.image} alt={selectedEvent.title} style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(11,11,16,1) 0%, rgba(11,11,16,0.35) 45%, rgba(0,0,0,0.25) 100%)" }} />
 
-              {/* Lineup */}
-              {selectedEvent.lineup?.length > 0 && (
-                <div className="mb-5">
-                  <p className="text-white/25 text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Lineup</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedEvent.lineup.map(name => (
-                      <span key={name}
-                        className="text-[10px] font-semibold px-3 py-1 rounded-full"
-                        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}>
-                        {name}
-                      </span>
-                    ))}
-                  </div>
+              {/* Event info overlay */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 30px" }}>
+                {selectedEvent.tag && (
+                  <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#39BD69" }}>{selectedEvent.tag}</span>
+                )}
+                <h2 style={{ fontSize: 30, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05, margin: "8px 0 14px" }}>{selectedEvent.title}</h2>
+                <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#39BD69" }} /> {selectedEvent.date}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#39BD69" }} /> {selectedEvent.venue || selectedEvent.location}</span>
                 </div>
-              )}
+              </div>
+            </div>
 
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 10, padding: "12px 16px 18px" }}>
               <button
                 onClick={() => router.push(`/events/${eventSlug(selectedEvent)}`)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm tracking-widest uppercase transition-all hover:brightness-110 active:scale-95"
-                style={{ background: "linear-gradient(90deg,#39BD69,#2da857)", color: "#000" }}
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
               >
-                VIEW FULL EVENT <ArrowRight size={14} />
+                View Event <ArrowRight size={14} />
+              </button>
+              <button
+                onClick={() => { setSelectedEvent(null); router.push("/events"); }}
+                style={{ padding: "12px 18px", borderRadius: 12, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                All Events
               </button>
             </div>
           </div>

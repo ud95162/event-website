@@ -103,6 +103,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
       {/* Image */}
       <img
         src={event.image} alt={event.title}
+        loading="lazy" decoding="async"
         style={{
           width: "100%", height: "68%", objectFit: "cover", objectPosition: "top",
           transform: hovered ? "scale(1.06)" : "scale(1)",
@@ -428,11 +429,15 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
 /* ══════════════════════════════════════════════════════════════════════
    Inner content
    ══════════════════════════════════════════════════════════════════════ */
+type SectionsData = {
+  rows: { title: string; subtitle: string; ids: number[] }[];
+  events: Record<number, Event>;
+};
+
 function EventsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userLocation } = useUserLocation();
-  const { events } = useAdminData();
 
   const [liked,  setLiked]  = useState<Set<number>>(new Set());
   const [shared, setShared] = useState<Set<number>>(new Set());
@@ -441,6 +446,14 @@ function EventsContent() {
   const dateParam     = searchParams.get("date")     ?? "";
   const queryParam    = searchParams.get("q")        ?? "";
   const categoryParam = searchParams.get("category") ?? "";
+  const isFiltered = !!genreParam || !!dateParam || !!queryParam;
+
+  // Category rows (default view) and search results (filtered view) are fetched from
+  // dedicated, capped endpoints — the page never downloads the whole events table.
+  const [sections, setSections] = useState<SectionsData | null>(null);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
+  const [results, setResults] = useState<Event[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
 
   const toggleLike = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -455,55 +468,41 @@ function EventsContent() {
     setTimeout(() => setShared(prev => { const s = new Set(prev); s.delete(id); return s; }), 1500);
   };
 
-  const isFiltered = !!genreParam || !!dateParam || !!queryParam;
+  // Default view: fetch the capped category rows. Refetch when the user's location
+  // resolves so the server can add the "Near You" row.
+  useEffect(() => {
+    if (isFiltered) return;
+    let cancelled = false;
+    setSectionsLoading(true);
+    const qs = userLocation ? `?lat=${userLocation.lat}&lon=${userLocation.lon}` : "";
+    fetch(`/api/events/sections${qs}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!cancelled && d) setSections(d); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setSectionsLoading(false); });
+    return () => { cancelled = true; };
+  }, [isFiltered, userLocation]);
 
-  /* ── Date matcher ─────────────────────────────────────────────── */
-  const matchesDate = (evDateStr: string): boolean => {
-    if (!dateParam) return true;
-    const d = new Date(evDateStr);
-    if (isNaN(d.getTime())) return false;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-    if (dateParam === "today") return dOnly.getTime() === today.getTime();
-    if (dateParam === "this-week") {
-      const end = new Date(today); end.setDate(today.getDate() + 7);
-      return dOnly >= today && dOnly < end;
-    }
-    if (dateParam === "this-month") {
-      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
-    }
-    if (dateParam.startsWith("custom:")) {
-      const [, from, to] = dateParam.split(":");
-      const f = from ? new Date(from) : null;
-      const t = to ? new Date(to) : f;
-      if (f && dOnly < new Date(f.getFullYear(), f.getMonth(), f.getDate())) return false;
-      if (t && dOnly > new Date(t.getFullYear(), t.getMonth(), t.getDate())) return false;
-      return true;
-    }
-    return true;
-  };
+  // Filtered view: fetch server-side search results for the active filters.
+  useEffect(() => {
+    if (!isFiltered) return;
+    let cancelled = false;
+    setResultsLoading(true);
+    const sp = new URLSearchParams();
+    if (genreParam) sp.set("genre", genreParam);
+    if (dateParam) sp.set("date", dateParam);
+    if (queryParam) sp.set("q", queryParam);
+    if (categoryParam) sp.set("category", categoryParam);
+    fetch(`/api/events/search?${sp.toString()}`)
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => { if (!cancelled) setResults(Array.isArray(d) ? d : []); })
+      .catch(() => { if (!cancelled) setResults([]); })
+      .finally(() => { if (!cancelled) setResultsLoading(false); });
+    return () => { cancelled = true; };
+  }, [isFiltered, genreParam, dateParam, queryParam, categoryParam]);
 
   /* ── Filtered view ───────────────────────────────────────────── */
   if (isFiltered) {
-    const filtered = events.filter(ev => {
-      if (genreParam && !ev.genres.some(g => g.toLowerCase() === genreParam.toLowerCase())) return false;
-      if (!matchesDate(ev.date)) return false;
-      if (queryParam) {
-        const q = queryParam.toLowerCase();
-        // For the genres category, match against genres only (skip the general searchable check).
-        if (categoryParam === "genres") {
-          if (!ev.genres.some(g => g.toLowerCase().includes(q) || q.includes(g.toLowerCase()))) return false;
-        } else {
-          const searchable = [ev.title, ev.tag, ev.location, ev.organizer, ...ev.genres, ...ev.lineup].join(" ").toLowerCase();
-          if (!searchable.includes(q)) return false;
-          if (categoryParam === "artists"    && !ev.lineup.some(a => a.toLowerCase().includes(q))) return false;
-          if (categoryParam === "organizers" && !(ev.organizer || "").toLowerCase().includes(q)) return false;
-        }
-      }
-      return true;
-    });
-
     return (
       <div style={{ padding: "24px 0 48px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -511,7 +510,9 @@ function EventsContent() {
             {queryParam ? `"${queryParam}"` : genreParam || "Filtered"}
           </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)" }}>{filtered.length} events</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
+              {resultsLoading ? "Searching…" : `${results.length} events`}
+            </span>
             <button onClick={() => router.push("/events")}
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", background: "transparent" }}>
               <X size={10} /> Clear
@@ -519,7 +520,7 @@ function EventsContent() {
           </div>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
-          {filtered.map(ev => (
+          {results.map(ev => (
             <EventCard key={ev.id} event={ev} liked={liked.has(ev.id)} shared={shared.has(ev.id)}
               onLike={e => toggleLike(ev.id, e)} onShare={e => handleShare(ev.id, ev.title, e)} />
           ))}
@@ -528,37 +529,12 @@ function EventsContent() {
     );
   }
 
-  /* ── Build categorised rows ──────────────────────────────────── */
-  const featured   = events.filter(e => e.badge === "HOT" || e.badge === "NEW");
-  const comingSoon = events.filter(e => e.badge === "COMING SOON");
-
-  const nearest = userLocation
-    ? [...events].sort((a, b) =>
-        haversineKm(userLocation.lat, userLocation.lon, a.lat, a.lon) -
-        haversineKm(userLocation.lat, userLocation.lon, b.lat, b.lon)
-      ).slice(0, 8)
-    : [];
-
-  const upcoming = [...events]
-    .filter(e => new Date(e.date) >= new Date())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  const electronic = events.filter(e => e.genres.includes("electronic"));
-  const sinhala    = events.filter(e => e.genres.includes("sinhala"));
-  const djNights   = events.filter(e => e.tag.toLowerCase().includes("dj"));
-  const colombo    = events.filter(e => e.location === "Colombo");
-
-  const rows = [
-    { title: "Hot & Trending",      subtitle: "Don't Miss Out",       data: featured },
-    ...(nearest.length ? [{ title: "Near You",         subtitle: "Based on Your Location", data: nearest }] : []),
-    { title: "Upcoming Events",     subtitle: "Coming Soon",          data: upcoming },
-    { title: "Electronic / EDM",    subtitle: "Genre",                data: electronic },
-    { title: "Sinhala Music",       subtitle: "Genre",                data: sinhala },
-    { title: "DJ Nights",           subtitle: "Night Life",           data: djNights },
-    { title: "Colombo Events",      subtitle: "By City",              data: colombo },
-    { title: "Coming Soon",         subtitle: "Save the Date",        data: comingSoon },
-    { title: "All Events",          subtitle: "Browse Everything",    data: events },
-  ];
+  /* ── Default view: category rows ──────────────────────────────── */
+  const rows = (sections?.rows ?? []).map(r => ({
+    title: r.title,
+    subtitle: r.subtitle,
+    data: r.ids.map(id => sections!.events[id]).filter(Boolean) as Event[],
+  }));
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
@@ -575,6 +551,11 @@ function EventsContent() {
           direction={i % 2 === 0 ? "left" : "right"}
         />
       ))}
+      {sectionsLoading && rows.length === 0 && (
+        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", padding: "40px 0" }}>
+          Loading events…
+        </p>
+      )}
     </div>
   );
 }
