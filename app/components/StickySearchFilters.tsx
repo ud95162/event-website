@@ -12,10 +12,30 @@ const DATE_PRESETS = [
   { label: "This Month", slug: "this-month" },
 ];
 
-const ARTISTS = [
-  "DJ Nova", "Randhir Witana", "Maya Perera", "Ashanthi Dias",
-  "Kasun Silva", "Nadia Fernando", "The Beat Crew", "Hiruni De Silva",
-];
+// Real artist names from the API (cached once per session) so the artist search and
+// suggestions show actual artists instead of sample data. Fetched directly because the
+// home/events routes don't load the full artists list into context.
+let _artistNamesCache: string[] | null = null;
+function useArtistNames(): string[] {
+  const [names, setNames] = useState<string[]>(_artistNamesCache ?? []);
+  useEffect(() => {
+    if (_artistNamesCache) { setNames(_artistNamesCache); return; }
+    let cancelled = false;
+    fetch("/api/artists")
+      .then(r => (r.ok ? r.json() : []))
+      .then((d: Array<{ name: string; stageName?: string }>) => {
+        const list = Array.isArray(d)
+          ? Array.from(new Set(d.map(a => a.stageName || a.name).filter(Boolean))).sort()
+          : [];
+        _artistNamesCache = list;
+        if (!cancelled) setNames(list);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return names;
+}
 
 const GENRES = [
   { label: "Electronic / EDM", color: "#39BD69" },
@@ -100,7 +120,8 @@ function DatePanel({ currentDate, onChange }: { currentDate: string; onChange: (
 /* ── Artists panel content ────────────────────────────────────────────── */
 function ArtistsPanel({ selected, onChange }: { selected: string[]; onChange: (v: string[]) => void }) {
   const [search, setSearch] = useState("");
-  const filtered = ARTISTS.filter(a => a.toLowerCase().includes(search.toLowerCase()));
+  const artists = useArtistNames();
+  const filtered = artists.filter(a => a.toLowerCase().includes(search.toLowerCase()));
 
   const toggle = (name: string) => {
     onChange(selected.includes(name) ? selected.filter(s => s !== name) : [...selected, name]);
@@ -330,6 +351,7 @@ const EXAMPLES: Record<string, string> = {
 export default function StickySearchFilters() {
   const router = useRouter();
   const { organizers, genres: dataGenres } = useAdminData();
+  const artistNames = useArtistNames();
   const [catOpen,      setCatOpen]      = useState(false);
   const [selectedCat,  setSelectedCat]  = useState<typeof CAT_OPTIONS[0] | null>(null);
   const [searchQuery,  setSearchQuery]  = useState("");
@@ -389,7 +411,7 @@ export default function StickySearchFilters() {
     if (selectedCat?.key === "genres") return genreMatches;
 
     if (selectedCat?.key === "artists" || !selectedCat) {
-      const artists = ARTISTS
+      const artists = artistNames
         .filter(a => a.toLowerCase().includes(q))
         .map(a => ({ label: a, color: "#e879f9", type: "Artist" }));
       if (selectedCat?.key === "artists") return artists;
