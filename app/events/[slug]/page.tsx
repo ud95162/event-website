@@ -909,6 +909,13 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
   const end = toDateTime(endDate || date, endTime || "23:59");
   const endMs = end ? end.getTime() : startMs + 3 * 60 * 60 * 1000; // assume ~3h if no end given
 
+  const nowD = new Date(now);
+  const sameDay =
+    start.getFullYear() === nowD.getFullYear() &&
+    start.getMonth() === nowD.getMonth() &&
+    start.getDate() === nowD.getDate();
+  const hasTime = !!startTime && /^\d{1,2}:\d{2}/.test(startTime);
+
   // ── Completed ──
   if (now > endMs) {
     return (
@@ -922,14 +929,27 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
     );
   }
 
-  // ── Happening now ──
-  if (now >= startMs && now <= endMs) {
+  // ── Happening now — only when a specific time is set and we're within it (red) ──
+  if (hasTime && now >= startMs && now <= endMs) {
     return (
       <div className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3"
         style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)" }}>
         <Radio size={16} className="animate-pulse" style={{ color: "#f87171" }} />
         <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: "#f87171" }}>
           Happening Now
+        </span>
+      </div>
+    );
+  }
+
+  // ── Happening today — event is today but not in its active time window (green) ──
+  if (sameDay) {
+    return (
+      <div className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3"
+        style={{ background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.35)" }}>
+        <Radio size={16} className="animate-pulse" style={{ color: "#39BD69" }} />
+        <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: "#39BD69" }}>
+          Happening Today
         </span>
       </div>
     );
