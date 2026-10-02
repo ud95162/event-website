@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Event } from "../../context/AdminDataContext";
@@ -18,7 +18,7 @@ const selectStyle: React.CSSProperties = {
 export default function EventsAdminPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { events, deleteEvent } = useAdminData();
+  const { deleteEvent } = useAdminData();
 
   // Events management is admin-only; organizers are sent to their analytics.
   useEffect(() => {
@@ -39,61 +39,60 @@ export default function EventsAdminPage() {
   const cycleDateSort = () =>
     setDateSort(s => (s === null ? "asc" : s === "asc" ? "desc" : null));
 
-  // Unique options for dropdowns
-  const locations = useMemo(
-    () => Array.from(new Set(events.map(e => e.location).filter(Boolean))).sort(),
-    [events]
+  // Events are paged on the server (/api/events/admin): only the current page is downloaded.
+  const [data, setData] = useState<{ events: Event[]; total: number; page: number; totalPages: number; locations: string[] }>(
+    { events: [], total: 0, page: 1, totalPages: 1, locations: [] }
   );
-  // dateFilter holds an ISO yyyy-mm-dd string from the calendar input
-  const toISO = (d: string) => {
-    const t = new Date(d);
-    return isNaN(t.getTime()) ? "" : t.toISOString().slice(0, 10);
-  };
+  const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const reqId = useRef(0);
 
-  const matchesPeriod = (evDate: string): boolean => {
-    if (!period) return true;
-    const d = new Date(evDate);
-    if (isNaN(d.getTime())) return false;
-    const now = new Date(); now.setHours(0, 0, 0, 0);
-    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    if (period === "today") return dOnly.getTime() === now.getTime();
-    if (period === "week") {
-      const end = new Date(now); end.setDate(now.getDate() + 7);
-      return dOnly >= now && dOnly < end;
-    }
-    if (period === "month") {
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }
-    return true;
-  };
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  const filtered = useMemo(() => {
-    const list = events.filter(ev => {
-      if (search && !ev.title.toLowerCase().includes(search.toLowerCase())) return false;
-      if (locationFilter && ev.location !== locationFilter) return false;
-      if (dateFilter && toISO(ev.date) !== dateFilter) return false;
-      if (monthFilter && toISO(ev.date).slice(0, 7) !== monthFilter) return false;
-      if (!matchesPeriod(ev.date)) return false;
-      return true;
-    });
-    if (dateSort) {
-      list.sort((a, b) => {
-        const ta = new Date(a.date).getTime() || 0;
-        const tb = new Date(b.date).getTime() || 0;
-        return dateSort === "asc" ? ta - tb : tb - ta;
-      });
+  const fetchPage = useCallback(async () => {
+    const id = ++reqId.current;
+    const params = new URLSearchParams({ page: String(page), limit: String(perPage) });
+    if (debouncedSearch) params.set("q", debouncedSearch);
+    if (locationFilter) params.set("location", locationFilter);
+    if (dateFilter) params.set("date", dateFilter);
+    if (monthFilter) params.set("month", monthFilter);
+    if (period) params.set("period", period);
+    if (dateSort) params.set("sort", dateSort);
+    try {
+      const res = await fetch(`/api/events/admin?${params.toString()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      const d = await res.json();
+      if (id === reqId.current) { setData(d); setLoading(false); }
+    } catch {
+      if (id === reqId.current) setLoading(false);
     }
-    return list;
-  }, [events, search, locationFilter, dateFilter, monthFilter, period, dateSort]);
+  }, [page, perPage, debouncedSearch, locationFilter, dateFilter, monthFilter, period, dateSort]);
+
+  useEffect(() => { fetchPage(); }, [fetchPage, refreshKey]);
+
+  const paged = data.events;
+  const locations = data.locations;
+  const total = data.total;
 
   const hasFilters = !!search || !!locationFilter || !!dateFilter || !!monthFilter || !!period;
   const clearFilters = () => { setSearch(""); setLocationFilter(""); setDateFilter(""); setMonthFilter(""); setPeriod(""); };
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  useEffect(() => { setPage(1); }, [search, locationFilter, dateFilter, monthFilter, period, dateSort, perPage]);
-  const currentPage = Math.min(page, totalPages);
-  const paged = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+  // Pagination — the server clamps the page, so trust the page it returns.
+  const totalPages = data.totalPages;
+  const currentPage = data.page;
+  useEffect(() => { setPage(1); }, [debouncedSearch, locationFilter, dateFilter, monthFilter, period, dateSort, perPage]);
+
+  // Delete on the server first, then refresh the current page (stepping back if it emptied).
+  const handleDelete = async (id: number) => {
+    setConfirmDelete(null);
+    try { await fetch(`/api/events/${id}`, { method: "DELETE" }); } catch { /* refetch below shows the truth */ }
+    deleteEvent(id); // keep the shared admin data in sync (idempotent DELETE)
+    if (paged.length === 1 && page > 1) setPage(page - 1); else setRefreshKey(k => k + 1);
+  };
 
   return (
     <div style={{ padding: 32 }}>
@@ -140,9 +139,9 @@ export default function EventsAdminPage() {
             <X size={12} /> Clear
           </button>
         )}
-        {filtered.length !== events.length && (
+        {hasFilters && (
           <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>
-            {filtered.length} match{filtered.length !== 1 ? "es" : ""}
+            {total} match{total !== 1 ? "es" : ""}
           </span>
         )}
         {/* Per-page selector */}
@@ -220,9 +219,11 @@ export default function EventsAdminPage() {
 
       {/* Grid view */}
       {view === "grid" && (
-        filtered.length === 0 ? (
+        total === 0 ? (
           <div style={{ padding: "40px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)", background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12 }}>
-            {hasFilters ? (
+            {loading ? (
+              <>Loading events…</>
+            ) : hasFilters ? (
               <>No events match your filters. <button onClick={clearFilters} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
             ) : (
               <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
@@ -259,7 +260,7 @@ export default function EventsAdminPage() {
                     </button>
                     {confirmDelete === ev.id ? (
                       <>
-                        <button onClick={() => { deleteEvent(ev.id); setConfirmDelete(null); }} style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} /></button>
+                        <button onClick={() => handleDelete(ev.id)} style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} /></button>
                         <button onClick={() => setConfirmDelete(null)} style={{ width: 32, height: 32, borderRadius: 6, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={12} /></button>
                       </>
                     ) : (
@@ -334,7 +335,7 @@ export default function EventsAdminPage() {
                       </button>
                       {confirmDelete === ev.id ? (
                         <div style={{ display: "flex", gap: 4 }}>
-                          <button onClick={() => { deleteEvent(ev.id); setConfirmDelete(null); }} style={{ width: 30, height: 30, borderRadius: 6, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <button onClick={() => handleDelete(ev.id)} style={{ width: 30, height: 30, borderRadius: 6, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <Check size={12} />
                           </button>
                           <button onClick={() => setConfirmDelete(null)} style={{ width: 30, height: 30, borderRadius: 6, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -353,10 +354,12 @@ export default function EventsAdminPage() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {total === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: "32px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>
-                    {hasFilters ? (
+                    {loading ? (
+              <>Loading events…</>
+            ) : hasFilters ? (
                       <>No events match your filters. <button onClick={clearFilters} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
                     ) : (
                       <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
@@ -371,10 +374,10 @@ export default function EventsAdminPage() {
       )}
 
       {/* Pagination */}
-      {filtered.length > perPage && (
+      {total > perPage && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, gap: 12, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
-            Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, filtered.length)} of {filtered.length}
+            Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, total)} of {total}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <button

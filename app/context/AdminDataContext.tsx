@@ -141,7 +141,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   // (home + /events listing) — event detail still loads it to resolve the lineup.
   // /calendar fetches its events per-month, but still needs the (small) artists list for
   // its artist filter options, so only events are skipped there.
-  const skipEvents = pathname === "/" || pathname.startsWith("/events") || pathname === "/calendar";
+  // The admin Events list pages through /api/events/admin and the edit form fetches its single
+  // event, so neither needs the full list either.
+  const skipEvents = pathname === "/" || pathname.startsWith("/events") || pathname === "/calendar"
+    || pathname === "/admin/events" || pathname === "/admin/events/new";
   const skipArtists = pathname === "/" || pathname === "/events";
 
   const [events, setEvents] = useState<Event[]>([]);

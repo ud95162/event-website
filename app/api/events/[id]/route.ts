@@ -3,6 +3,18 @@ import { getPool } from "../../../lib/db";
 import { ensureSchema } from "../../../lib/schema";
 import { mapEventRow } from "../../../lib/mappers";
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await ensureSchema();
+  const { id } = await params;
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [id]);
+  if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(mapEventRow(rows[0]), { headers: { "Cache-Control": "no-store" } });
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

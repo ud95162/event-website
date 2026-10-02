@@ -78,7 +78,18 @@ function EventFormInner() {
   }, [user, router]);
 
   const editId = searchParams.get("id") ? Number(searchParams.get("id")) : null;
-  const editing = editId ? events.find(e => e.id === editId) ?? null : null;
+  // The full events list isn't loaded on this page, so fetch the one being edited.
+  const [fetchedEvent, setFetchedEvent] = useState<Event | null>(null);
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    fetch(`/api/events/${editId}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((ev: Event | null) => { if (!cancelled && ev) setFetchedEvent(ev); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [editId]);
+  const editing = editId ? events.find(e => e.id === editId) ?? (fetchedEvent?.id === editId ? fetchedEvent : null) : null;
 
   const [form, setForm] = useState<Omit<Event, "id">>(EMPTY);
   const [coordMode, setCoordMode] = useState<"map" | "manual">("map");
