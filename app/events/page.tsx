@@ -51,17 +51,16 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
   const showTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
   const PREVIEW_W = 330;
-  const PREVIEW_H = 450;
+  const PREVIEW_H = 490;
 
   const openPreview = () => {
     const el = cardRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const gap = 8;
-    let left = r.right + gap;                                   // prefer to the right
-    if (left + PREVIEW_W > window.innerWidth - 8) left = r.left - gap - PREVIEW_W; // else left
-    if (left < 8) left = Math.min(Math.max(8, r.left + r.width / 2 - PREVIEW_W / 2), window.innerWidth - PREVIEW_W - 8);
-    let top = r.top + r.height / 2 - PREVIEW_H / 2;             // vertically centred on card
+    // Centre the enlarged card right on top of the one being hovered.
+    let left = r.left + r.width / 2 - PREVIEW_W / 2;
+    left = Math.min(Math.max(8, left), window.innerWidth - PREVIEW_W - 8);
+    let top = r.top + r.height / 2 - PREVIEW_H / 2;
     top = Math.min(Math.max(8, top), window.innerHeight - PREVIEW_H - 8);
     setPreview({ top, left });
   };
