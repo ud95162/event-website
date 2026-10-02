@@ -39,11 +39,11 @@ function ArtistCard({ artist, followed, onFollow }: {
         flexShrink: 0, width: 230, height: 320,
         borderRadius: 16, overflow: "hidden", position: "relative",
         cursor: "pointer",
-        border: `1px solid ${hovered ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.08)"}`,
-        boxShadow: hovered ? "0 0 28px rgba(57,189,105,0.15)" : "none",
+        border: `1px solid ${hovered ? "rgba(227,184,115,0.6)" : "rgba(227,184,115,0.14)"}`,
+        boxShadow: hovered ? "0 14px 40px rgba(0,0,0,0.5), 0 0 34px rgba(227,184,115,0.26)" : "0 6px 20px rgba(0,0,0,0.3)",
         transition: "border-color 0.3s, box-shadow 0.3s, transform 0.3s",
-        transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        background: "#0a0a0a",
+        transform: hovered ? "translateY(-5px)" : "translateY(0)",
+        background: "#0b0a08",
       }}
     >
       <img src={artist.image} alt={artist.name} style={{
@@ -69,19 +69,19 @@ function ArtistCard({ artist, followed, onFollow }: {
         <div style={{
           position: "absolute", top: 10, left: 10,
           display: "flex", alignItems: "center", gap: 4,
-          padding: "3px 8px", borderRadius: 999,
+          padding: "4px 10px", borderRadius: 999,
           background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.12)",
           backdropFilter: "blur(6px)",
         }}>
-          <Music2 size={8} style={{ color: "#39BD69" }} />
-          <span style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{eventCount}</span>
+          <Music2 size={12} style={{ color: "#E3B873" }} />
+          <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{eventCount}</span>
         </div>
       )}
 
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px", textAlign: "center" }}>
-        <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.28em", textTransform: "uppercase", marginBottom: 5 }}>{artist.role}</p>
+        <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 5 }}>{artist.role}</p>
         <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, letterSpacing: "0.04em", marginBottom: 6 }}>{artist.name}</h3>
-        <div style={{ height: 2, borderRadius: 999, margin: "0 auto", width: hovered ? "60%" : "30%", background: "linear-gradient(90deg,#39BD69,#2ecc71)", transition: "width 0.4s ease" }} />
+        <div style={{ height: 2, borderRadius: 999, margin: "0 auto", width: hovered ? "62%" : "32%", background: "linear-gradient(90deg, rgba(227,184,115,0), #F0D592 35%, #C9A24B 65%, rgba(227,184,115,0))", transition: "width 0.4s ease" }} />
       </div>
     </div>
   );
@@ -168,7 +168,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
   return (
     <div style={{ marginBottom: 40 }}>
       <div style={{ marginBottom: 16 }}>
-        {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#39BD69", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
+        {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#ffffff", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
         <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
       </div>
       <div

@@ -356,6 +356,8 @@ export default function StickySearchFilters() {
   // On the artists pages the bar searches artists in place: genre filter only, no date.
   const artistsMode = pathname.startsWith("/artists");
   const basePath = artistsMode ? "/artists" : "/events";
+  // Artist pages use the premium gold accent; other pages keep the green.
+  const genreAccent = artistsMode ? "#ffffff" : "#39BD69";
   const { organizers, genres: dataGenres } = useAdminData();
   const artistNames = useArtistNames();
   const [catOpen,      setCatOpen]      = useState(false);
@@ -408,7 +410,7 @@ export default function StickySearchFilters() {
     if (artistsMode) {
       return artistGenres
         .filter(g => g.toLowerCase().includes(q))
-        .map(g => ({ label: g, color: "#39BD69", type: "Genre", value: g }));
+        .map(g => ({ label: g, color: genreAccent, type: "Genre", value: g }));
     }
 
     if (!q) return [];
@@ -420,7 +422,7 @@ export default function StickySearchFilters() {
     // Genres come straight from the stored data keys so they always match.
     const genreMatches = dataGenres
       .filter(g => g.toLowerCase().includes(q))
-      .map(g => ({ label: cap(g), color: "#39BD69", type: "Event Type", value: g }));
+      .map(g => ({ label: cap(g), color: genreAccent, type: "Event Type", value: g }));
 
     if (selectedCat?.key === "organizers") return orgMatches;
     if (selectedCat?.key === "genres") return genreMatches;
@@ -477,8 +479,8 @@ export default function StickySearchFilters() {
 
           {/* Category button + dropdown */}
           {artistsMode ? (
-            <div className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap" style={{ color: "#39BD69" }}>
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#39BD69" }} />
+            <div className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap" style={{ color: genreAccent }}>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: genreAccent }} />
               Genres
             </div>
           ) : (

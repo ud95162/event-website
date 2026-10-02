@@ -42,7 +42,7 @@ const socialMeta = (platform: string): { icon: string; color: string } => {
   if (p.includes("tiktok") || p.includes("tik tok")) return { icon: "tiktok", color: "#69c9d0" };
   if (p.includes("youtube") || p.includes("you tube")) return { icon: "youtube", color: "#ff0000" };
   if (p.includes("x") || p.includes("twitter")) return { icon: "x", color: "#ffffff" };
-  if (p.includes("web") || p.includes("site")) return { icon: "website", color: "#39BD69" };
+  if (p.includes("web") || p.includes("site")) return { icon: "website", color: "#ffffff" };
   return { icon: "link", color: "#9ca3af" };
 };
 import { useAdminData } from "../../context/AdminDataContext";
@@ -147,7 +147,7 @@ export default function ArtistDetailPage() {
   if (loading && !artist) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
-        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#ffffff] animate-spin mb-4" />
         <p className="text-white/30 text-xs tracking-widest uppercase">Loading artist…</p>
       </main>
     );
@@ -239,7 +239,7 @@ export default function ArtistDetailPage() {
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.55) 45%, rgba(8,8,8,0.25) 100%)" }} />
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 70% 40%, rgba(57,189,105,0.08) 0%, transparent 60%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 70% 40%, rgba(255,255,255,0.08) 0%, transparent 60%)" }} />
 
             {/* Top row */}
             <div className="absolute top-5 left-5 right-5 flex items-center justify-between">
@@ -304,9 +304,9 @@ export default function ArtistDetailPage() {
               {artistEvents.length > 0 && (
                 <div
                   className="flex-shrink-0 text-center px-6 py-4 rounded-2xl hidden sm:block"
-                  style={{ background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.2)", backdropFilter: "blur(10px)" }}
+                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}
                 >
-                  <Music2 size={18} className="text-[#39BD69] mx-auto mb-1" />
+                  <Music2 size={18} className="text-[#ffffff] mx-auto mb-1" />
                   <p className="text-white font-black text-3xl leading-none">{artistEvents.length}</p>
                   <p className="text-white/40 text-[9px] tracking-[0.3em] uppercase mt-1">
                     Upcoming {artistEvents.length === 1 ? "Event" : "Events"}
@@ -345,15 +345,15 @@ export default function ArtistDetailPage() {
                           {m.image ? (
                             <img src={m.image} alt={m.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(57,189,105,0.08)" }}>
-                              <span className="text-[#39BD69] font-black text-lg">{(m.name || "?").charAt(0).toUpperCase()}</span>
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
+                              <span className="text-[#ffffff] font-black text-lg">{(m.name || "?").charAt(0).toUpperCase()}</span>
                             </div>
                           )}
                           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0F1116 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
                         </div>
                         <div className="px-2.5 pb-2.5 pt-1.5 text-center">
                           <h3 className="text-white font-black text-[11px] uppercase tracking-wide truncate">{m.name}</h3>
-                          {m.instrument && <p className="text-[#39BD69] text-[8px] font-bold tracking-[0.2em] uppercase truncate mt-0.5">{m.instrument}</p>}
+                          {m.instrument && <p className="text-[#ffffff] text-[8px] font-bold tracking-[0.2em] uppercase truncate mt-0.5">{m.instrument}</p>}
                         </div>
                       </div>
                     ))}
@@ -376,11 +376,11 @@ export default function ArtistDetailPage() {
               {hasBPM && (
                 <div
                   className="rounded-2xl p-4 flex items-center gap-6"
-                  style={{ background: "rgba(57,189,105,0.06)", border: "1px solid rgba(57,189,105,0.15)" }}
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)" }}
                 >
                   <div>
                     <p className="text-white/30 text-[9px] tracking-[0.25em] uppercase mb-1">BPM (Beats Per Minute)</p>
-                    <p className="text-[#39BD69] font-black text-2xl">{bpmValue}</p>
+                    <p className="text-[#ffffff] font-black text-2xl">{bpmValue}</p>
                   </div>
                   <p className="text-white/25 text-xs">Typical set tempo for DJ performances</p>
                 </div>
@@ -421,23 +421,23 @@ export default function ArtistDetailPage() {
                   <div className="flex flex-col gap-3">
                     {bookingEmail && (
                       <a href={`mailto:${bookingEmail}`} className="flex items-center gap-3 group">
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Mail size={15} style={{ color: "#39BD69" }} />
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Mail size={15} style={{ color: "#ffffff" }} />
                         </div>
                         <div>
                           <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Email</p>
-                          <p className="text-white/85 text-sm font-semibold group-hover:text-[#39BD69] transition-colors">{bookingEmail}</p>
+                          <p className="text-white/85 text-sm font-semibold group-hover:text-[#ffffff] transition-colors">{bookingEmail}</p>
                         </div>
                       </a>
                     )}
                     {bookingPhone && (
                       <a href={`tel:${bookingPhone.replace(/\s/g, "")}`} className="flex items-center gap-3 group">
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Phone size={15} style={{ color: "#39BD69" }} />
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Phone size={15} style={{ color: "#ffffff" }} />
                         </div>
                         <div>
                           <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">Phone</p>
-                          <p className="text-white/85 text-sm font-semibold group-hover:text-[#39BD69] transition-colors">{bookingPhone}</p>
+                          <p className="text-white/85 text-sm font-semibold group-hover:text-[#ffffff] transition-colors">{bookingPhone}</p>
                         </div>
                       </a>
                     )}
@@ -488,8 +488,8 @@ export default function ArtistDetailPage() {
                           className="flex items-center gap-4 rounded-2xl p-4 cursor-pointer group transition-all duration-200"
                           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
                           onMouseEnter={e => {
-                            (e.currentTarget as HTMLDivElement).style.background   = "rgba(57,189,105,0.05)";
-                            (e.currentTarget as HTMLDivElement).style.borderColor  = "rgba(57,189,105,0.2)";
+                            (e.currentTarget as HTMLDivElement).style.background   = "rgba(255,255,255,0.05)";
+                            (e.currentTarget as HTMLDivElement).style.borderColor  = "rgba(255,255,255,0.2)";
                           }}
                           onMouseLeave={e => {
                             (e.currentTarget as HTMLDivElement).style.background   = "rgba(255,255,255,0.03)";
@@ -500,7 +500,7 @@ export default function ArtistDetailPage() {
                             <img src={event.image} alt={event.title} className="w-full h-full object-cover object-top" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[#39BD69] text-[8px] font-bold tracking-[0.3em] uppercase mb-0.5">{event.tag}</p>
+                            <p className="text-[#ffffff] text-[8px] font-bold tracking-[0.3em] uppercase mb-0.5">{event.tag}</p>
                             <h3 className="text-white font-black text-sm uppercase tracking-wide leading-tight mb-1 truncate">{event.title}</h3>
                             <div className="flex items-center gap-3 flex-wrap">
                               <div className="flex items-center gap-1 text-white/35 text-[10px]">
@@ -510,13 +510,13 @@ export default function ArtistDetailPage() {
                                 <MapPin size={9} className="text-white/25" /> {event.location}
                               </div>
                               {distance !== null && (
-                                <span className="text-[#39BD69] text-[10px] font-semibold">{formatDistance(distance)}</span>
+                                <span className="text-[#ffffff] text-[10px] font-semibold">{formatDistance(distance)}</span>
                               )}
                             </div>
                           </div>
                           <div className="flex-shrink-0 text-right">
                             <p className="text-white/50 text-[11px] font-semibold mb-1">{fromPrice(event.tickets, event.price)}</p>
-                            <ArrowRight size={14} className="text-white/25 group-hover:text-[#39BD69] group-hover:translate-x-0.5 transition-all duration-200 ml-auto" />
+                            <ArrowRight size={14} className="text-white/25 group-hover:text-[#ffffff] group-hover:translate-x-0.5 transition-all duration-200 ml-auto" />
                           </div>
                         </div>
                       );
@@ -583,7 +583,7 @@ export default function ArtistDetailPage() {
                       <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
                       <div>
                         <p className="text-white/30 text-[8px] tracking-[0.25em] uppercase mb-0.5">BPM</p>
-                        <p className="text-[#39BD69] text-xs font-bold">{bpmValue} BPM</p>
+                        <p className="text-[#ffffff] text-xs font-bold">{bpmValue} BPM</p>
                       </div>
                     </>
                   )}
@@ -613,9 +613,9 @@ export default function ArtistDetailPage() {
                       onClick={() => setFollowed(f => !f)}
                       className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-200"
                       style={{
-                        background: followed ? "rgba(239,68,68,0.15)" : "rgba(57,189,105,0.1)",
-                        border: followed ? "1px solid rgba(239,68,68,0.35)" : "1px solid rgba(57,189,105,0.3)",
-                        color: followed ? "#f87171" : "#39BD69",
+                        background: followed ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.1)",
+                        border: followed ? "1px solid rgba(239,68,68,0.35)" : "1px solid rgba(255,255,255,0.3)",
+                        color: followed ? "#f87171" : "#ffffff",
                       }}
                     >
                       <Heart size={11} strokeWidth={2.5} fill={followed ? "currentColor" : "none"} />
