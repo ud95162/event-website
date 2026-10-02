@@ -32,6 +32,7 @@ function DayCard({
   const multi = n > 1;
   const cover = dayEvents[0];
   const cellRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
   const [listOpen, setListOpen] = useState(false);
@@ -58,16 +59,22 @@ function DayCard({
     else onSelect(cover);
   };
 
-  // Close the list popup on outside click / scroll / resize.
+  // Close the list popup on outside click / resize / page scroll — but NOT when the
+  // scroll happens inside the popup itself (so the user can scroll its event list).
   useEffect(() => {
     if (!listOpen) return;
     const close = () => setListOpen(false);
-    window.addEventListener("scroll", close, true);
+    const onScroll = (e: globalThis.Event) => {
+      const t = e.target;
+      if (listRef.current && t instanceof Node && listRef.current.contains(t)) return;
+      setListOpen(false);
+    };
+    window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", close);
     const t = setTimeout(() => document.addEventListener("mousedown", close), 0);
     return () => {
       clearTimeout(t);
-      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", close);
       document.removeEventListener("mousedown", close);
     };
@@ -184,6 +191,7 @@ function DayCard({
       {/* Multi-event click list popup */}
       {multi && listOpen && listPos && typeof document !== "undefined" && createPortal(
         <div
+          ref={listRef}
           onClick={e => e.stopPropagation()}
           onMouseDown={e => e.stopPropagation()}
           style={{
