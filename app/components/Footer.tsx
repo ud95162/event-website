@@ -156,7 +156,7 @@ export default function Footer() {
             &copy; 2026 DiscoverEvents.lk. All Rights Reserved.
           </p>
           <p className="text-white/35 text-sm">
-            Designed and Developed by <span className="text-white/60 font-semibold">HWC</span>
+            Made for music lovers in <span className="text-white/60 font-semibold">Sri Lanka</span>
           </p>
         </div>
       </div>
