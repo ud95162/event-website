@@ -1,5 +1,7 @@
 "use client";
 
+import { CalendarPlus } from "lucide-react";
+
 const SvgFacebook = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={15} height={15}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
 );
@@ -136,6 +138,12 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+            <a
+              href="/admin/login"
+              className="self-start inline-flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-xl bg-white/10 text-[#39BD69] text-sm font-bold tracking-widest uppercase hover:bg-white/20 hover:text-[#4ccf7c] transition-colors"
+            >
+              <CalendarPlus size={16} /> List Your Event
+            </a>
           </div>
 
         </div>

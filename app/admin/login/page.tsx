@@ -58,8 +58,10 @@ export default function AdminLoginPage() {
       }}>
         {/* Brand */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 8 }}>Admin Panel</p>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase" }}>EVENTS.LK</h1>
+          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>Partner Portal</p>
+          <h1 style={{ margin: 0 }}>
+            <img src="/logo.png" alt="DiscoverEvents.lk" style={{ height: 44, width: "auto", display: "inline-block" }} />
+          </h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>Sign in to continue</p>
         </div>
 

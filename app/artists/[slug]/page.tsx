@@ -61,17 +61,17 @@ function Chip({ label, accent = false }: { label: string; accent?: boolean }) {
     <span
       style={{
         display: "inline-block",
-        padding: "3px 10px",
+        padding: "8px 18px",
         borderRadius: 99,
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 700,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
-        background: accent ? "rgba(57,189,105,0.12)" : "rgba(255,255,255,0.05)",
-        border: `1px solid ${accent ? "rgba(57,189,105,0.3)" : "rgba(255,255,255,0.1)"}`,
-        color: accent ? "#39BD69" : "rgba(255,255,255,0.6)",
-        marginRight: 6,
-        marginBottom: 6,
+        background: accent ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
+        border: `1px solid ${accent ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)"}`,
+        color: accent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.6)",
+        marginRight: 8,
+        marginBottom: 8,
       }}
     >
       {label}
@@ -85,15 +85,17 @@ function StreamBtn({ href, label, color, icon }: { href: string; label: string; 
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      className="hover:bg-white/10 hover:text-white hover:border-white/25"
       style={{
-        display: "inline-flex", alignItems: "center", gap: 8,
-        padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+        display: "inline-flex", alignItems: "center", gap: 10,
+        padding: "12px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700,
         letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none",
-        background: `${color}18`, border: `1px solid ${color}40`, color,
-        transition: "opacity 0.15s",
+        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
+        color: "rgba(255,255,255,0.75)",
+        transition: "background 0.15s, color 0.15s, border-color 0.15s",
       }}
     >
-      <BrandIcon name={icon} size={14} /> {label}
+      <span style={{ display: "inline-flex", color }}><BrandIcon name={icon} size={18} /></span> {label}
     </a>
   );
 }

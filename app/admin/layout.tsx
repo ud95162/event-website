@@ -62,8 +62,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }}>
         {/* Brand */}
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 4 }}>Admin Panel</p>
-          <h1 style={{ fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase" }}>EVENTS.LK</h1>
+          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>Partner Portal</p>
+          <h1 style={{ margin: 0 }}>
+            <img src="/logo.png" alt="DiscoverEvents.lk" style={{ height: 32, width: "auto", display: "block" }} />
+          </h1>
         </div>
 
         {/* Nav */}
