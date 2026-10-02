@@ -914,7 +914,6 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
     start.getFullYear() === nowD.getFullYear() &&
     start.getMonth() === nowD.getMonth() &&
     start.getDate() === nowD.getDate();
-  const hasTime = !!startTime && /^\d{1,2}:\d{2}/.test(startTime);
 
   // ── Completed ──
   if (now > endMs) {
@@ -929,8 +928,9 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
     );
   }
 
-  // ── Happening now — only when a specific time is set and we're within it (red) ──
-  if (hasTime && now >= startMs && now <= endMs) {
+  // ── Happening now — the event is currently active: either an all-day event today, or
+  //     a timed event within its start–end window (red) ──
+  if (now >= startMs && now <= endMs) {
     return (
       <div className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3"
         style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)" }}>
