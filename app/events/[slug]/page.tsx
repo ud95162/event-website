@@ -942,21 +942,9 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
     );
   }
 
-  // ── Happening today — event is today but not in its active time window (green) ──
-  if (sameDay) {
-    return (
-      <div className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3"
-        style={{ background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.35)" }}>
-        <Radio size={16} className="animate-pulse" style={{ color: "#39BD69" }} />
-        <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: "#39BD69" }}>
-          Happening Today
-        </span>
-      </div>
-    );
-  }
-
-  // ── Upcoming — live countdown ──
-  const diff  = startMs - now;
+  // ── Live countdown to the start (shown for upcoming events and for today's events
+  //     that haven't started yet) ──
+  const diff  = Math.max(0, startMs - now);
   const days  = Math.floor(diff / 86400000);
   const hours = Math.floor((diff % 86400000) / 3600000);
   const mins  = Math.floor((diff % 3600000) / 60000);
@@ -967,9 +955,8 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
     { v: mins,  l: "Min"  },
     { v: secs,  l: "Sec"  },
   ];
-
-  return (
-    <div className="mb-6 rounded-xl p-4"
+  const countdownBox = (
+    <div className="rounded-xl p-4"
       style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.2)" }}>
       <p className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.3em] uppercase mb-3" style={{ color: "#ffffff" }}>
         <Clock size={11} /> Starts In
@@ -985,4 +972,24 @@ function EventCountdown({ date, startTime, endDate, endTime }: {
       </div>
     </div>
   );
+
+  // ── Happening today — event is today but not in its active time window (green).
+  //     Also show the countdown when it hasn't started yet. ──
+  if (sameDay) {
+    return (
+      <div className="mb-6 flex flex-col gap-3">
+        <div className="flex items-center gap-2.5 rounded-xl px-4 py-3"
+          style={{ background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.35)" }}>
+          <Radio size={16} className="animate-pulse" style={{ color: "#39BD69" }} />
+          <span className="text-[12px] font-bold tracking-[0.18em] uppercase" style={{ color: "#39BD69" }}>
+            Happening Today
+          </span>
+        </div>
+        {now < startMs && countdownBox}
+      </div>
+    );
+  }
+
+  // ── Upcoming — live countdown ──
+  return <div className="mb-6">{countdownBox}</div>;
 }
