@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Banner, Event } from "../../context/AdminDataContext";
-import { Trash2, X, Check, ImageIcon } from "lucide-react";
+import { Trash2, X, Check, ImageIcon, Pencil } from "lucide-react";
 import ImageUpload from "../components/ImageUpload";
 
 const inputStyle: React.CSSProperties = {
@@ -28,6 +28,8 @@ function BannerCard({ banner, index, events, onUpdate, onDelete }: {
   const [title, setTitle] = useState(banner.title ?? "");
   const [description, setDescription] = useState(banner.description ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingImage, setEditingImage] = useState(false);
+  const [draftImage, setDraftImage] = useState(banner.url);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // Re-sync when the server echoes back a saved value.
@@ -59,7 +61,14 @@ function BannerCard({ banner, index, events, onUpdate, onDelete }: {
         <div style={{ position: "absolute", top: 8, left: 10, padding: "3px 10px", borderRadius: 999, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.12)" }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>Banner {index + 1}</p>
         </div>
-        <div style={{ position: "absolute", top: 8, right: 8 }}>
+        <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
+          {!confirmDelete && (
+            <button
+              onClick={() => { setDraftImage(banner.url); setEditingImage(e => !e); }}
+              title="Edit banner image"
+              style={{ width: 30, height: 30, borderRadius: 6, background: editingImage ? "rgba(96,165,250,0.9)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            ><Pencil size={12} /></button>
+          )}
           {confirmDelete ? (
             <div style={{ display: "flex", gap: 4 }}>
               <button onClick={() => { onDelete(banner.id); setConfirmDelete(false); }} style={{ width: 30, height: 30, borderRadius: 6, background: "rgba(239,68,68,0.9)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} /></button>
@@ -70,6 +79,28 @@ function BannerCard({ banner, index, events, onUpdate, onDelete }: {
           )}
         </div>
       </div>
+
+      {/* Replace image */}
+      {editingImage && (
+        <div style={{ padding: 14, borderBottom: "1px solid rgba(255,255,255,0.07)", background: "rgba(96,165,250,0.04)" }}>
+          <ImageUpload
+            label="Banner Image"
+            value={draftImage}
+            onChange={setDraftImage}
+            aspectRatio="wide"
+            hint="Wide landscape image (16:9 recommended) · PNG, JPG, WEBP · Max 5 MB"
+          />
+          <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
+            <button type="button" onClick={() => { setEditingImage(false); setDraftImage(banner.url); }} style={{ padding: "7px 16px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+            <button
+              type="button"
+              disabled={!draftImage || draftImage === banner.url}
+              onClick={async () => { await save({ url: draftImage }); setEditingImage(false); }}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 18px", borderRadius: 8, border: "none", fontSize: 11, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#000", background: (!draftImage || draftImage === banner.url) ? "rgba(57,189,105,0.3)" : "#39BD69", cursor: (!draftImage || draftImage === banner.url) ? "not-allowed" : "pointer" }}
+            ><Check size={12} /> Save Image</button>
+          </div>
+        </div>
+      )}
 
       {/* Editable fields */}
       <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
