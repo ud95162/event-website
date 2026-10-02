@@ -294,9 +294,9 @@ function EventFormInner() {
             </div>
           </section>
 
-          {/* GENRES */}
+          {/* EVENT TYPES */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
-            <p style={sectionHeadStyle}>Genres</p>
+            <p style={sectionHeadStyle}>Event Types</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {GENRES.map(g => (
                 <button

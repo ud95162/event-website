@@ -499,7 +499,7 @@ export default function EventDetailPage() {
               {/* Genres */}
               {event.genres.length > 0 && (
                 <div>
-                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">GENRES</p>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">EVENT TYPE</p>
                   <div className="flex flex-wrap gap-2">
                     {event.genres.map(g => (
                       <span

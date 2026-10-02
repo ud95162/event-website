@@ -183,7 +183,7 @@ function GenrePanel({ selected, onChange }: { selected: string[]; onChange: (v: 
   return (
     <div className="p-5">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-white/30 text-[11px] font-bold tracking-[0.3em] uppercase">Select Genres</p>
+        <p className="text-white/30 text-[11px] font-bold tracking-[0.3em] uppercase">Select Event Types</p>
         {selected.length > 0 && (
           <button onClick={() => onChange([])} className="text-[11px] text-white/40 hover:text-white/70 tracking-widest uppercase transition-colors flex items-center gap-1">
             <X size={10} /> Clear all
@@ -254,7 +254,7 @@ function FilterRow() {
   const tabs: { id: Tab; label: string; color: string; count: number }[] = [
     { id: "date",    label: "Date",    color: "#60a5fa", count: currentDate ? 1 : 0 },
     { id: "artists", label: "Artists", color: "#e879f9", count: currentArtists.length },
-    { id: "genre",   label: "Genre",   color: "#39BD69", count: currentGenres.length  },
+    { id: "genre",   label: "Event Type", color: "#39BD69", count: currentGenres.length  },
   ];
 
   return (
@@ -336,7 +336,7 @@ function FilterRow() {
 
 const CAT_OPTIONS = [
   { label: "Artists",    color: "#e879f9", key: "artists"    },
-  { label: "Genres",     color: "#39BD69", key: "genres"     },
+  { label: "Event Types", color: "#39BD69", key: "genres"     },
   { label: "Organizers", color: "#38bdf8", key: "organizers" },
 ];
 
@@ -405,7 +405,7 @@ export default function StickySearchFilters() {
     // Genres come straight from the stored data keys so they always match.
     const genreMatches = dataGenres
       .filter(g => g.toLowerCase().includes(q))
-      .map(g => ({ label: cap(g), color: "#39BD69", type: "Genre", value: g }));
+      .map(g => ({ label: cap(g), color: "#39BD69", type: "Event Type", value: g }));
 
     if (selectedCat?.key === "organizers") return orgMatches;
     if (selectedCat?.key === "genres") return genreMatches;
@@ -422,7 +422,7 @@ export default function StickySearchFilters() {
 
   // Route a picked result to the right query param.
   const pickResult = (r: { label: string; type: string; value?: string }) => {
-    if (r.type === "Genre" && r.value) {
+    if (r.type === "Event Type" && r.value) {
       const params = new URLSearchParams();
       params.set("genre", r.value);
       if (dateVal) params.set("date", dateVal);
