@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay, MessageSquareQuote } from "lucide-react";
+import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay, MessageSquareQuote, Mail } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/admin/analytics",        label: "Analytics",        icon: BarChart3,       roles: ["admin", "organizer"] },
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/admin/genres",           label: "Genres",           icon: Tag,             roles: ["admin"] },
   { href: "/admin/banners",          label: "Banners",          icon: ImageIcon,       roles: ["admin"] },
   { href: "/admin/reviews",          label: "Reviews",          icon: MessageSquareQuote, roles: ["admin"] },
+  { href: "/admin/subscribers",      label: "Subscribers",      icon: Mail,            roles: ["admin"] },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

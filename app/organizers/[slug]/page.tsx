@@ -72,26 +72,34 @@ export default function OrganizerDetailPage() {
       <div
         key={event.id}
         onClick={() => router.push(`/events/${eventSlug(event)}`)}
-        className="flex items-center gap-4 rounded-2xl p-4 cursor-pointer group transition-all duration-200"
+        className="group cursor-pointer rounded-2xl overflow-hidden transition-all duration-200"
         style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(57,189,105,0.05)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(57,189,105,0.2)"; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(57,189,105,0.3)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
       >
-        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-          <img src={event.image} alt={event.title} className="w-full h-full object-cover object-top" />
+        {/* Square image */}
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
+          <img src={event.image} alt={event.title} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)" }} />
+          {event.tag && (
+            <span className="absolute top-2.5 left-2.5 text-[8px] font-bold tracking-[0.2em] uppercase px-2 py-1 rounded-full"
+              style={{ background: "rgba(0,0,0,0.55)", color: "#39BD69", backdropFilter: "blur(6px)" }}>{event.tag}</span>
+          )}
+          {distance !== null && (
+            <span className="absolute top-2.5 right-2.5 text-[8px] font-bold tracking-wide px-2 py-1 rounded-full"
+              style={{ background: "rgba(0,0,0,0.55)", color: "#fff", backdropFilter: "blur(6px)" }}>{formatDistance(distance)}</span>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[#39BD69] text-[8px] font-bold tracking-[0.3em] uppercase mb-0.5">{event.tag}</p>
-          <h3 className="text-white font-black text-sm uppercase tracking-wide leading-tight mb-1 truncate">{event.title}</h3>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1 text-white/35 text-[10px]"><Calendar size={9} className="text-white/25" /> {event.date}</div>
-            <div className="flex items-center gap-1 text-white/35 text-[10px]"><MapPin size={9} className="text-white/25" /> {event.location}</div>
-            {distance !== null && <span className="text-[#39BD69] text-[10px] font-semibold">{formatDistance(distance)}</span>}
+        {/* Info */}
+        <div className="p-3.5">
+          <h3 className="text-white font-black text-[13px] uppercase tracking-wide leading-tight mb-2"
+            style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{event.title}</h3>
+          <div className="flex items-center gap-1.5 text-white/40 text-[10px] mb-1"><Calendar size={10} className="text-white/30 flex-shrink-0" /> {event.date}</div>
+          <div className="flex items-center gap-1.5 text-white/40 text-[10px] mb-2.5"><MapPin size={10} className="text-white/30 flex-shrink-0" /> <span className="truncate">{event.location}</span></div>
+          <div className="flex items-center justify-between pt-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <span className="text-white/60 text-[11px] font-semibold truncate">{fromPrice(event.tickets, event.price)}</span>
+            <ArrowRight size={13} className="text-white/25 group-hover:text-[#39BD69] group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-2" />
           </div>
-        </div>
-        <div className="flex-shrink-0 text-right">
-          <p className="text-white/50 text-[11px] font-semibold mb-1">{fromPrice(event.tickets, event.price)}</p>
-          <ArrowRight size={14} className="text-white/25 group-hover:text-[#39BD69] group-hover:translate-x-0.5 transition-all duration-200 ml-auto" />
         </div>
       </div>
     );
@@ -198,7 +206,7 @@ export default function OrganizerDetailPage() {
           <div className="mb-10">
             <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-4">Upcoming Events</p>
             {upcomingEvents.length > 0 ? (
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {upcomingEvents.map(renderEvent)}
               </div>
             ) : (
@@ -216,7 +224,7 @@ export default function OrganizerDetailPage() {
                 <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase">Previous Events</p>
                 <span className="text-white/20 text-[10px]">· Last 12 months</span>
               </div>
-              <div className="flex flex-col gap-3" style={{ opacity: 0.82 }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" style={{ opacity: 0.82 }}>
                 {previousEvents.map(renderEvent)}
               </div>
             </div>

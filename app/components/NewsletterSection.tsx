@@ -1,8 +1,44 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function NewsletterSection() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const subscribe = async () => {
+    if (status === "loading") return;
+    const clean = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      setStatus("error");
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+    setStatus("loading");
+    setMessage("");
+    try {
+      const res = await fetch("/api/subscribers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: clean }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setStatus("success");
+        setMessage(data.already ? "You're already on the list — thanks for being with us!" : "You're subscribed! Watch your inbox for upcoming events.");
+        setEmail("");
+      } else {
+        setStatus("error");
+        setMessage(data.error || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Couldn't reach the server. Please try again.");
+    }
+  };
+
   return (
     <section className="relative px-4 text-center overflow-hidden flex-1 flex flex-col justify-center" style={{ background: "#0F1116", padding: "clamp(8px, 2vh, 24px) 16px" }}>
 
@@ -72,26 +108,45 @@ export default function NewsletterSection() {
           and exclusive early-bird ticket offers directly to your inbox.
         </p>
 
-        <p className="text-white/40 text-[11px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 0.8vh, 8px)" }}>
-          YOUR EMAIL
-        </p>
-        <div className="flex max-w-md mx-auto" style={{ marginBottom: "clamp(4px, 1vh, 12px)" }}>
-          <input
-            type="email"
-            placeholder="ENTER YOUR EMAIL HERE"
-            className="flex-1 bg-white/10 border border-white/20 border-r-0 rounded-l-lg px-4 py-2.5 text-white text-sm outline-none focus:border-white/40 transition-colors placeholder:text-white/25 placeholder:tracking-[0.12em]"
-          />
-          <button
-            className="flex items-center gap-2 text-[13px] font-bold tracking-[0.15em] uppercase px-5 py-2.5 rounded-r-lg whitespace-nowrap transition-all hover:brightness-110"
-            style={{ background: "#39BD69", color: "#fff" }}
+        {status === "success" ? (
+          <div
+            className="flex items-center justify-center gap-2.5 max-w-md mx-auto rounded-lg px-4 py-3"
+            style={{ background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.4)", marginBottom: "clamp(4px, 1vh, 12px)" }}
           >
-            SUBMIT <ArrowRight size={13} />
-          </button>
-        </div>
-
-        <p className="text-white/25 text-[11px] tracking-[0.2em] uppercase">
-          No spam. Unsubscribe anytime.
-        </p>
+            <CheckCircle2 size={18} style={{ color: "#39BD69", flexShrink: 0 }} />
+            <span className="text-[13px] font-semibold" style={{ color: "#39BD69" }}>{message}</span>
+          </div>
+        ) : (
+          <>
+            <p className="text-white/40 text-[11px] font-semibold tracking-[0.4em] uppercase" style={{ marginBottom: "clamp(4px, 0.8vh, 8px)" }}>
+              YOUR EMAIL
+            </p>
+            <div className="flex max-w-md mx-auto" style={{ marginBottom: message ? 6 : "clamp(4px, 1vh, 12px)" }}>
+              <input
+                type="email"
+                value={email}
+                onChange={e => { setEmail(e.target.value); if (status === "error") { setStatus("idle"); setMessage(""); } }}
+                onKeyDown={e => { if (e.key === "Enter") subscribe(); }}
+                placeholder="ENTER YOUR EMAIL HERE"
+                className="flex-1 bg-white/10 border border-white/20 border-r-0 rounded-l-lg px-4 py-2.5 text-white text-sm outline-none focus:border-white/40 transition-colors placeholder:text-white/25 placeholder:tracking-[0.12em]"
+              />
+              <button
+                onClick={subscribe}
+                disabled={status === "loading"}
+                className="flex items-center gap-2 text-[13px] font-bold tracking-[0.15em] uppercase px-5 py-2.5 rounded-r-lg whitespace-nowrap transition-all hover:brightness-110 disabled:opacity-70"
+                style={{ background: "#39BD69", color: "#fff" }}
+              >
+                {status === "loading" ? "SENDING…" : <>SUBMIT <ArrowRight size={13} /></>}
+              </button>
+            </div>
+            {status === "error" && message && (
+              <p className="text-[12px] font-medium" style={{ color: "#f87171", marginBottom: "clamp(4px, 0.6vh, 8px)" }}>{message}</p>
+            )}
+            <p className="text-white/25 text-[11px] tracking-[0.2em] uppercase">
+              No spam. Unsubscribe anytime.
+            </p>
+          </>
+        )}
       </div>
     </section>
   );

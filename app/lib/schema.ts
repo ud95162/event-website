@@ -234,6 +234,15 @@ async function createAndSeed(): Promise<void> {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  // Newsletter subscribers (collected from the home "Never Miss An Event" form).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS subscribers (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   // Analytics counters: page views + link clicks per event/organizer.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS analytics (
