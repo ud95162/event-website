@@ -203,24 +203,31 @@ function ArtistsContent() {
   const [followed, setFollowed] = useState<Set<number>>(new Set());
   const queryParam  = searchParams.get("q")      ?? "";
   const filterParam = searchParams.get("filter") ?? "";
+  const genreParam  = searchParams.get("genre")  ?? "";
   const toggleFollow = (id: number) =>
     setFollowed(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
-  const isFiltered = !!queryParam || !!filterParam;
+  const isFiltered = !!queryParam || !!filterParam || !!genreParam;
 
   if (isFiltered) {
     let filtered = [...artists];
     if (filterParam === "followed")    filtered = filtered.filter(a => followed.has(a.id));
     if (filterParam === "recommended") filtered = filtered.sort((a, b) => eventCountFor(b.name) - eventCountFor(a.name));
+    if (genreParam) {
+      const g = genreParam.toLowerCase();
+      filtered = filtered.filter(a => [...(a.genres ?? []), ...(a.subGenres ?? [])].some(x => x.toLowerCase() === g));
+    }
     if (queryParam) {
       const q = queryParam.toLowerCase();
-      filtered = filtered.filter(a => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q));
+      filtered = filtered.filter(a =>
+        a.name.toLowerCase().includes(q) || (a.stageName ?? "").toLowerCase().includes(q) || a.role.toLowerCase().includes(q) ||
+        [...(a.genres ?? []), ...(a.subGenres ?? [])].some(x => x.toLowerCase().includes(q)));
     }
     return (
       <div style={{ padding: "24px 0 48px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <h1 style={{ fontSize: "clamp(1.5rem,3vw,2.5rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>
-            {queryParam ? `"${queryParam}"` : filterParam === "followed" ? "Followed Artists" : "Artists"}
+            {queryParam ? `"${queryParam}"` : genreParam ? genreParam : filterParam === "followed" ? "Followed Artists" : "Artists"}
           </h1>
           <button onClick={() => router.push("/artists")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", background: "transparent" }}>

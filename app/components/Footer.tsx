@@ -122,10 +122,10 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Legal + socials */}
-          <div className="md:col-span-1 flex flex-col gap-5">
-            <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase">Legal</p>
-            <ul className="flex flex-col gap-5 -mt-1">
+          {/* Legal */}
+          <div className="md:col-span-1">
+            <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Legal</p>
+            <ul className="flex flex-col gap-5">
               {[
                 { label: "Privacy Policy", href: "/privacy" },
                 { label: "Terms and Conditions", href: "#" },
@@ -137,13 +137,15 @@ export default function Footer() {
                   </a>
                 </li>
               ))}
+              <li>
+                <a
+                  href="/admin/login"
+                  className="inline-flex items-center gap-2 whitespace-nowrap text-[#39BD69] font-semibold text-base hover:text-[#4ccf7c] transition-colors"
+                >
+                  <CalendarPlus size={18} /> List Your Event
+                </a>
+              </li>
             </ul>
-            <a
-              href="/admin/login"
-              className="self-start inline-flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-xl bg-white/10 text-[#39BD69] text-sm font-bold tracking-widest uppercase hover:bg-white/20 hover:text-[#4ccf7c] transition-colors"
-            >
-              <CalendarPlus size={16} /> List Your Event
-            </a>
           </div>
 
         </div>

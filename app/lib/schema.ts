@@ -1,6 +1,6 @@
 import { getPool } from "./db";
 import { events as seedEvents } from "../data/events";
-import { artists as seedArtists } from "../data/artists";
+import { artists as seedArtists, ARTIST_GENRES } from "../data/artists";
 
 const SEED_ORGANIZERS = [
   "Rhythm Nation LK",
@@ -323,6 +323,23 @@ async function createAndSeed(): Promise<void> {
     for (const name of SEED_GENRES) {
       await pool.query("INSERT IGNORE INTO genres (name) VALUES (?)", [name]);
     }
+  }
+
+  // ---- One-time merge: fold the old hard-coded artist genre list into the saved genres ----
+  // The admin artist form used to offer a fixed list; it now reads the saved genres, so those
+  // entries must exist there first. Case-insensitive de-dupe, and a marker so genres an admin
+  // later deletes are not re-added on the next restart.
+  const [mergedRows] = await pool.query<any[]>("SELECT 1 FROM settings WHERE name = 'genres_merged_v1'");
+  if (mergedRows.length === 0) {
+    const [existing] = await pool.query<any[]>("SELECT name FROM genres");
+    const have = new Set(existing.map((r) => String(r.name).trim().toLowerCase()));
+    for (const name of ARTIST_GENRES) {
+      const key = name.trim().toLowerCase();
+      if (have.has(key)) continue;
+      have.add(key);
+      await pool.query("INSERT IGNORE INTO genres (name) VALUES (?)", [name]);
+    }
+    await pool.query("INSERT IGNORE INTO settings (name, data) VALUES ('genres_merged_v1', ?)", [JSON.stringify(true)]);
   }
 
   // ---- Seed badges ----

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useAdminData, Artist } from "../../../context/AdminDataContext";
-import { ARTIST_GENRES, ARTIST_LEVELS } from "../../../data/artists";
+import { ARTIST_LEVELS } from "../../../data/artists";
 import { ChevronLeft, Check, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import LineupSelector from "../../components/LineupSelector";
@@ -44,7 +44,9 @@ function ArtistFormInner() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { artists, addArtist, updateArtist } = useAdminData();
+  const { artists, addArtist, updateArtist, genres: savedGenres } = useAdminData();
+  // Options come from the saved genres (/api/genres); Title-Cased to match how artists store them.
+  const genreOptions = savedGenres.map(g => g.replace(/\b\w/g, c => c.toUpperCase()));
 
   const editId = searchParams.get("id") ? Number(searchParams.get("id")) : null;
   const listEditing = editId ? artists.find(a => a.id === editId) ?? null : null;
@@ -286,7 +288,7 @@ function ArtistFormInner() {
               <LineupSelector
                 value={form.genres ?? []}
                 onChange={v => set("genres", v)}
-                allArtists={ARTIST_GENRES}
+                allArtists={genreOptions}
                 placeholder="Search and select genres…"
               />
             </div>

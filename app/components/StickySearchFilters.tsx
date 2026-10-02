@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown, Search, Calendar, Check, X } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
 
@@ -348,8 +348,14 @@ const EXAMPLES: Record<string, string> = {
 };
 
 /* ── Main component ───────────────────────────────────────────────────── */
+const cap = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
+
 export default function StickySearchFilters() {
   const router = useRouter();
+  const pathname = usePathname();
+  // On the artists pages the bar searches artists in place: genre filter only, no date.
+  const artistsMode = pathname.startsWith("/artists");
+  const basePath = artistsMode ? "/artists" : "/events";
   const { organizers, genres: dataGenres } = useAdminData();
   const artistNames = useArtistNames();
   const [catOpen,      setCatOpen]      = useState(false);
@@ -362,6 +368,9 @@ export default function StickySearchFilters() {
   const catRef     = useRef<HTMLDivElement>(null);
   const searchRef  = useRef<HTMLDivElement>(null);
   const dateRef    = useRef<HTMLDivElement>(null);
+
+  // Genres on the artists pages come from the saved list (/api/genres via context).
+  const artistGenres = dataGenres.map(g => cap(g));
 
   const dateLabel = (() => {
     const p = DATE_PRESETS.find(x => x.slug === dateVal);
@@ -392,10 +401,16 @@ export default function StickySearchFilters() {
   };
 
   // Compute matching results based on category + query
-  const cap = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
-
   const matchedResults: { label: string; color: string; type: string; value?: string }[] = (() => {
     const q = searchQuery.trim().toLowerCase();
+
+    // Artists pages: show the whole saved genre list, narrowed as the user types.
+    if (artistsMode) {
+      return artistGenres
+        .filter(g => g.toLowerCase().includes(q))
+        .map(g => ({ label: g, color: "#39BD69", type: "Genre", value: g }));
+    }
+
     if (!q) return [];
 
     const orgMatches = organizers
@@ -422,11 +437,11 @@ export default function StickySearchFilters() {
 
   // Route a picked result to the right query param.
   const pickResult = (r: { label: string; type: string; value?: string }) => {
-    if (r.type === "Event Type" && r.value) {
+    if ((r.type === "Event Type" || r.type === "Genre") && r.value) {
       const params = new URLSearchParams();
       params.set("genre", r.value);
-      if (dateVal) params.set("date", dateVal);
-      router.push(`/events?${params.toString()}`);
+      if (dateVal && !artistsMode) params.set("date", dateVal);
+      router.push(`${basePath}?${params.toString()}`);
       setResultsOpen(false);
       setSearchQuery(r.label);
       return;
@@ -436,6 +451,13 @@ export default function StickySearchFilters() {
 
   const handleSearch = (override?: string) => {
     const q = override ?? searchQuery.trim();
+    if (artistsMode) {
+      if (!q) return;
+      router.push(`/artists?q=${encodeURIComponent(q)}`);
+      setResultsOpen(false);
+      setSearchQuery(q);
+      return;
+    }
     if (!q && !selectedCat && !dateVal) return;
     const params = new URLSearchParams();
     if (selectedCat) params.set("category", selectedCat.key);
@@ -454,6 +476,12 @@ export default function StickySearchFilters() {
         <div className="bg-black/60 backdrop-blur-md rounded-full flex items-center px-2 py-1.5 border border-white/12 relative">
 
           {/* Category button + dropdown */}
+          {artistsMode ? (
+            <div className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap" style={{ color: "#39BD69" }}>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#39BD69" }} />
+              Genres
+            </div>
+          ) : (
           <div ref={catRef} className="relative flex-shrink-0">
             <button
               onClick={() => setCatOpen(o => !o)}
@@ -511,6 +539,7 @@ export default function StickySearchFilters() {
               </div>
             )}
           </div>
+          )}
 
           {/* Search input + results */}
           <div ref={searchRef} className="flex-1 flex items-center px-5 relative">
@@ -520,7 +549,7 @@ export default function StickySearchFilters() {
               onChange={e => { setSearchQuery(e.target.value); setResultsOpen(true); }}
               onFocus={() => setResultsOpen(true)}
               onKeyDown={e => e.key === "Enter" && handleSearch()}
-              placeholder={EXAMPLES[selectedCat?.key ?? "default"]}
+              placeholder={artistsMode ? "e.g. Electronic, Rock, Sinhala or an artist name…" : EXAMPLES[selectedCat?.key ?? "default"]}
               className="bg-transparent text-white/60 text-sm w-full outline-none placeholder:text-white/30 placeholder:italic"
             />
             {searchQuery && (
@@ -537,12 +566,16 @@ export default function StickySearchFilters() {
                   background: "rgba(10,10,20,0.97)",
                   backdropFilter: "blur(20px)",
                   boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+                  maxHeight: 360,
+                  overflowY: "auto",
                   zIndex: 400,
                 }}
               >
                 <div className="px-4 pt-3 pb-1">
                   <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase">
-                    {matchedResults.length} result{matchedResults.length !== 1 ? "s" : ""} found
+                    {artistsMode && !searchQuery.trim()
+                      ? "Browse by genre"
+                      : `${matchedResults.length} result${matchedResults.length !== 1 ? "s" : ""} found`}
                   </p>
                 </div>
                 {matchedResults.map((r, i) => (
@@ -565,6 +598,7 @@ export default function StickySearchFilters() {
           </div>
 
           {/* Date filter */}
+          {!artistsMode && (
           <div ref={dateRef} className="relative flex-shrink-0">
             <button
               onClick={() => setDateOpen(o => !o)}
@@ -621,6 +655,7 @@ export default function StickySearchFilters() {
               </div>
             )}
           </div>
+          )}
 
           <button
             onClick={() => handleSearch()}
