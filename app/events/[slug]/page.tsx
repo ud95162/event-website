@@ -384,6 +384,32 @@ export default function EventDetailPage() {
                   </div>
                 </div>
 
+                {/* Performing artists — right under the name, each links to its artist page */}
+                {lineupArtists.length > 0 && (
+                  <div className="mb-5">
+                    <p className="text-white/30 text-[8px] tracking-[0.35em] uppercase mb-2">PERFORMING ARTISTS</p>
+                    <div className="flex flex-wrap gap-2">
+                      {lineupArtists.map(artist => (
+                        <button
+                          key={artist.id}
+                          onClick={() => router.push(`/artists/${artistSlug(artist)}`)}
+                          className="group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-all"
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.14)", cursor: "pointer" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.14)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.4)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.14)"; }}
+                        >
+                          {artist.image ? (
+                            <img src={artist.image} alt={artist.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>{artist.name.charAt(0)}</span>
+                          )}
+                          <span className="text-white text-[12px] font-semibold tracking-wide whitespace-nowrap">{artist.stageName || artist.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Status */}
                 {event.status && (
                   <div className="mb-5 -mt-2">
@@ -464,21 +490,6 @@ export default function EventDetailPage() {
                   </div>
                 )}
 
-                {/* Performing artists — names only */}
-                <div>
-                  <p className="text-white/30 text-[8px] tracking-[0.35em] uppercase mb-2">PERFORMING ARTISTS</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {lineupArtists.map(artist => (
-                      <span
-                        key={artist.id}
-                        className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide"
-                        style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)", color: "#ffffff" }}
-                      >
-                        {artist.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
 
             </div>
