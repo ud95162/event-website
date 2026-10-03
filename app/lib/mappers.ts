@@ -38,6 +38,7 @@ export function mapEventRow(r: any) {
     coOrganizers: parseJson(r.co_organizers, []),
     videoTrailer: r.video_trailer ?? "",
     externalLink: r.external_link ?? "",
+    links: parseJson(r.links, {}),
     featured: !!r.featured,
     popup: !!r.popup,
   };

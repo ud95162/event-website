@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Mail, Link2, Check } from "lucide-react";
+import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Mail, Link2, Check, Globe } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { artistSlug, organizerSlug } from "../../lib/slug";
@@ -68,6 +68,12 @@ const IgFacebook = () => (
 );
 const IgX = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={14} height={14}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+);
+const IgTiktok = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width={15} height={15}><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.7a8.19 8.19 0 0 0 4.76 1.52v-3.4a4.85 4.85 0 0 1-1-.13z"/></svg>
+);
+const IgInstagram = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={15} height={15}><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
 );
 
 export default function EventDetailPage() {
@@ -563,6 +569,42 @@ export default function EventDetailPage() {
                   )}
                 </div>
               )}
+
+              {/* Links & socials */}
+              {(() => {
+                const L = event.links ?? {};
+                const items = [
+                  { key: "website",   label: "Website",   url: L.website,   color: "#38bdf8", icon: <Globe size={15} /> },
+                  { key: "tickets",   label: "Tickets",   url: L.tickets,   color: "#39BD69", icon: <Ticket size={15} /> },
+                  { key: "instagram", label: "Instagram", url: L.instagram, color: "#E1306C", icon: <IgInstagram /> },
+                  { key: "facebook",  label: "Facebook",  url: L.facebook,  color: "#1877F2", icon: <IgFacebook /> },
+                  { key: "tiktok",    label: "TikTok",    url: L.tiktok,    color: "#FE2C55", icon: <IgTiktok /> },
+                ].filter(i => i.url && i.url.trim());
+                if (items.length === 0) return null;
+                return (
+                  <div>
+                    <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-4">LINKS</p>
+                    <div className="flex flex-wrap gap-2.5">
+                      {items.map(i => (
+                        <a
+                          key={i.key}
+                          href={i.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => track("event", event.id, "link_click")}
+                          className="inline-flex items-center gap-2 py-2.5 px-4 rounded-xl text-[12px] font-bold tracking-wide transition-all"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.4)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.14)"; }}
+                        >
+                          <span className="flex items-center" style={{ color: i.color }}>{i.icon}</span>
+                          {i.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Participating artists */}
               <div>

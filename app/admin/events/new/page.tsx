@@ -17,6 +17,7 @@ const EMPTY: Omit<Event, "id"> = {
   organizer: "", description: "", lat: 0, lon: 0, tickets: [], status: "Confirmed",
   startTime: "", endDate: "", endTime: "", ageRestriction: "", capacity: null,
   venueType: "", coOrganizers: [], videoTrailer: "", externalLink: "",
+  links: {},
 };
 
 const inputStyle: React.CSSProperties = {
@@ -377,6 +378,31 @@ function EventFormInner() {
               <div style={{ gridColumn: "span 2" }}>
                 <label style={labelStyle}>Video Trailer URL (portrait preferred)</label>
                 <input style={inputStyle} type="url" value={form.videoTrailer ?? ""} onChange={e => set("videoTrailer", e.target.value)} placeholder="YouTube, Vimeo, or direct .mp4 URL" />
+              </div>
+            </div>
+
+            {/* Links & socials — each shown separately on the event page with its icon */}
+            <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+              <label style={{ ...labelStyle, marginBottom: 12 }}>Links &amp; Socials</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }}>
+                {([
+                  ["website",   "Website",      "https://…"],
+                  ["tickets",   "Tickets Link", "https://… (ticket purchase)"],
+                  ["instagram", "Instagram",    "https://instagram.com/…"],
+                  ["facebook",  "Facebook",     "https://facebook.com/…"],
+                  ["tiktok",    "TikTok",       "https://tiktok.com/@…"],
+                ] as const).map(([key, lbl, ph]) => (
+                  <div key={key}>
+                    <label style={{ ...labelStyle, fontSize: 9, marginBottom: 4 }}>{lbl}</label>
+                    <input
+                      style={inputStyle}
+                      type="url"
+                      value={(form.links ?? {})[key] ?? ""}
+                      onChange={e => set("links", { ...(form.links ?? {}), [key]: e.target.value })}
+                      placeholder={ph}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </section>

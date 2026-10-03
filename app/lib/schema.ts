@@ -81,6 +81,7 @@ async function createAndSeed(): Promise<void> {
   await addColumn("co_organizers", "co_organizers JSON");
   await addColumn("video_trailer", "video_trailer MEDIUMTEXT");
   await addColumn("external_link", "external_link TEXT");
+  await addColumn("links", "links JSON");
   await addColumn("featured", "featured TINYINT(1) DEFAULT 0");
   await addColumn("popup", "popup TINYINT(1) DEFAULT 0");
 

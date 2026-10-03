@@ -31,6 +31,14 @@ export type Event = {
   coOrganizers?:   string[]; // additional organizer names
   videoTrailer?:   string;   // promo video URL (portrait preferred)
   externalLink?:   string;   // external / more-info URL
+  // External/social links shown on the event detail page, each with its own icon.
+  links?: {
+    website?:   string;
+    tickets?:   string;
+    instagram?: string;
+    facebook?:  string;
+    tiktok?:    string;
+  };
   featured?:       boolean;  // shown in the home "Featured Events" carousel
   popup?:          boolean;  // shown in the home "This Week" popup (admin-selected)
 };
