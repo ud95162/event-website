@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapEventRow } from "../../../lib/mappers";
+import { keepImg, keepImgParams } from "../../../lib/images";
 
 export async function GET(
   _req: NextRequest,
@@ -10,7 +12,7 @@ export async function GET(
   await ensureSchema();
   const { id } = await params;
   const pool = getPool();
-  const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [id]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id = ?`, [id]);
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(mapEventRow(rows[0]), { headers: { "Cache-Control": "no-store" } });
 }
@@ -25,12 +27,12 @@ export async function PUT(
   const e = await req.json();
   await pool.query(
     `UPDATE events SET
-       tag=?, title=?, date=?, location=?, price=?, image=?, badge=?, lat=?, lon=?,
+       tag=?, title=?, date=?, location=?, price=?, ${keepImg("image")}, badge=?, lat=?, lon=?,
        description=?, venue=?, organizer=?, lineup=?, genres=?, tickets=?, status=?,
        start_time=?, end_date=?, end_time=?, age_restriction=?, capacity=?, venue_type=?, co_organizers=?, video_trailer=?, external_link=?, links=?, featured=?, popup=?
      WHERE id=?`,
     [
-      e.tag, e.title, e.date, e.location, e.price, e.image, e.badge ?? null,
+      e.tag, e.title, e.date, e.location, e.price, ...keepImgParams(e.image), e.badge ?? null,
       e.lat, e.lon, e.description, e.venue, e.organizer,
       JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), JSON.stringify(e.tickets ?? []), e.status ?? null,
       e.startTime ?? null, e.endDate ?? null, e.endTime ?? null, e.ageRestriction ?? null,
@@ -38,7 +40,7 @@ export async function PUT(
       e.videoTrailer ?? null, e.externalLink ?? null, JSON.stringify(e.links ?? {}), e.featured ? 1 : 0, e.popup ? 1 : 0, id,
     ]
   );
-  const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [id]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id = ?`, [id]);
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(mapEventRow(rows[0]));
 }

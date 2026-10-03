@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapEventRow } from "../../../lib/mappers";
 
@@ -42,7 +43,7 @@ export async function GET() {
 
   let events: ReturnType<typeof mapEventRow>[] = [];
   if (picked.length) {
-    const [full] = await pool.query<any[]>("SELECT * FROM events WHERE id IN (?)", [picked]);
+    const [full] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id IN (?)`, [picked]);
     const byId = new Map<number, any>(full.map((r) => [r.id, r]));
     events = picked.map((id) => mapEventRow(byId.get(id))).filter(Boolean);
   }

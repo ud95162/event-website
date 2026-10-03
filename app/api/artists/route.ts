@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../lib/db";
+import { cols } from "../../lib/select";
 import { ensureSchema } from "../../lib/schema";
 import { mapArtistRow } from "../../lib/mappers";
 
@@ -10,7 +11,7 @@ export async function GET() {
   // the payload) that only the artist detail page uses. Dropping it keeps this shared
   // response small so the home "Featured Artists" section loads instantly. The detail
   // page fetches the full record (with members) from /api/artists/[id].
-  const [rows] = await pool.query<any[]>("SELECT * FROM artists ORDER BY id");
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("artists")} FROM artists ORDER BY id`);
   const list = rows.map((r) => {
     const { members, ...rest } = mapArtistRow(r);
     void members;
@@ -47,6 +48,6 @@ export async function POST(req: NextRequest) {
       a.artistType ?? null, JSON.stringify(a.members ?? []),
     ]
   );
-  const [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE id = ?", [result.insertId]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("artists")} FROM artists WHERE id = ?`, [result.insertId]);
   return NextResponse.json(mapArtistRow(rows[0]), { status: 201 });
 }

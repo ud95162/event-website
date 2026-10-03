@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../lib/db";
+import { imgMarker } from "../../lib/select";
 import { ensureSchema } from "../../lib/schema";
+import { imgUrl } from "../../lib/images";
 
 function clampRating(r: unknown): number {
   const n = Math.round(Number(r));
@@ -10,8 +12,8 @@ function clampRating(r: unknown): number {
 export async function GET() {
   await ensureSchema();
   const pool = getPool();
-  const [rows] = await pool.query<any[]>("SELECT id, name, image, review, rating FROM reviews ORDER BY id DESC");
-  return NextResponse.json(rows, {
+  const [rows] = await pool.query<any[]>(`SELECT id, name, ${imgMarker("image")}, review, rating FROM reviews ORDER BY id DESC`);
+  return NextResponse.json(rows.map((r) => ({ ...r, image: imgUrl("reviews", r.id, "image", r.image) })), {
     headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
   });
 }
@@ -26,5 +28,5 @@ export async function POST(req: NextRequest) {
     "INSERT INTO reviews (name, image, review, rating) VALUES (?, ?, ?, ?)",
     [name, image ?? null, review, r]
   );
-  return NextResponse.json({ id: result.insertId, name, image: image ?? null, review, rating: r }, { status: 201 });
+  return NextResponse.json({ id: result.insertId, name, image: imgUrl("reviews", result.insertId, "image", image) ?? null, review, rating: r }, { status: 201 });
 }

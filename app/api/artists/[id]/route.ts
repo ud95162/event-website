@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapArtistRow } from "../../../lib/mappers";
+import { keepImg, keepImgParams } from "../../../lib/images";
 
 export async function GET(
   _req: NextRequest,
@@ -11,7 +13,7 @@ export async function GET(
   const { id } = await params;
   const pool = getPool();
   // Full record including `members` (omitted from the list endpoint for payload size).
-  const [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE id = ?", [id]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("artists")} FROM artists WHERE id = ?`, [id]);
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(mapArtistRow(rows[0]), {
     headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
@@ -28,7 +30,7 @@ export async function PUT(
   const a = await req.json();
   await pool.query(
     `UPDATE artists SET
-       name=?, stage_name=?, real_name=?, role=?, image=?, banner_image=?, bio=?,
+       name=?, stage_name=?, real_name=?, role=?, ${keepImg("image")}, ${keepImg("banner_image")}, bio=?,
        genres=?, sub_genres=?, bpm_min=?, bpm_max=?, is_dj=?, city=?, touring_region=?,
        soundcloud_url=?, spotify_url=?, beatport_url=?, instagram_url=?, tiktok_url=?,
        youtube_url=?, booking_contact=?, similar_artists=?, rating=?,
@@ -36,7 +38,7 @@ export async function PUT(
      WHERE id=?`,
     [
       a.name, a.stageName ?? null, a.realName ?? null, a.role,
-      a.image, a.bannerImage ?? null, a.bio,
+      ...keepImgParams(a.image), ...keepImgParams(a.bannerImage), a.bio,
       JSON.stringify(a.genres ?? []), JSON.stringify(a.subGenres ?? []),
       a.bpmMin ?? null, a.bpmMax ?? null, a.isDJ ? 1 : 0,
       a.city ?? null, a.touringRegion ?? null,
@@ -49,7 +51,7 @@ export async function PUT(
       a.artistType ?? null, JSON.stringify(a.members ?? []), id,
     ]
   );
-  const [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE id = ?", [id]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("artists")} FROM artists WHERE id = ?`, [id]);
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(mapArtistRow(rows[0]));
 }

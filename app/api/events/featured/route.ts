@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapEventRow } from "../../../lib/mappers";
 
@@ -32,11 +33,11 @@ export async function GET() {
 
   let rows: any[] = [];
   if (ids.length) {
-    const [r] = await pool.query<any[]>("SELECT * FROM events WHERE id IN (?) ORDER BY id", [ids]);
+    const [r] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id IN (?) ORDER BY id`, [ids]);
     rows = r;
   } else {
     // Nothing flagged / upcoming — fall back to the first few so the section isn't empty.
-    const [r] = await pool.query<any[]>("SELECT * FROM events ORDER BY id LIMIT 8");
+    const [r] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events ORDER BY id LIMIT 8`);
     rows = r;
   }
 

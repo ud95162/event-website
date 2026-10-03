@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { imgMarker } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
+import { imgUrl, keepImg, keepImgParams } from "../../../lib/images";
 
 function clampRating(r: unknown): number {
   const n = Math.round(Number(r));
@@ -17,12 +19,13 @@ export async function PUT(
   const { name, image, review, rating } = await req.json();
   const r = clampRating(rating);
   await pool.query(
-    "UPDATE reviews SET name = ?, image = ?, review = ?, rating = ? WHERE id = ?",
-    [name, image ?? null, review, r, id]
+    `UPDATE reviews SET name = ?, ${keepImg("image")}, review = ?, rating = ? WHERE id = ?`,
+    [name, ...keepImgParams(image), review, r, id]
   );
-  const [rows] = await pool.query<any[]>("SELECT id, name, image, review, rating FROM reviews WHERE id = ?", [id]);
+  const [rows] = await pool.query<any[]>(`SELECT id, name, ${imgMarker("image")}, review, rating FROM reviews WHERE id = ?`, [id]);
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(rows[0]);
+  const row = rows[0];
+  return NextResponse.json({ ...row, image: imgUrl("reviews", row.id, "image", row.image) });
 }
 
 export async function DELETE(

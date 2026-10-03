@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../../lib/db";
+import { cols } from "../../../../lib/select";
 import { ensureSchema } from "../../../../lib/schema";
 import { mapEventRow } from "../../../../lib/mappers";
 import { slugify } from "../../../../lib/slug";
@@ -19,7 +20,7 @@ export async function GET(
   const match = meta.find((r) => slugify(r.title) === slug);
   if (!match) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [match.id]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id = ?`, [match.id]);
   if (!rows.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json(mapEventRow(rows[0]), {

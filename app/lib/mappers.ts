@@ -1,4 +1,6 @@
 // Maps snake_case DB rows to the camelCase shapes the frontend expects.
+// Stored base64 pictures are replaced by small /api/img/ URLs (see lib/images.ts).
+import { imgUrl } from "./images";
 
 function parseJson(v: any, fallback: any) {
   if (v == null) return fallback;
@@ -18,7 +20,7 @@ export function mapEventRow(r: any) {
     date: r.date,
     location: r.location,
     price: r.price,
-    image: r.image,
+    image: imgUrl("events", r.id, "image", r.image) as string,
     badge: r.badge ?? null,
     lat: r.lat,
     lon: r.lon,
@@ -51,8 +53,8 @@ export function mapArtistRow(r: any) {
     stageName: r.stage_name ?? undefined,
     realName: r.real_name ?? undefined,
     role: r.role,
-    image: r.image,
-    bannerImage: r.banner_image ?? undefined,
+    image: imgUrl("artists", r.id, "image", r.image) as string,
+    bannerImage: imgUrl("artists", r.id, "banner", r.banner_image) ?? undefined,
     bio: r.bio,
     genres: parseJson(r.genres, []),
     subGenres: parseJson(r.sub_genres, []),

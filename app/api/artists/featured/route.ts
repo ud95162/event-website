@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapArtistRow } from "../../../lib/mappers";
 
@@ -10,9 +11,9 @@ export async function GET() {
   await ensureSchema();
   const pool = getPool();
 
-  let [rows] = await pool.query<any[]>("SELECT * FROM artists WHERE featured = 1 ORDER BY id");
+  let [rows] = await pool.query<any[]>(`SELECT ${await cols("artists")} FROM artists WHERE featured = 1 ORDER BY id`);
   if (!rows.length) {
-    [rows] = await pool.query<any[]>("SELECT * FROM artists ORDER BY id LIMIT 8");
+    [rows] = await pool.query<any[]>(`SELECT ${await cols("artists")} FROM artists ORDER BY id LIMIT 8`);
   }
 
   const list = rows.map((r) => {

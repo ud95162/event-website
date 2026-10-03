@@ -66,6 +66,8 @@ type AdminDataContextType = {
   featuredArtists: Artist[];
   organizers: Organizer[];
   genres: string[];
+  genreColors: Record<string, string>;   // lowercase genre name -> #RRGGBB (only genres with a colour)
+  setGenreColor: (name: string, color: string) => Promise<boolean>;
   badges: string[];
   banners: Banner[];
   brands: Brand[];
@@ -153,6 +155,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [featuredArtists, setFeaturedArtists] = useState<Artist[]>([]);
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
+  const [genreColors, setGenreColors] = useState<Record<string, string>>({});
   const [badges, setBadges] = useState<string[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -175,6 +178,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     const crv = readCache<Review[]>("reviews");   if (crv) setReviews(crv);
     const co = readCache<Organizer[]>("organizers"); if (co) setOrganizers(co);
     const cg = readCache<string[]>("genres");     if (cg) setGenres(cg);
+    const cgc = readCache<Record<string, string>>("genreColors"); if (cgc) setGenreColors(cgc);
     const cbd = readCache<string[]>("badges");    if (cbd) setBadges(cbd);
     const cp = readCache<PopupSettings>("popup"); if (cp) setPopupSettings({ ...DEFAULT_POPUP, ...cp });
   }, []);
@@ -192,6 +196,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         jsonFetch<Artist[]>("/api/artists/featured").then((d) => { setFeaturedArtists(d); writeCache("featuredArtists", d); }),
         jsonFetch<Organizer[]>("/api/organizers").then((d) => { setOrganizers(d); writeCache("organizers", d); }),
         jsonFetch<string[]>("/api/genres").then((d) => { setGenres(d); writeCache("genres", d); }),
+        jsonFetch<Record<string, string>>("/api/genres?colors=1").then((d) => { setGenreColors(d); writeCache("genreColors", d); }),
         jsonFetch<string[]>("/api/badges").then((d) => { setBadges(d); writeCache("badges", d); }),
         jsonFetch<Banner[]>("/api/banners").then((d) => { setBanners(d); writeCache("banners", d); }),
         jsonFetch<Brand[]>("/api/brands").then((d) => { setBrands(d); writeCache("brands", d); }),
@@ -385,6 +390,19 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ name: v }),
     }).catch(() => {});
   };
+  const setGenreColor = async (name: string, color: string): Promise<boolean> => {
+    const key = name.trim().toLowerCase();
+    setGenreColors((prev) => { const next = { ...prev }; if (color) next[key] = color; else delete next[key]; return next; });
+    try {
+      const map = await jsonFetch<Record<string, string>>("/api/genres", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, color }),
+      });
+      setGenreColors(map); writeCache("genreColors", map);
+      return true;
+    } catch { return false; }
+  };
   const deleteGenre = (name: string) => {
     setGenres((prev) => prev.filter((g) => g !== name));
     fetch(`/api/genres?name=${encodeURIComponent(name)}`, { method: "DELETE" }).catch(() => {});
@@ -496,7 +514,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     <AdminDataContext.Provider value={{
       loading,
       events, artists, featuredEvents, featuredArtists,
-      organizers, genres, badges, banners, brands, reviews,
+      organizers, genres, genreColors, setGenreColor, badges, banners, brands, reviews,
       popupSettings, updatePopupSettings,
       addEvent, updateEvent, deleteEvent,
       addArtist, updateArtist, deleteArtist,

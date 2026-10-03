@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapEventRow } from "../../../lib/mappers";
 
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
   const [countRows] = await pool.query<any[]>("SELECT COUNT(*) AS total FROM events");
   const total = Number(countRows[0]?.total ?? 0);
 
-  const [rows] = await pool.query<any[]>("SELECT * FROM events ORDER BY id LIMIT ? OFFSET ?", [limit, offset]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events ORDER BY id LIMIT ? OFFSET ?`, [limit, offset]);
   const events = rows.map(mapEventRow);
 
   return NextResponse.json({ events, total, hasMore: offset + events.length < total }, {

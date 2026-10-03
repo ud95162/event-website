@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
+import { imgMarker } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
+import { imgUrl, keepImg, keepImgParams } from "../../../lib/images";
 
 export async function PUT(
   req: NextRequest,
@@ -11,11 +13,12 @@ export async function PUT(
   const pool = getPool();
   const { url, eventId, title, description } = await req.json();
   await pool.query(
-    "UPDATE banners SET url = ?, event_id = ?, title = ?, description = ? WHERE id = ?",
-    [url, eventId ?? null, title ?? null, description ?? null, id]
+    `UPDATE banners SET ${keepImg("url")}, event_id = ?, title = ?, description = ? WHERE id = ?`,
+    [...keepImgParams(url), eventId ?? null, title ?? null, description ?? null, id]
   );
-  const [rows] = await pool.query<any[]>("SELECT id, url, event_id AS eventId, title, description FROM banners WHERE id = ?", [id]);
-  return NextResponse.json(rows[0]);
+  const [rows] = await pool.query<any[]>(`SELECT id, ${imgMarker("url")}, event_id AS eventId, title, description FROM banners WHERE id = ?`, [id]);
+  const r = rows[0];
+  return NextResponse.json({ ...r, url: imgUrl("banners", r.id, "url", r.url) });
 }
 
 export async function DELETE(

@@ -186,6 +186,14 @@ async function createAndSeed(): Promise<void> {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  // Optional per-genre colour (#RRGGBB), chosen in Admin -> Genres. Idempotent migration.
+  {
+    const [c] = await pool.query<any[]>(
+      "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'genres' AND COLUMN_NAME = 'color'"
+    );
+    if (c[0].c === 0) await pool.query("ALTER TABLE genres ADD COLUMN color VARCHAR(16) NULL");
+  }
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS badges (
       id INT PRIMARY KEY AUTO_INCREMENT,

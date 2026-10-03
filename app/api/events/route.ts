@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../lib/db";
+import { cols } from "../../lib/select";
 import { ensureSchema } from "../../lib/schema";
 import { mapEventRow } from "../../lib/mappers";
 
 export async function GET() {
   await ensureSchema();
   const pool = getPool();
-  const [rows] = await pool.query<any[]>("SELECT * FROM events ORDER BY id");
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events ORDER BY id`);
   // Cache so repeat visits reuse the (image-heavy) response instantly; SWR keeps it fresh.
   return NextResponse.json(rows.map(mapEventRow), {
     headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
@@ -31,6 +32,6 @@ export async function POST(req: NextRequest) {
       e.videoTrailer ?? null, e.externalLink ?? null, JSON.stringify(e.links ?? {}), e.featured ? 1 : 0, e.popup ? 1 : 0,
     ]
   );
-  const [rows] = await pool.query<any[]>("SELECT * FROM events WHERE id = ?", [result.insertId]);
+  const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id = ?`, [result.insertId]);
   return NextResponse.json(mapEventRow(rows[0]), { status: 201 });
 }
