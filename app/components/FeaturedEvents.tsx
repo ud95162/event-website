@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
+import { thumb } from "../lib/images";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
@@ -135,16 +136,16 @@ export default function FeaturedEvents() {
                     width: CARD_W,
                     height: CARD_H,
                     scrollSnapAlign: "start",
-                    background: hovered ? "#0d2318" : "#0F1116",
+                    background: hovered ? "#1b1a16" : "#0F1116",
                     border: "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: hovered ? "0 0 40px rgba(57,189,105,0.15)" : "none",
+                    boxShadow: hovered ? "0 0 40px rgba(232,220,192,0.15)" : "none",
                     transform: hovered ? "translateY(-6px)" : "translateY(0)",
                     transition: "background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease",
                   }}
                 >
                   {/* Image */}
                   <div className="relative w-full overflow-hidden" style={{ height: IMG_H }}>
-                    <img src={card.image} alt={card.title} loading="eager" decoding="async" className="w-full h-full object-cover object-top"
+                    <img src={thumb(card.image, 600)} alt={card.title} loading="eager" decoding="async" className="w-full h-full object-cover object-top"
                       style={{
                         transform: hovered ? "scale(1.08)" : "scale(1)",
                         transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
@@ -174,8 +175,8 @@ export default function FeaturedEvents() {
                         onClick={(e) => handleShare(card.id, card.title, e)}
                         className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
                         style={{
-                          background: shared.has(card.id) ? "rgba(57,189,105,0.85)" : "rgba(0,0,0,0.45)",
-                          border: shared.has(card.id) ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.15)",
+                          background: shared.has(card.id) ? "rgba(232,220,192,0.85)" : "rgba(0,0,0,0.45)",
+                          border: shared.has(card.id) ? "1px solid rgba(232,220,192,0.6)" : "1px solid rgba(255,255,255,0.15)",
                           backdropFilter: "blur(6px)",
                         }}
                       >
@@ -195,15 +196,15 @@ export default function FeaturedEvents() {
                       <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13 }}>Price: {fromPrice(card.tickets, card.price)}</p>
                       {userLocation && (
                         <div className="flex items-center justify-center gap-1 mt-1.5">
-                          <MapPin size={9} className="text-[#39BD69]" />
-                          <span className="text-[12px] font-semibold" style={{ color: "#39BD69" }}>
+                          <MapPin size={9} className="text-[#E8DCC0]" />
+                          <span className="text-[12px] font-semibold" style={{ color: "#E8DCC0" }}>
                             {formatDistance(haversineKm(userLocation.lat, userLocation.lon, card.lat, card.lon))}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="flex justify-center mt-2">
-                      <div className="h-[3px] rounded-full" style={{ width: hovered ? "60%" : "30%", background: "linear-gradient(90deg, #39BD69, #2ecc71)", transition: "width 0.4s ease" }} />
+                      <div className="h-[3px] rounded-full" style={{ width: hovered ? "60%" : "30%", background: "linear-gradient(90deg, #E8DCC0, #F7F1E1)", transition: "width 0.4s ease" }} />
                     </div>
                   </div>
                 </div>

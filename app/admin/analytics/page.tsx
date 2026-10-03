@@ -103,13 +103,13 @@ export default function AdminAnalytics() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 28 }}>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>
             {isOrganizer ? "Your Performance" : "Overview"}
           </p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Analytics</h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8, maxWidth: 620 }}>
             {isOrganizer
-              ? <>Page views and ticket-link clicks for events by <strong style={{ color: "#39BD69" }}>{user?.orgName}</strong> — measure how well your promotion is converting.</>
+              ? <>Page views and ticket-link clicks for events by <strong style={{ color: "#E8DCC0" }}>{user?.orgName}</strong> — measure how well your promotion is converting.</>
               : "Page views and ticket-link clicks per event — filter by organizer to measure promotion effectiveness."}
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function AdminAnalytics() {
 
       {/* Stat cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 16 }}>
-        <StatCard icon={<Eye size={16} />} label="Page Views" value={totals.views.toLocaleString()} accent="#39BD69" />
+        <StatCard icon={<Eye size={16} />} label="Page Views" value={totals.views.toLocaleString()} accent="#E8DCC0" />
         <StatCard icon={<MousePointerClick size={16} />} label="Ticket / Link Clicks" value={totals.clicks.toLocaleString()} accent="#60a5fa" />
         <StatCard icon={<Percent size={16} />} label="Click-through Rate" value={ctr(totals.clicks, totals.views).toFixed(1)} suffix="%" accent="#e879f9" />
         {scopedOrgName
@@ -157,7 +157,7 @@ export default function AdminAnalytics() {
       {!isOrganizer && (
         <div style={{ ...card, overflow: "hidden", marginBottom: 16 }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#39BD69" }}><Building2 size={14} /></span>
+            <span style={{ color: "#E8DCC0" }}><Building2 size={14} /></span>
             <h2 style={{ fontSize: 13, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em" }}>Organizers — Reach Summary</h2>
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>Click a row to see that organizer&apos;s events</span>
           </div>
@@ -180,16 +180,16 @@ export default function AdminAnalytics() {
                       style={{
                         borderBottom: i < orgRollup.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                         cursor: "pointer",
-                        background: active ? "rgba(57,189,105,0.08)" : "transparent",
+                        background: active ? "rgba(232,220,192,0.08)" : "transparent",
                       }}
                     >
                       <td style={{ padding: "12px 20px", color: "#fff", fontWeight: 600 }}>
-                        <span style={{ color: active ? "#39BD69" : "#fff" }}>{o.name}</span>
+                        <span style={{ color: active ? "#E8DCC0" : "#fff" }}>{o.name}</span>
                       </td>
                       <td style={{ padding: "12px 20px", textAlign: "right", color: "rgba(255,255,255,0.55)", fontVariantNumeric: "tabular-nums" }}>{o.events}</td>
                       <td style={{ padding: "12px 20px", textAlign: "right", color: "rgba(255,255,255,0.85)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{o.views.toLocaleString()}</td>
                       <td style={{ padding: "12px 20px", textAlign: "right", color: "#60a5fa", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{o.clicks.toLocaleString()}</td>
-                      <td style={{ padding: "12px 20px", textAlign: "right", color: "#39BD69", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{ctr(o.clicks, o.views).toFixed(1)}%</td>
+                      <td style={{ padding: "12px 20px", textAlign: "right", color: "#E8DCC0", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{ctr(o.clicks, o.views).toFixed(1)}%</td>
                     </tr>
                   );
                 })}
@@ -205,7 +205,7 @@ export default function AdminAnalytics() {
       {/* Per-event table */}
       <div style={{ ...card, overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: "#39BD69" }}><TrendingUp size={14} /></span>
+          <span style={{ color: "#E8DCC0" }}><TrendingUp size={14} /></span>
           <h2 style={{ fontSize: 13, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             {isOrganizer ? "Your Events" : "Events by Performance"}
           </h2>
@@ -235,7 +235,7 @@ export default function AdminAnalytics() {
                   )}
                   <td style={{ padding: "11px 20px", textAlign: "right", color: "rgba(255,255,255,0.75)", fontVariantNumeric: "tabular-nums" }}>{ev.views.toLocaleString()}</td>
                   <td style={{ padding: "11px 20px", textAlign: "right", color: "#60a5fa", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{ev.clicks.toLocaleString()}</td>
-                  <td style={{ padding: "11px 20px", textAlign: "right", color: "#39BD69", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{ctr(ev.clicks, ev.views).toFixed(1)}%</td>
+                  <td style={{ padding: "11px 20px", textAlign: "right", color: "#E8DCC0", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{ctr(ev.clicks, ev.views).toFixed(1)}%</td>
                 </tr>
               ))}
               {!loading && scopedEvents.length === 0 && (

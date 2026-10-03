@@ -38,8 +38,8 @@ function pinIcon(L: any) {
     className: "",
     html: `
       <div style="position:relative;width:34px;height:34px;">
-        <span style="position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(57,189,105,0.3);animation:mp-ping 1.8s ease-out infinite;"></span>
-        <span style="position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);border-radius:50%;background:#39BD69;border:3px solid #0b0b10;box-shadow:0 0 0 2px rgba(57,189,105,0.6),0 4px 12px rgba(0,0,0,0.5);"></span>
+        <span style="position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(232,220,192,0.3);animation:mp-ping 1.8s ease-out infinite;"></span>
+        <span style="position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);border-radius:50%;background:#E8DCC0;border:3px solid #0b0b10;box-shadow:0 0 0 2px rgba(232,220,192,0.6),0 4px 12px rgba(0,0,0,0.5);"></span>
       </div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 17],
@@ -248,14 +248,14 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "none")}
                 >
-                  <MapPin size={12} style={{ color: "#39BD69", flexShrink: 0, marginTop: 2 }} />
+                  <MapPin size={12} style={{ color: "#E8DCC0", flexShrink: 0, marginTop: 2 }} />
                   <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.35 }}>{s.label}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
-        <button type="submit" disabled={searching} style={{ padding: "9px 16px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 700, cursor: searching ? "default" : "pointer", opacity: searching ? 0.6 : 1 }}>
+        <button type="submit" disabled={searching} style={{ padding: "9px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: searching ? "default" : "pointer", opacity: searching ? 0.6 : 1 }}>
           {searching ? "…" : "Find"}
         </button>
       </form>
@@ -274,11 +274,11 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
             position: "absolute", left: 12, bottom: 12, zIndex: 500,
             display: "flex", alignItems: "center", gap: 7,
             padding: "7px 12px", borderRadius: 999,
-            background: "rgba(11,11,16,0.82)", border: "1px solid rgba(57,189,105,0.35)",
+            background: "rgba(11,11,16,0.82)", border: "1px solid rgba(232,220,192,0.35)",
             backdropFilter: "blur(8px)", fontSize: 11, fontWeight: 600, color: "#fff",
             fontVariantNumeric: "tabular-nums", boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
           }}>
-            <MapPin size={12} style={{ color: "#39BD69" }} />
+            <MapPin size={12} style={{ color: "#E8DCC0" }} />
             {lat.toFixed(5)}, {lon.toFixed(5)}
           </div>
         )}
@@ -296,7 +296,7 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
 
         {!ready && (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "rgba(255,255,255,0.4)", fontSize: 12, pointerEvents: "none", background: "#0b0b10", zIndex: 600 }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.12)", borderTopColor: "#39BD69", animation: "mp-spin 0.8s linear infinite" }} />
+            <div style={{ width: 26, height: 26, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.12)", borderTopColor: "#E8DCC0", animation: "mp-spin 0.8s linear infinite" }} />
             Loading map…
           </div>
         )}
@@ -312,7 +312,7 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
           border: 1px solid rgba(255,255,255,0.14) !important;
           backdrop-filter: blur(8px);
         }
-        .leaflet-control-zoom a:hover { background: #39BD69 !important; color: #000 !important; }
+        .leaflet-control-zoom a:hover { background: #E8DCC0 !important; color: #000 !important; }
         .leaflet-control-zoom { border: none !important; box-shadow: 0 6px 18px rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin: 12px !important; }
         .leaflet-container { font-family: inherit; }
       `}</style>

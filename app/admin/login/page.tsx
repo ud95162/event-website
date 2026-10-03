@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
       }}>
         {/* Brand */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>Partner Portal</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 12 }}>Partner Portal</p>
           <h1 style={{ margin: 0 }}>
             <img src="/logo.png" alt="DiscoverEvents.lk" style={{ height: 44, width: "auto", display: "inline-block" }} />
           </h1>
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
               placeholder="Enter username"
               autoComplete="username"
               required
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(57,189,105,0.5)")}
+              onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,220,192,0.5)")}
               onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
             />
           </div>
@@ -95,7 +95,7 @@ export default function AdminLoginPage() {
               placeholder="Enter password"
               autoComplete="current-password"
               required
-              onFocus={e => (e.currentTarget.style.borderColor = "rgba(57,189,105,0.5)")}
+              onFocus={e => (e.currentTarget.style.borderColor = "rgba(232,220,192,0.5)")}
               onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
             />
           </div>
@@ -115,7 +115,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             style={{
               width: "100%", padding: "12px", borderRadius: 8,
-              background: loading ? "rgba(57,189,105,0.5)" : "#39BD69",
+              background: loading ? "rgba(232,220,192,0.5)" : "#E8DCC0",
               border: "none", color: "#000", fontSize: 13,
               fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase",
               cursor: loading ? "not-allowed" : "pointer",

@@ -38,14 +38,14 @@ function useArtistNames(): string[] {
 }
 
 const GENRES = [
-  { label: "Electronic / EDM", color: "#39BD69" },
+  { label: "Electronic / EDM", color: "#E8DCC0" },
   { label: "Sinhala Music",    color: "#f59e0b" },
   { label: "Tamil Music",      color: "#a855f7" },
   { label: "Hindi Music",      color: "#f43f5e" },
   { label: "Rock & Indie",     color: "#60a5fa" },
   { label: "R&B / Soul",       color: "#fb923c" },
   { label: "Classical Fusion", color: "#e879f9" },
-  { label: "Live Band",        color: "#34d399" },
+  { label: "Live Band",        color: "#f5ecd0" },
 ];
 
 type Tab = "date" | "artists" | "genre" | null;
@@ -254,7 +254,7 @@ function FilterRow() {
   const tabs: { id: Tab; label: string; color: string; count: number }[] = [
     { id: "date",    label: "Date",    color: "#60a5fa", count: currentDate ? 1 : 0 },
     { id: "artists", label: "Artists", color: "#e879f9", count: currentArtists.length },
-    { id: "genre",   label: "Event Type", color: "#39BD69", count: currentGenres.length  },
+    { id: "genre",   label: "Event Type", color: "#E8DCC0", count: currentGenres.length  },
   ];
 
   return (
@@ -336,7 +336,7 @@ function FilterRow() {
 
 const CAT_OPTIONS = [
   { label: "Artists",    color: "#e879f9", key: "artists"    },
-  { label: "Event Types", color: "#39BD69", key: "genres"     },
+  { label: "Event Types", color: "#E8DCC0", key: "genres"     },
   { label: "Organizers", color: "#38bdf8", key: "organizers" },
 ];
 
@@ -350,6 +350,16 @@ const EXAMPLES: Record<string, string> = {
 /* ── Main component ───────────────────────────────────────────────────── */
 const cap = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
 
+// Reads the URL's query string and reports it, so the search bar can show what was searched
+// (the bar is re-created on every page, so it can't rely on its own state). Isolated in its
+// own Suspense boundary because useSearchParams needs one.
+function UrlSync({ onSync }: { onSync: (sp: URLSearchParams) => void }) {
+  const sp = useSearchParams();
+  const key = sp.toString();
+  useEffect(() => { onSync(new URLSearchParams(key)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 export default function StickySearchFilters() {
   const router = useRouter();
   const pathname = usePathname();
@@ -357,8 +367,8 @@ export default function StickySearchFilters() {
   const artistsMode = pathname.startsWith("/artists");
   const basePath = artistsMode ? "/artists" : "/events";
   // Artist pages use the premium gold accent; other pages keep the green.
-  const genreAccent = artistsMode ? "#ffffff" : "#39BD69";
-  const { organizers, genres: dataGenres } = useAdminData();
+  const genreAccent = artistsMode ? "#ffffff" : "#E8DCC0";
+  const { organizers, genres: dataGenres, genreColors } = useAdminData();
   const artistNames = useArtistNames();
   const [catOpen,      setCatOpen]      = useState(false);
   const [selectedCat,  setSelectedCat]  = useState<typeof CAT_OPTIONS[0] | null>(null);
@@ -374,6 +384,18 @@ export default function StickySearchFilters() {
   // Genres on the artists pages come from the saved list (/api/genres via context).
   const artistGenres = dataGenres.map(g => cap(g));
 
+  // Show the current search in the bar: the free-text query, or the picked genre's name.
+  const syncFromUrl = (sp: URLSearchParams) => {
+    const q = sp.get("q");
+    const genre = sp.get("genre");
+    setSearchQuery(q ?? (genre ? cap(genre) : ""));
+    setResultsOpen(false);
+    if (!artistsMode) {
+      setSelectedCat(CAT_OPTIONS.find(o => o.key === sp.get("category")) ?? null);
+      setDateVal(sp.get("date") ?? "");
+    }
+  };
+
   const dateLabel = (() => {
     const p = DATE_PRESETS.find(x => x.slug === dateVal);
     if (p) return p.label;
@@ -386,7 +408,7 @@ export default function StickySearchFilters() {
     const handler = (e: MouseEvent) => {
       if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
       if (dateRef.current && !dateRef.current.contains(e.target as Node)) setDateOpen(false);
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) { setResultsOpen(false); setSearchQuery(""); }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setResultsOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -410,7 +432,7 @@ export default function StickySearchFilters() {
     if (artistsMode) {
       return artistGenres
         .filter(g => g.toLowerCase().includes(q))
-        .map(g => ({ label: g, color: genreAccent, type: "Genre", value: g }));
+        .map(g => ({ label: g, color: genreColors[g.toLowerCase()] ?? genreAccent, type: "Genre", value: g }));
     }
 
     if (!q) return [];
@@ -422,7 +444,7 @@ export default function StickySearchFilters() {
     // Genres come straight from the stored data keys so they always match.
     const genreMatches = dataGenres
       .filter(g => g.toLowerCase().includes(q))
-      .map(g => ({ label: cap(g), color: genreAccent, type: "Event Type", value: g }));
+      .map(g => ({ label: cap(g), color: genreColors[g.toLowerCase()] ?? genreAccent, type: "Event Type", value: g }));
 
     if (selectedCat?.key === "organizers") return orgMatches;
     if (selectedCat?.key === "genres") return genreMatches;
@@ -472,6 +494,7 @@ export default function StickySearchFilters() {
 
   return (
     <div className="relative z-[290] bg-[#0F1116]/95 backdrop-blur-md border-b border-white/10 py-4 shadow-lg">
+      <Suspense fallback={null}><UrlSync onSync={syncFromUrl} /></Suspense>
 
       {/* Search bar */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-3">

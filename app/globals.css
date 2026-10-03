@@ -270,8 +270,8 @@ body {
   height: 200%;
   background: conic-gradient(
     from 0deg,
-    #39BD69 0deg,
-    #39BD69 40deg,
+    #E8DCC0 0deg,
+    #E8DCC0 40deg,
     transparent 120deg
   );
   z-index: 0;
@@ -286,7 +286,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: #39BD69;
+  background: #E8DCC0;
   z-index: 0;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -296,7 +296,7 @@ body {
 
 .event-card-wrapper:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(57, 189, 105, 0.2); /* Glowing green shadow on hover */
+  box-shadow: 0 16px 32px rgba(232,220,192, 0.2); /* Glowing green shadow on hover */
 }
 
 .event-card-wrapper:hover::before {
@@ -425,7 +425,7 @@ select optgroup {
 }
 select option:checked,
 select option:hover {
-  background-color: #39BD69;
+  background-color: #E8DCC0;
   color: #000000;
 }
 

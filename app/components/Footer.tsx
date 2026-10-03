@@ -140,7 +140,7 @@ export default function Footer() {
               <li>
                 <a
                   href="/admin/login"
-                  className="inline-flex items-center gap-2 whitespace-nowrap text-[#39BD69] font-semibold text-base hover:text-[#4ccf7c] transition-colors"
+                  className="inline-flex items-center gap-2 whitespace-nowrap text-[#E8DCC0] font-semibold text-base hover:text-[#F7F1E1] transition-colors"
                 >
                   <CalendarPlus size={18} /> List Your Event
                 </a>

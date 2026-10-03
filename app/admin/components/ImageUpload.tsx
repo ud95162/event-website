@@ -105,7 +105,7 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
 
       {/* Always-visible size guidance */}
       {hint && (
-        <p style={{ fontSize: 10, color: "rgba(57,189,105,0.7)", fontWeight: 600, letterSpacing: "0.02em" }}>
+        <p style={{ fontSize: 10, color: "rgba(232,220,192,0.7)", fontWeight: 600, letterSpacing: "0.02em" }}>
           {hint}
         </p>
       )}
@@ -124,7 +124,7 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
               color: "#fff", fontSize: 12, outline: "none", fontFamily: "inherit",
             }}
           />
-          <button type="button" onClick={applyUrl} style={{ padding: "9px 16px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+          <button type="button" onClick={applyUrl} style={{ padding: "9px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
             Apply
           </button>
         </div>
@@ -136,9 +136,9 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
           style={{
-            border: `2px dashed ${dragging ? "#39BD69" : "rgba(255,255,255,0.12)"}`,
+            border: `2px dashed ${dragging ? "#E8DCC0" : "rgba(255,255,255,0.12)"}`,
             borderRadius: 10,
-            background: dragging ? "rgba(57,189,105,0.05)" : "rgba(255,255,255,0.02)",
+            background: dragging ? "rgba(232,220,192,0.05)" : "rgba(255,255,255,0.02)",
             cursor: "pointer",
             transition: "all 0.2s",
             overflow: "hidden",
@@ -190,8 +190,8 @@ export default function ImageUpload({ label, value, onChange, aspectRatio = "wid
           ) : (
             /* Empty state */
             <div style={{ padding: "28px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Upload size={18} style={{ color: "#39BD69" }} />
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Upload size={18} style={{ color: "#E8DCC0" }} />
               </div>
               <div style={{ textAlign: "center" }}>
                 <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 600, marginBottom: 3 }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { genreColor, withAlpha } from "../../../lib/genres";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { useAdminData, Event } from "../../../context/AdminDataContext";
@@ -33,9 +34,9 @@ const labelStyle: React.CSSProperties = {
 };
 
 const sectionHeadStyle: React.CSSProperties = {
-  fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.3em",
+  fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.3em",
   textTransform: "uppercase", paddingBottom: 8, marginBottom: 16,
-  borderBottom: "1px solid rgba(57,189,105,0.2)",
+  borderBottom: "1px solid rgba(232,220,192,0.2)",
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -71,7 +72,7 @@ function EventFormInner() {
   const router = useRouter();
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const { events, organizers, artists, genres: GENRES, badges, addEvent, updateEvent, addBadge } = useAdminData();
+  const { events, organizers, artists, genres: GENRES, genreColors, badges, addEvent, updateEvent, addBadge } = useAdminData();
 
   // Event creation/editing is admin-only.
   useEffect(() => {
@@ -133,7 +134,7 @@ function EventFormInner() {
           <ChevronLeft size={14} /> Back to Events
         </button>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 4 }}>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 4 }}>
             {editing ? "Edit Event" : "New Event"}
           </p>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>
@@ -282,7 +283,7 @@ function EventFormInner() {
               <button
                 type="button"
                 onClick={() => set("tickets", [...(form.tickets ?? []), { name: "", price: "" }])}
-                style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.3)", color: "#E8DCC0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
               >
                 <Plus size={14} /> Add Ticket Type
               </button>
@@ -293,7 +294,7 @@ function EventFormInner() {
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
             <p style={sectionHeadStyle}>Event Poster / Flyer</p>
             <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 14 }}>
-              Upload a social-media-ready poster. Use a <strong style={{ color: "#39BD69" }}>4:5 portrait</strong> or <strong style={{ color: "#39BD69" }}>1:1 square</strong> image so it looks consistent across the site.
+              Upload a social-media-ready poster. Use a <strong style={{ color: "#E8DCC0" }}>4:5 portrait</strong> or <strong style={{ color: "#E8DCC0" }}>1:1 square</strong> image so it looks consistent across the site.
             </p>
             <div style={{ maxWidth: 360 }}>
               <ImageUpload
@@ -310,19 +311,24 @@ function EventFormInner() {
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
             <p style={sectionHeadStyle}>Event Types</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {GENRES.map(g => (
+              {GENRES.map(g => {
+                const on = form.genres.includes(g);
+                const c = genreColor(genreColors, g);
+                return (
                 <button
                   key={g} type="button"
                   onClick={() => toggleGenre(g)}
                   style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
                     padding: "7px 16px", borderRadius: 999, fontSize: 12, fontWeight: 600,
                     cursor: "pointer", textTransform: "capitalize", transition: "all 0.15s",
-                    background: form.genres.includes(g) ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${form.genres.includes(g) ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.1)"}`,
-                    color: form.genres.includes(g) ? "#39BD69" : "rgba(255,255,255,0.4)",
+                    background: on ? withAlpha(c, 0.15) : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${on ? withAlpha(c, 0.5) : "rgba(255,255,255,0.1)"}`,
+                    color: on ? c : "rgba(255,255,255,0.4)",
                   }}
-                >{g}</button>
-              ))}
+                ><span style={{ width: 8, height: 8, borderRadius: "50%", background: c, opacity: on ? 1 : 0.55 }} />{g}</button>
+                );
+              })}
             </div>
           </section>
 
@@ -409,7 +415,7 @@ function EventFormInner() {
 
           {/* LOCATION COORDS */}
           <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(57,189,105,0.2)", paddingBottom: 8, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(232,220,192,0.2)", paddingBottom: 8, marginBottom: 16 }}>
               <p style={{ ...sectionHeadStyle, border: "none", padding: 0, margin: 0 }}>Coordinates (optional)</p>
               {/* Mode toggle */}
               <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -420,8 +426,8 @@ function EventFormInner() {
                     style={{
                       padding: "5px 12px", borderRadius: 6, cursor: "pointer", border: "none",
                       fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", textTransform: "capitalize",
-                      background: coordMode === m ? "rgba(57,189,105,0.15)" : "transparent",
-                      color: coordMode === m ? "#39BD69" : "rgba(255,255,255,0.4)",
+                      background: coordMode === m ? "rgba(232,220,192,0.15)" : "transparent",
+                      color: coordMode === m ? "#E8DCC0" : "rgba(255,255,255,0.4)",
                     }}
                   >
                     {m === "map" ? "Pick on Map" : "Enter Manually"}
@@ -476,7 +482,7 @@ function EventFormInner() {
           <button
             type="submit"
             disabled={saving}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: saving ? "rgba(43,46,54,0.5)" : "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}
           >
             <Check size={14} /> {saving ? "Saving…" : editing ? "Save Changes" : "Create Event"}
           </button>

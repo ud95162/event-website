@@ -24,7 +24,7 @@ const PURPLE = "purple";
 const RED    = "red";
 
 const GROUP_COLOR: Record<string, string> = {
-  green:  "#22c55e",
+  green:  "#E8DCC0",
   blue:   "#60a5fa",
   purple: "#a855f7",
   red:    "#f43f5e",
@@ -149,7 +149,7 @@ export default function Hero() {
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(57,189,105,0.015) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(232,220,192,0.015) 0%, transparent 70%)",
         }} />
         <div className="absolute inset-0" style={{
           backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px),

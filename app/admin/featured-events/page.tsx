@@ -32,7 +32,7 @@ export default function FeaturedEventsPage() {
     <div style={{ padding: "32px 40px", maxWidth: 1200, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: 8 }}>
-        <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>
+        <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>
           Homepage
         </p>
         <h1 style={{ fontSize: 26, fontWeight: 900, color: "#fff", letterSpacing: "-0.01em" }}>Featured Events</h1>
@@ -57,9 +57,9 @@ export default function FeaturedEventsPage() {
             }}
           />
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 999, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)" }}>
-          <Star size={13} style={{ color: "#39BD69", fill: "#39BD69" }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#39BD69" }}>{featuredCount} featured</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 999, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.25)" }}>
+          <Star size={13} style={{ color: "#E8DCC0", fill: "#E8DCC0" }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#E8DCC0" }}>{featuredCount} featured</span>
         </div>
       </div>
 
@@ -79,8 +79,8 @@ export default function FeaturedEventsPage() {
                 style={{
                   textAlign: "left", cursor: "pointer", padding: 0, overflow: "hidden",
                   borderRadius: 12, background: "#0d0d0d",
-                  border: isFeatured ? "1.5px solid #39BD69" : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: isFeatured ? "0 0 0 3px rgba(57,189,105,0.12)" : "none",
+                  border: isFeatured ? "1.5px solid #E8DCC0" : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: isFeatured ? "0 0 0 3px rgba(232,220,192,0.12)" : "none",
                   transition: "all 0.15s", position: "relative", fontFamily: "inherit",
                 }}
               >
@@ -95,7 +95,7 @@ export default function FeaturedEventsPage() {
                   <div style={{
                     position: "absolute", top: 10, right: 10, width: 32, height: 32, borderRadius: "50%",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: isFeatured ? "#39BD69" : "rgba(0,0,0,0.55)",
+                    background: isFeatured ? "#E8DCC0" : "rgba(0,0,0,0.55)",
                     border: isFeatured ? "none" : "1px solid rgba(255,255,255,0.25)",
                     backdropFilter: "blur(4px)",
                   }}>

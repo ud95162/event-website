@@ -101,10 +101,10 @@ export default function Home() {
           <StickySearchFilters />
           <Hero />
         </div>
-        <StatsCounter />
         <FeaturedEvents />
         <FeaturedArtists />
         <ReviewsSection />
+        <StatsCounter />
 
         <div className="snap-section flex flex-col">
           <NewsletterSection />

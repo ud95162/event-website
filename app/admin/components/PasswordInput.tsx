@@ -19,7 +19,7 @@ export default function PasswordInput({ style, ...rest }: Props) {
         title={show ? "Hide password" : "Show password"}
         aria-label={show ? "Hide password" : "Show password"}
         tabIndex={-1}
-        style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", color: show ? "#39BD69" : "rgba(255,255,255,0.4)" }}
+        style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", color: show ? "#E8DCC0" : "rgba(255,255,255,0.4)" }}
       >
         {show ? <EyeOff size={15} /> : <Eye size={15} />}
       </button>

@@ -74,7 +74,7 @@ function StatItem({ value, suffix, label, trigger, delay }: { value: number; suf
       <div style={{ fontSize: "clamp(1.8rem, 3.5vw, 3rem)", fontWeight: 900, background: "linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.35) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 }}>
         {count}{suffix}
       </div>
-      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#39BD69", boxShadow: "0 0 8px rgba(57,189,105,0.6)", margin: "10px auto 8px", transform: started ? "scale(1)" : "scale(0)", transition: "transform 0.5s ease 0.4s" }} />
+      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8DCC0", boxShadow: "0 0 8px rgba(232,220,192,0.6)", margin: "10px auto 8px", transform: started ? "scale(1)" : "scale(0)", transition: "transform 0.5s ease 0.4s" }} />
       <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase" }}>{label}</p>
     </div>
   );
@@ -89,10 +89,10 @@ function ContactForm() {
   const inputStyle = (field: string): React.CSSProperties => ({
     width: "100%", padding: "12px 16px", borderRadius: 12, outline: "none",
     background: "rgba(255,255,255,0.04)",
-    border: `1px solid ${focused === field ? "rgba(57,189,105,0.5)" : "rgba(255,255,255,0.1)"}`,
+    border: `1px solid ${focused === field ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.1)"}`,
     color: "#fff", fontSize: 14, fontFamily: "inherit",
     transition: "border-color 0.2s",
-    boxShadow: focused === field ? "0 0 0 3px rgba(57,189,105,0.08)" : "none",
+    boxShadow: focused === field ? "0 0 0 3px rgba(232,220,192,0.08)" : "none",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -156,13 +156,13 @@ function ContactForm() {
         type="submit"
         style={{
           padding: "14px 32px", borderRadius: 12, cursor: "pointer",
-          background: sent ? "rgba(57,189,105,0.2)" : "linear-gradient(90deg,#39BD69,#2da857)",
-          color: sent ? "#39BD69" : "#000",
+          background: sent ? "rgba(232,220,192,0.2)" : "#2B2E36",
+          color: sent ? "#E8DCC0" : "#fff",
           fontWeight: 800, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase",
           fontFamily: "inherit",
-          border: sent ? "1px solid rgba(57,189,105,0.4)" : "none",
+          border: sent ? "1px solid rgba(232,220,192,0.4)" : "1px solid rgba(255,255,255,0.18)",
           transition: "all 0.3s",
-          boxShadow: sent ? "none" : "0 0 24px rgba(57,189,105,0.2)",
+          boxShadow: sent ? "none" : "0 4px 18px rgba(0,0,0,0.35)",
         } as React.CSSProperties}
       >
         {sent ? "✓ Message Sent!" : "Send Message"}
@@ -199,12 +199,12 @@ export default function AboutPage() {
 
         {/* ── 1. Hero ─────────────────────────────────────────── */}
         <div className="snap-section" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "clamp(24px,5vh,80px) 24px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(57,189,105,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(232,220,192,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", top: "15%", left: "5%", width: "40vmax", height: "40vmax", borderRadius: "50%", background: "radial-gradient(circle, rgba(233,30,140,0.05) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: "clamp(10px,2vh,20px)" }}>WHO WE ARE</p>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: "clamp(10px,2vh,20px)" }}>WHO WE ARE</p>
           <h1 style={{ fontSize: "clamp(2rem, 6vw, 5.5rem)", fontWeight: 900, letterSpacing: "-0.02em", lineHeight: 1.05, marginBottom: "clamp(12px,2.5vh,28px)", maxWidth: 900 }}>
             Sri Lanka's Premier<br />
-            <span style={{ background: "linear-gradient(90deg, #39BD69, #e91e8c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ background: "linear-gradient(90deg, #E8DCC0, #e91e8c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Event Discovery
             </span>{" "}Platform
           </h1>
@@ -212,7 +212,7 @@ export default function AboutPage() {
             DiscoverEvents.lk was born from a simple belief — that great music and unforgettable live experiences should be accessible to everyone. We connect passionate fans with the events that move them.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-            <button onClick={() => router.push("/events")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 26px", borderRadius: 999, background: "#39BD69", color: "#000", fontWeight: 800, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", border: "none" }}>
+            <button onClick={() => router.push("/events")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 26px", borderRadius: 999, background: "#2B2E36", color: "#fff", fontWeight: 800, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", border: "1px solid rgba(255,255,255,0.18)" }}>
               Explore Events <ArrowRight size={14} />
             </button>
             <button onClick={() => router.push("/artists")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 26px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" }}>
@@ -225,7 +225,7 @@ export default function AboutPage() {
         <div ref={missionV.ref} className="snap-section" style={{ padding: "clamp(24px,5vh,60px) clamp(24px,5vw,80px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(32px,5vw,80px)", alignItems: "center", height: "100%" }}>
             <div style={{ opacity: missionV.inView ? 1 : 0, transform: missionV.inView ? "translateX(0)" : "translateX(-30px)", transition: "opacity 0.8s ease, transform 0.8s ease" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: "clamp(8px,1.5vh,16px)" }}>OUR MISSION</p>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: "clamp(8px,1.5vh,16px)" }}>OUR MISSION</p>
               <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900, lineHeight: 1.15, marginBottom: "clamp(12px,2vh,24px)" }}>Making Live Music<br />Accessible to All</h2>
               <p style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.8, fontSize: "clamp(0.85rem, 1.1vw, 1rem)", marginBottom: "clamp(8px,1.5vh,16px)" }}>
                 We started DiscoverEvents.lk because we noticed a gap — amazing events happening across Sri Lanka, but no single place to discover them all. We set out to change that.
@@ -242,8 +242,8 @@ export default function AboutPage() {
               <div style={{ borderRadius: 20, overflow: "hidden", aspectRatio: "4/3" }}>
                 <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=900&q=80&fit=crop" alt="Live concert crowd" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.7)" }} />
               </div>
-              <div style={{ position: "absolute", bottom: -16, left: -16, background: "rgba(8,8,8,0.92)", border: "1px solid rgba(57,189,105,0.3)", borderRadius: 14, padding: "14px 20px", backdropFilter: "blur(12px)" }}>
-                <p style={{ fontSize: "clamp(1.4rem, 2.5vw, 2rem)", fontWeight: 900, color: "#39BD69", lineHeight: 1 }}>2018</p>
+              <div style={{ position: "absolute", bottom: -16, left: -16, background: "rgba(8,8,8,0.92)", border: "1px solid rgba(232,220,192,0.3)", borderRadius: 14, padding: "14px 20px", backdropFilter: "blur(12px)" }}>
+                <p style={{ fontSize: "clamp(1.4rem, 2.5vw, 2rem)", fontWeight: 900, color: "#E8DCC0", lineHeight: 1 }}>2018</p>
                 <p style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 4 }}>Founded in Colombo</p>
               </div>
             </div>
@@ -254,14 +254,14 @@ export default function AboutPage() {
         <div ref={valuesV.ref} className="snap-section" style={{ padding: "clamp(24px,4vh,60px) clamp(24px,5vw,80px)", borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.01)" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: "clamp(20px,3vh,40px)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: 10 }}>WHAT DRIVES US</p>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: 10 }}>WHAT DRIVES US</p>
               <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900 }}>Our Values</h2>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "clamp(12px,2vh,20px)" }}>
               {values.map(({ icon: Icon, title, desc }, i) => (
                 <div key={title} style={{ padding: "clamp(16px,2vh,24px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", opacity: valuesV.inView ? 1 : 0, transform: valuesV.inView ? "translateY(0)" : "translateY(20px)", transition: `opacity 0.6s ease ${i * 70}ms, transform 0.6s ease ${i * 70}ms` }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "clamp(8px,1.5vh,14px)" }}>
-                    <Icon size={18} color="#39BD69" />
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.25)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "clamp(8px,1.5vh,14px)" }}>
+                    <Icon size={18} color="#E8DCC0" />
                   </div>
                   <h3 style={{ fontWeight: 800, fontSize: "clamp(0.8rem, 1.1vw, 0.95rem)", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>{title}</h3>
                   <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "clamp(0.75rem, 0.9vw, 0.88rem)", lineHeight: 1.6 }}>{desc}</p>
@@ -275,7 +275,7 @@ export default function AboutPage() {
         <div ref={teamV.ref} className="snap-section" style={{ padding: "clamp(24px,4vh,60px) clamp(24px,5vw,80px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: "clamp(20px,3vh,40px)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: 10 }}>THE PEOPLE BEHIND IT</p>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: 10 }}>THE PEOPLE BEHIND IT</p>
               <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900 }}>Meet the Team</h2>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "clamp(12px,2vw,24px)" }}>
@@ -286,7 +286,7 @@ export default function AboutPage() {
                   </div>
                   <div style={{ padding: "clamp(12px,1.5vh,20px)" }}>
                     <h3 style={{ fontWeight: 800, fontSize: "clamp(0.85rem, 1.1vw, 1rem)", marginBottom: 4 }}>{name}</h3>
-                    <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>{role}</p>
+                    <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>{role}</p>
                     <p style={{ fontSize: "clamp(0.75rem, 0.9vw, 0.85rem)", color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>{bio}</p>
                   </div>
                 </div>
@@ -296,12 +296,12 @@ export default function AboutPage() {
         </div>
 
         {/* ── 6. Contact (full screen) ─────────────────────────── */}
-        <div className="snap-section" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(32px,5vh,64px) clamp(24px,5vw,80px)", background: "rgba(57,189,105,0.02)" }}>
+        <div className="snap-section" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(32px,5vh,64px) clamp(24px,5vw,80px)", background: "rgba(232,220,192,0.02)" }}>
             <div style={{ maxWidth: 1100, width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(32px,5vw,80px)", alignItems: "center" }}>
 
               {/* Left — info */}
               <div>
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#39BD69", marginBottom: 14 }}>GET IN TOUCH</p>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: 14 }}>GET IN TOUCH</p>
                 <h2 style={{ fontSize: "clamp(1.8rem,3.5vw,3rem)", fontWeight: 900, lineHeight: 1.1, marginBottom: 16 }}>Let's Work Together</h2>
                 <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.8, fontSize: "clamp(0.85rem,1.1vw,1rem)", maxWidth: 420, marginBottom: 32 }}>
                   Whether you're a venue, artist, or promoter — we'd love to hear from you and explore how we can bring your events to a wider audience.
@@ -313,8 +313,8 @@ export default function AboutPage() {
                     { icon: MapPin, label: "Colombo 03, Sri Lanka" },
                   ].map(({ icon: Icon, label }) => (
                     <div key={label} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Icon size={15} color="#39BD69" />
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon size={15} color="#E8DCC0" />
                       </div>
                       <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.85rem,1vw,1rem)" }}>{label}</span>
                     </div>

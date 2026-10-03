@@ -46,9 +46,9 @@ export default function LineupSelector({ value, onChange, allArtists, placeholde
           minHeight: 42, padding: "6px 10px",
           borderRadius: 8, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
           background: "rgba(255,255,255,0.04)",
-          border: `1px solid ${open ? "rgba(57,189,105,0.5)" : "rgba(255,255,255,0.1)"}`,
+          border: `1px solid ${open ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.1)"}`,
           cursor: "text", transition: "border-color 0.2s",
-          boxShadow: open ? "0 0 0 3px rgba(57,189,105,0.08)" : "none",
+          boxShadow: open ? "0 0 0 3px rgba(232,220,192,0.08)" : "none",
         }}
       >
         {/* Selected chips */}
@@ -56,8 +56,8 @@ export default function LineupSelector({ value, onChange, allArtists, placeholde
           <span key={name} style={{
             display: "inline-flex", alignItems: "center", gap: 5,
             padding: "3px 8px 3px 10px", borderRadius: 999,
-            background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.35)",
-            fontSize: 11, fontWeight: 700, color: "#39BD69",
+            background: "rgba(232,220,192,0.12)", border: "1px solid rgba(232,220,192,0.35)",
+            fontSize: 11, fontWeight: 700, color: "#E8DCC0",
           }}>
             {name}
             <button
@@ -118,9 +118,9 @@ export default function LineupSelector({ value, onChange, allArtists, placeholde
                 >
                   <div style={{
                     width: 28, height: 28, borderRadius: "50%",
-                    background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.2)",
+                    background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.2)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 9, fontWeight: 800, color: "#39BD69", flexShrink: 0,
+                    fontSize: 9, fontWeight: 800, color: "#E8DCC0", flexShrink: 0,
                   }}>
                     {name.split(" ").map(w => w[0]).join("").slice(0, 2)}
                   </div>

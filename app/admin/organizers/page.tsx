@@ -107,12 +107,12 @@ export default function OrganizersAdminPage() {
     <div style={{ padding: 32 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Organizers</h1>
         </div>
         <button
           onClick={openAdd}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
         >
           <Plus size={14} /> Add Organizer
         </button>
@@ -121,7 +121,7 @@ export default function OrganizersAdminPage() {
       {showForm && (
         <form onSubmit={handleSubmit} style={{ marginBottom: 28, padding: 24, background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <p style={{ fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.3em", textTransform: "uppercase" }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.3em", textTransform: "uppercase" }}>
               {editingId != null ? "Edit Organizer" : "New Organizer"}
             </p>
             <button type="button" onClick={closeForm} style={{ width: 32, height: 32, borderRadius: 7, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -168,8 +168,8 @@ export default function OrganizersAdminPage() {
           </div>
 
           {/* Login credentials — organizer signs in with these to see only their events' analytics */}
-          <div style={{ padding: 16, marginBottom: 20, borderRadius: 10, background: "rgba(57,189,105,0.04)", border: "1px solid rgba(57,189,105,0.15)" }}>
-            <p style={{ fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>
+          <div style={{ padding: 16, marginBottom: 20, borderRadius: 10, background: "rgba(232,220,192,0.04)", border: "1px solid rgba(232,220,192,0.15)" }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>
               Login Access
             </p>
             <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>
@@ -209,7 +209,7 @@ export default function OrganizersAdminPage() {
             <button type="button" onClick={closeForm} style={{ padding: "10px 22px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
               Cancel
             </button>
-            <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: saving ? "rgba(43,46,54,0.5)" : "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               <Check size={14} /> {saving ? "Saving…" : editingId != null ? "Save Changes" : "Create"}
             </button>
           </div>
@@ -229,8 +229,8 @@ export default function OrganizersAdminPage() {
                 {org.logo ? (
                   <img src={org.logo} alt={org.name} style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", border: "1px solid rgba(255,255,255,0.1)" }} />
                 ) : (
-                  <div style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 15, fontWeight: 900, color: "#39BD69" }}>{org.name[0]}</span>
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 15, fontWeight: 900, color: "#E8DCC0" }}>{org.name[0]}</span>
                   </div>
                 )}
                 <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{org.name}</span>

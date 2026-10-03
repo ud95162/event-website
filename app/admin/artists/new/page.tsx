@@ -35,9 +35,9 @@ const labelStyle: React.CSSProperties = {
 };
 
 const sectionHeadStyle: React.CSSProperties = {
-  fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.3em",
+  fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.3em",
   textTransform: "uppercase", paddingBottom: 8, marginBottom: 16,
-  borderBottom: "1px solid rgba(57,189,105,0.2)",
+  borderBottom: "1px solid rgba(232,220,192,0.2)",
 };
 
 function ArtistFormInner() {
@@ -149,7 +149,7 @@ function ArtistFormInner() {
           <ChevronLeft size={14} /> Back to Artists
         </button>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 4 }}>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 4 }}>
             {editing ? "Edit Artist" : "New Artist"}
           </p>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>
@@ -174,7 +174,7 @@ function ArtistFormInner() {
                   return (
                     <button key={t} type="button" onClick={() => set("artistType", t)}
                       style={{ padding: "8px 20px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em", transition: "all 0.15s",
-                        background: active ? "#39BD69" : "transparent", color: active ? "#000" : "rgba(255,255,255,0.55)" }}>
+                        background: active ? "#2B2E36" : "transparent", color: active ? "#fff" : "rgba(255,255,255,0.55)" }}>
                       {lbl}
                     </button>
                   );
@@ -209,9 +209,9 @@ function ArtistFormInner() {
           {/* BAND MEMBERS — only for live bands */}
           {isBand && (
             <section style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8, marginBottom: 16, borderBottom: "1px solid rgba(57,189,105,0.2)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8, marginBottom: 16, borderBottom: "1px solid rgba(232,220,192,0.2)" }}>
                 <p style={{ ...sectionHeadStyle, borderBottom: "none", paddingBottom: 0, marginBottom: 0 }}>Band Members</p>
-                <button type="button" onClick={addMember} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                <button type="button" onClick={addMember} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(232,220,192,0.12)", border: "1px solid rgba(232,220,192,0.3)", color: "#E8DCC0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                   <Plus size={13} /> Add Member
                 </button>
               </div>
@@ -297,7 +297,7 @@ function ArtistFormInner() {
               <input style={inputStyle} value={(form.subGenres ?? []).join(", ")} onChange={e => set("subGenres", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} placeholder="Progressive House, Big Room" />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <input type="checkbox" id="isDJ" checked={form.isDJ ?? false} onChange={e => set("isDJ", e.target.checked)} style={{ accentColor: "#39BD69", width: 16, height: 16, cursor: "pointer" }} />
+              <input type="checkbox" id="isDJ" checked={form.isDJ ?? false} onChange={e => set("isDJ", e.target.checked)} style={{ accentColor: "#E8DCC0", width: 16, height: 16, cursor: "pointer" }} />
               <label htmlFor="isDJ" style={{ ...labelStyle, marginBottom: 0, cursor: "pointer", color: "rgba(255,255,255,0.6)" }}>This artist is a DJ</label>
             </div>
             {form.isDJ && (
@@ -368,7 +368,7 @@ function ArtistFormInner() {
             <button
               type="button"
               onClick={() => set("socialLinks", [...(form.socialLinks ?? []), { platform: "", url: "" }])}
-              style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)", color: "#39BD69", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 8, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.3)", color: "#E8DCC0", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
             >
               <Plus size={14} /> Add Social Link
             </button>
@@ -390,7 +390,7 @@ function ArtistFormInner() {
             <div>
               <label style={labelStyle}>Rating</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <input type="range" min={0} max={5} step={0.5} value={form.rating ?? 0} onChange={e => set("rating", Number(e.target.value))} style={{ flex: 1, accentColor: "#39BD69" }} />
+                <input type="range" min={0} max={5} step={0.5} value={form.rating ?? 0} onChange={e => set("rating", Number(e.target.value))} style={{ flex: 1, accentColor: "#E8DCC0" }} />
                 <span style={{ fontSize: 14, fontWeight: 800, color: "#f59e0b", minWidth: 30, textAlign: "right" }}>{(form.rating ?? 0).toFixed(1)}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>
@@ -429,7 +429,7 @@ function ArtistFormInner() {
           <button type="button" onClick={() => router.push("/admin/artists")} style={{ padding: "11px 24px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             Cancel
           </button>
-          <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 28px", borderRadius: 8, background: saving ? "rgba(43,46,54,0.5)" : "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
             <Check size={14} /> {saving ? "Saving…" : editing ? "Save Changes" : "Create Artist"}
           </button>
         </div>

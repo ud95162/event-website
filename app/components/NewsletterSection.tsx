@@ -84,7 +84,7 @@ export default function NewsletterSection() {
 
       {/* Pulsing green glow */}
       <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(57,189,105,0.08) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(232,220,192,0.08) 0%, transparent 70%)",
         animation: "glow-pulse 4s ease-in-out infinite",
       }} />
 
@@ -101,7 +101,7 @@ export default function NewsletterSection() {
           Never Miss An Event
         </h2>
         {/* Divider */}
-        <div className="w-12 h-0.5 mx-auto" style={{ background: "#39BD69", marginBottom: "clamp(4px, 1vh, 16px)" }} />
+        <div className="w-12 h-0.5 mx-auto" style={{ background: "#E8DCC0", marginBottom: "clamp(4px, 1vh, 16px)" }} />
 
         <p className="text-white/55 max-w-lg mx-auto leading-relaxed" style={{ fontSize: "clamp(0.8rem, 1.1vw, 1rem)", marginBottom: "clamp(8px, 1.5vh, 20px)" }}>
           Get weekly updates about concerts, festivals, workshops, nightlife events,
@@ -111,10 +111,10 @@ export default function NewsletterSection() {
         {status === "success" ? (
           <div
             className="flex items-center justify-center gap-2.5 max-w-md mx-auto rounded-lg px-4 py-3"
-            style={{ background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.4)", marginBottom: "clamp(4px, 1vh, 12px)" }}
+            style={{ background: "rgba(232,220,192,0.12)", border: "1px solid rgba(232,220,192,0.4)", marginBottom: "clamp(4px, 1vh, 12px)" }}
           >
-            <CheckCircle2 size={18} style={{ color: "#39BD69", flexShrink: 0 }} />
-            <span className="text-[13px] font-semibold" style={{ color: "#39BD69" }}>{message}</span>
+            <CheckCircle2 size={18} style={{ color: "#E8DCC0", flexShrink: 0 }} />
+            <span className="text-[13px] font-semibold" style={{ color: "#E8DCC0" }}>{message}</span>
           </div>
         ) : (
           <>
@@ -134,7 +134,7 @@ export default function NewsletterSection() {
                 onClick={subscribe}
                 disabled={status === "loading"}
                 className="flex items-center gap-2 text-[13px] font-bold tracking-[0.15em] uppercase px-5 py-2.5 rounded-r-lg whitespace-nowrap transition-all hover:brightness-110 disabled:opacity-70"
-                style={{ background: "#39BD69", color: "#fff" }}
+                style={{ background: "#2B2E36", color: "#fff" }}
               >
                 {status === "loading" ? "SENDING…" : <>SUBMIT <ArrowRight size={13} /></>}
               </button>

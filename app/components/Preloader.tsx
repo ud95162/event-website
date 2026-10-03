@@ -173,7 +173,7 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
           style={{
             width: "35vmax", height: "35vmax",
             bottom: "10%", left: "30%",
-            background: "radial-gradient(circle, rgba(25,100,55,0.20) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(232,220,192,0.12) 0%, transparent 70%)",
             filter: "blur(70px)",
             animation: "aurora-3 14s ease-in-out infinite",
           }}

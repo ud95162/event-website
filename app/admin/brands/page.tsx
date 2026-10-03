@@ -50,13 +50,13 @@ export default function BrandsAdminPage() {
     <div style={{ padding: 32 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Brands &amp; Sponsors</h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>Logos shown in the home &ldquo;Trusted By&rdquo; marquee.</p>
         </div>
         <button
           onClick={() => { setShowAdd(s => !s); resetForm(); }}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: showAdd ? "rgba(255,255,255,0.06)" : "#39BD69", border: showAdd ? "1px solid rgba(255,255,255,0.15)" : "none", color: showAdd ? "rgba(255,255,255,0.5)" : "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: showAdd ? "rgba(255,255,255,0.06)" : "#E8DCC0", border: showAdd ? "1px solid rgba(255,255,255,0.15)" : "none", color: showAdd ? "rgba(255,255,255,0.5)" : "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
         >
           {showAdd ? <><X size={14} /> Cancel</> : <>+ Add Brand</>}
         </button>
@@ -84,7 +84,7 @@ export default function BrandsAdminPage() {
           )}
           <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
             <button type="button" onClick={() => { setShowAdd(false); resetForm(); }} style={{ padding: "9px 20px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-            <button type="button" onClick={handleAdd} disabled={!newName || !newLogo || saving} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 22px", borderRadius: 8, background: (newName && newLogo && !saving) ? "#39BD69" : "rgba(57,189,105,0.3)", border: "none", color: "#000", fontSize: 12, fontWeight: 800, cursor: (newName && newLogo && !saving) ? "pointer" : "not-allowed", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <button type="button" onClick={handleAdd} disabled={!newName || !newLogo || saving} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 22px", borderRadius: 8, background: (newName && newLogo && !saving) ? "#2B2E36" : "rgba(43,46,54,0.5)", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, cursor: (newName && newLogo && !saving) ? "pointer" : "not-allowed", letterSpacing: "0.08em", textTransform: "uppercase" }}>
               <Check size={13} /> {saving ? "Saving…" : "Add Brand"}
             </button>
           </div>

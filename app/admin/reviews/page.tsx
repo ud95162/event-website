@@ -76,13 +76,13 @@ export default function ReviewsAdminPage() {
     <div style={{ padding: 32 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Customer Reviews</h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>Shown in the home &ldquo;What People Say&rdquo; section.</p>
         </div>
         <button
           onClick={() => (showForm ? close() : openAdd())}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: showForm ? "rgba(255,255,255,0.06)" : "#39BD69", border: showForm ? "1px solid rgba(255,255,255,0.15)" : "none", color: showForm ? "rgba(255,255,255,0.5)" : "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: showForm ? "rgba(255,255,255,0.06)" : "#E8DCC0", border: showForm ? "1px solid rgba(255,255,255,0.15)" : "none", color: showForm ? "rgba(255,255,255,0.5)" : "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
         >
           {showForm ? <><X size={14} /> Cancel</> : <>+ Add Review</>}
         </button>
@@ -120,7 +120,7 @@ export default function ReviewsAdminPage() {
           )}
           <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
             <button type="button" onClick={close} style={{ padding: "9px 20px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-            <button type="button" onClick={handleSave} disabled={!canSave} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 22px", borderRadius: 8, background: canSave ? "#39BD69" : "rgba(57,189,105,0.3)", border: "none", color: "#000", fontSize: 12, fontWeight: 800, cursor: canSave ? "pointer" : "not-allowed", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <button type="button" onClick={handleSave} disabled={!canSave} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 22px", borderRadius: 8, background: canSave ? "#2B2E36" : "rgba(43,46,54,0.5)", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, cursor: canSave ? "pointer" : "not-allowed", letterSpacing: "0.08em", textTransform: "uppercase" }}>
               <Check size={13} /> {saving ? "Saving…" : editId != null ? "Save Changes" : "Add Review"}
             </button>
           </div>
@@ -135,7 +135,7 @@ export default function ReviewsAdminPage() {
               {r.image ? (
                 <img src={r.image} alt={r.name} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, background: "rgba(57,189,105,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#39BD69", fontWeight: 900 }}>{r.name.charAt(0)}</div>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, background: "rgba(232,220,192,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#E8DCC0", fontWeight: 900 }}>{r.name.charAt(0)}</div>
               )}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>

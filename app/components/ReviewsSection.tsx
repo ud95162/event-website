@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { thumb } from "../lib/images";
 import { Star, Quote } from "lucide-react";
 import { useAdminData, Review } from "../context/AdminDataContext";
 
@@ -19,7 +20,7 @@ function ReviewCard({ review }: { review: Review }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           {review.image ? (
-            <img src={review.image} alt={review.name} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+            <img src={thumb(review.image, 128)} alt={review.name} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
           ) : (
             <div style={{ width: 48, height: 48, borderRadius: "50%", flexShrink: 0, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 900 }}>{review.name.charAt(0)}</div>
           )}

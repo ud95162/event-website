@@ -99,12 +99,12 @@ export default function EventsAdminPage() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>Events</h1>
         </div>
         <button
           onClick={() => router.push("/admin/events/new")}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
         >
           <Plus size={14} /> Add Event
         </button>
@@ -165,8 +165,8 @@ export default function EventsAdminPage() {
               style={{
                 width: 30, height: 28, borderRadius: 6, cursor: "pointer", border: "none",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                background: view === mode ? "rgba(57,189,105,0.15)" : "transparent",
-                color: view === mode ? "#39BD69" : "rgba(255,255,255,0.4)",
+                background: view === mode ? "rgba(232,220,192,0.15)" : "transparent",
+                color: view === mode ? "#E8DCC0" : "rgba(255,255,255,0.4)",
                 transition: "all 0.15s",
               }}
             >
@@ -177,8 +177,8 @@ export default function EventsAdminPage() {
       </div>
 
       {/* Internal management: filter by period */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap", padding: "12px 14px", background: "rgba(57,189,105,0.04)", border: "1px solid rgba(57,189,105,0.15)", borderRadius: 10 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(57,189,105,0.9)" }}>Manage by period</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap", padding: "12px 14px", background: "rgba(232,220,192,0.04)", border: "1px solid rgba(232,220,192,0.15)", borderRadius: 10 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(232,220,192,0.9)" }}>Manage by period</span>
         {/* Relative period segmented control */}
         <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
           {([["", "All"], ["today", "Today"], ["week", "This Week"], ["month", "This Month"]] as const).map(([val, lbl]) => (
@@ -188,8 +188,8 @@ export default function EventsAdminPage() {
               style={{
                 padding: "6px 12px", borderRadius: 6, cursor: "pointer", border: "none",
                 fontSize: 11, fontWeight: 700, letterSpacing: "0.03em",
-                background: period === val ? "rgba(57,189,105,0.18)" : "transparent",
-                color: period === val ? "#39BD69" : "rgba(255,255,255,0.45)",
+                background: period === val ? "rgba(232,220,192,0.18)" : "transparent",
+                color: period === val ? "#E8DCC0" : "rgba(255,255,255,0.45)",
                 transition: "all 0.15s",
               }}
             >
@@ -224,9 +224,9 @@ export default function EventsAdminPage() {
             {loading ? (
               <>Loading events…</>
             ) : hasFilters ? (
-              <>No events match your filters. <button onClick={clearFilters} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
+              <>No events match your filters. <button onClick={clearFilters} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
             ) : (
-              <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
+              <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
             )}
           </div>
         ) : (
@@ -237,7 +237,7 @@ export default function EventsAdminPage() {
                   <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,0.9) 0%, transparent 60%)" }} />
                   {ev.badge && (
-                    <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(57,189,105,0.9)", color: "#000" }}>{ev.badge}</span>
+                    <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(232,220,192,0.9)", color: "#000" }}>{ev.badge}</span>
                   )}
                 </div>
                 <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
@@ -290,7 +290,7 @@ export default function EventsAdminPage() {
                           display: "flex", alignItems: "center", gap: 5,
                           background: "none", border: "none", cursor: "pointer", padding: 0,
                           fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase",
-                          color: dateSort ? "#39BD69" : "rgba(255,255,255,0.35)",
+                          color: dateSort ? "#E8DCC0" : "rgba(255,255,255,0.35)",
                         }}
                       >
                         Date
@@ -320,7 +320,7 @@ export default function EventsAdminPage() {
                   <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.4)" }}>{ev.organizer || "—"}</td>
                   <td style={{ padding: "12px 16px" }}>
                     {ev.badge ? (
-                      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(57,189,105,0.12)", color: "#39BD69", border: "1px solid rgba(57,189,105,0.2)" }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(232,220,192,0.12)", color: "#E8DCC0", border: "1px solid rgba(232,220,192,0.2)" }}>
                         {ev.badge}
                       </span>
                     ) : <span style={{ color: "rgba(255,255,255,0.15)" }}>—</span>}
@@ -360,9 +360,9 @@ export default function EventsAdminPage() {
                     {loading ? (
               <>Loading events…</>
             ) : hasFilters ? (
-                      <>No events match your filters. <button onClick={clearFilters} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
+                      <>No events match your filters. <button onClick={clearFilters} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Clear filters</button></>
                     ) : (
-                      <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#39BD69", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
+                      <>No events yet. <button onClick={() => router.push("/admin/events/new")} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>
                     )}
                   </td>
                 </tr>
@@ -396,9 +396,9 @@ export default function EventsAdminPage() {
                     onClick={() => setPage(p)}
                     style={{
                       minWidth: 32, height: 32, borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 700,
-                      background: p === currentPage ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.04)",
-                      border: `1px solid ${p === currentPage ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.1)"}`,
-                      color: p === currentPage ? "#39BD69" : "rgba(255,255,255,0.5)",
+                      background: p === currentPage ? "rgba(232,220,192,0.15)" : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${p === currentPage ? "rgba(232,220,192,0.4)" : "rgba(255,255,255,0.1)"}`,
+                      color: p === currentPage ? "#E8DCC0" : "rgba(255,255,255,0.5)",
                     }}
                   >
                     {p}

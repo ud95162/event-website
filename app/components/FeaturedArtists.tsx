@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
+import { thumb } from "../lib/images";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
@@ -27,8 +28,8 @@ function useCardSizes(sectionRef: React.RefObject<HTMLElement | null>) {
   return sizes;
 }
 
-const ACCENT_COLOR = "#39BD69";
-const ACCENT_RGB   = "57,189,105";
+const ACCENT_COLOR = "#E8DCC0";
+const ACCENT_RGB   = "212,175,55";
 
 export default function FeaturedArtists() {
   const { featuredArtists: allArtists, loading } = useAdminData();
@@ -66,7 +67,7 @@ export default function FeaturedArtists() {
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(57,189,105,0.015) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(232,220,192,0.015) 0%, transparent 70%)",
         }} />
         <div className="absolute inset-0" style={{
           backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px),
@@ -142,7 +143,7 @@ export default function FeaturedArtists() {
                   {/* Image */}
                   <div className="relative w-full overflow-hidden" style={{ height: "62%" }}>
                     <img
-                      src={card.image}
+                      src={thumb(card.image, 600)}
                       alt={card.stageName || card.name}
                       loading="eager"
                       decoding="async"
@@ -179,7 +180,7 @@ export default function FeaturedArtists() {
                       <h3 className="text-white font-black text-base uppercase mb-3 tracking-wide">{card.stageName || card.name}</h3>
                     </div>
                     <div className="flex justify-center">
-                      <div className="h-[3px] rounded-full" style={{ width: hovered ? "60%" : "30%", background: `linear-gradient(90deg,${ACCENT_COLOR},#2ecc71)`, transition: "width 0.4s ease" }} />
+                      <div className="h-[3px] rounded-full" style={{ width: hovered ? "60%" : "30%", background: `linear-gradient(90deg,${ACCENT_COLOR},#F7F1E1)`, transition: "width 0.4s ease" }} />
                     </div>
                   </div>
                 </div>

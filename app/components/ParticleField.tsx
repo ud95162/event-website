@@ -11,7 +11,14 @@ interface Particle {
   glow: string;
 }
 
-const COUNT       = 140;
+// Particle mix. White / pink / accent keep their original counts; the rose-gold ones are
+// extra, so the whites no longer outnumber the coloured ones.
+const MIX = [
+  { n: 87, color: "#ffffff", glow: "rgba(255,255,255,0.8)" },    // white
+  { n: 31, color: "#D8B567", glow: "rgba(216,181,103,0.9)" },    // warm gold (was green)
+  { n: 22, color: "#e91e8c", glow: "rgba(233,30,140,0.9)" },     // pink
+  { n: 24, color: "#E9A98F", glow: "rgba(233,169,143,0.9)" },    // rose gold (new)
+];
 const LINK_DIST   = 150;
 const MOUSE_RADIUS = 130;
 
@@ -31,21 +38,18 @@ export default function ParticleField() {
     resize();
     window.addEventListener("resize", resize);
 
-    const particles: Particle[] = Array.from({ length: COUNT }, () => {
-      const rnd = Math.random();
-      const isGreen = rnd < 0.22;
-      const isPink  = rnd < 0.38 && !isGreen;
-      return {
+    const particles: Particle[] = MIX.flatMap(({ n, color, glow }) =>
+      Array.from({ length: n }, () => ({
         x:     Math.random() * window.innerWidth,
         y:     Math.random() * window.innerHeight,
         vx:    (Math.random() - 0.5) * 0.4,
         vy:    (Math.random() - 0.5) * 0.4,
         r:     Math.random() * 3.5 + 1.8,
         alpha: Math.random() * 0.45 + 0.2,
-        color: isGreen ? "#39BD69" : isPink ? "#e91e8c" : "#ffffff",
-        glow:  isGreen ? "rgba(57,189,105,0.9)" : isPink ? "rgba(233,30,140,0.9)" : "rgba(255,255,255,0.8)",
-      };
-    });
+        color,
+        glow,
+      }))
+    );
 
     const onMove  = (e: MouseEvent) => { mouse.current = { x: e.clientX, y: e.clientY }; };
     const onLeave = () => { mouse.current = { x: -9999, y: -9999 }; };

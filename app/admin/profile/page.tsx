@@ -19,12 +19,12 @@ const labelStyle: React.CSSProperties = {
   letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6,
 };
 const panel: React.CSSProperties = { background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24, marginBottom: 24 };
-const sectionHead: React.CSSProperties = { fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 18 };
+const sectionHead: React.CSSProperties = { fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 18 };
 const note = (ok: boolean): React.CSSProperties => ({
   marginBottom: 16, padding: "12px 16px", borderRadius: 8, fontSize: 13,
-  background: ok ? "rgba(57,189,105,0.1)" : "rgba(239,68,68,0.1)",
-  border: `1px solid ${ok ? "rgba(57,189,105,0.3)" : "rgba(239,68,68,0.3)"}`,
-  color: ok ? "#39BD69" : "#f87171",
+  background: ok ? "rgba(232,220,192,0.1)" : "rgba(239,68,68,0.1)",
+  border: `1px solid ${ok ? "rgba(232,220,192,0.3)" : "rgba(239,68,68,0.3)"}`,
+  color: ok ? "#E8DCC0" : "#f87171",
 });
 
 // The signed-in organizer's own profile: view/edit details and change password.
@@ -106,7 +106,7 @@ export default function ProfilePage() {
   return (
     <div style={{ padding: 32, maxWidth: 860 }}>
       <div style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>{user.orgName}</p>
+        <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>{user.orgName}</p>
         <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>My Profile</h1>
         <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>Your organizer details as shown on the site, and your sign-in password.</p>
       </div>
@@ -157,7 +157,7 @@ export default function ProfilePage() {
             {detailsMsg && <div style={note(detailsMsg.ok)}>{detailsMsg.text}</div>}
 
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: saving ? "rgba(57,189,105,0.5)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <button type="submit" disabled={saving} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: saving ? "rgba(43,46,54,0.5)" : "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 13, fontWeight: 800, cursor: saving ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 <Check size={14} /> {saving ? "Saving…" : "Save Changes"}
               </button>
             </div>
@@ -186,7 +186,7 @@ export default function ProfilePage() {
         {pwMsg && <div style={note(pwMsg.ok)}>{pwMsg.text}</div>}
 
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button type="submit" disabled={pwSaving || !currentPw || !newPw || !confirmPw} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: (pwSaving || !currentPw || !newPw || !confirmPw) ? "rgba(57,189,105,0.3)" : "#39BD69", border: "none", color: "#000", fontSize: 13, fontWeight: 800, cursor: (pwSaving || !currentPw || !newPw || !confirmPw) ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <button type="submit" disabled={pwSaving || !currentPw || !newPw || !confirmPw} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 26px", borderRadius: 8, background: (pwSaving || !currentPw || !newPw || !confirmPw) ? "rgba(43,46,54,0.5)" : "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 13, fontWeight: 800, cursor: (pwSaving || !currentPw || !newPw || !confirmPw) ? "not-allowed" : "pointer", textTransform: "uppercase", letterSpacing: "0.08em" }}>
             <Lock size={14} /> {pwSaving ? "Updating…" : "Update Password"}
           </button>
         </div>

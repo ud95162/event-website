@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { thumb } from "../lib/images";
 
 const upcomingEvents = [
   {
@@ -129,14 +130,14 @@ export default function UpcomingEvents() {
                   zIndex,
                   transition: "transform 0.15s linear, opacity 0.15s linear, filter 0.15s linear, box-shadow 0.3s ease, border 0.3s ease",
                   boxShadow: isCenter
-                    ? "0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(57,189,105,0.1)"
+                    ? "0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(232,220,192,0.1)"
                     : "0 10px 30px rgba(0,0,0,0.4)",
                 }}
               >
                 {/* Image — top portion */}
                 <div className="relative w-full" style={{ height: "62%" }}>
                   <img
-                    src={event.image}
+                    src={thumb(event.image, 600)}
                     alt={event.title}
                     className="w-full h-full object-cover object-top"
                   />
@@ -168,8 +169,8 @@ export default function UpcomingEvents() {
                     style={{
                       width: isCenter ? "50%" : "20%",
                       marginLeft: isCenter ? "25%" : "40%",
-                      background: "linear-gradient(90deg, #39BD69, #2ecc71)",
-                      boxShadow: isCenter ? "0 0 12px rgba(57,189,105,0.6)" : "none",
+                      background: "linear-gradient(90deg, #E8DCC0, #F7F1E1)",
+                      boxShadow: isCenter ? "0 0 12px rgba(232,220,192,0.6)" : "none",
                       transition: "width 0.3s ease, margin-left 0.3s ease, box-shadow 0.3s ease",
                     }}
                   />
@@ -200,7 +201,7 @@ export default function UpcomingEvents() {
                 style={{
                   width: active ? 28 : 6,
                   height: 6,
-                  background: active ? "#39BD69" : "rgba(255,255,255,0.2)",
+                  background: active ? "#E8DCC0" : "rgba(255,255,255,0.2)",
                 }}
               />
             );

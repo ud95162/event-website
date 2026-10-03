@@ -78,8 +78,8 @@ function StatItem({ label, value, suffix, trigger, delay }: {
       <div
         className="w-1.5 h-1.5 rounded-full mb-3"
         style={{
-          background: "#39BD69",
-          boxShadow: "0 0 8px rgba(57,189,105,0.6)",
+          background: "#E8DCC0",
+          boxShadow: "0 0 8px rgba(232,220,192,0.6)",
           transform: started ? "scale(1)" : "scale(0)",
           transition: "transform 0.5s cubic-bezier(0.16,1,0.3,1)",
           transitionDelay: `${delay + 400}ms`,
@@ -116,7 +116,7 @@ export default function StatsCounter() {
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(57,189,105,0.015) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(232,220,192,0.015) 0%, transparent 70%)",
         }} />
         <div className="absolute inset-0" style={{
           backgroundImage: `repeating-linear-gradient(0deg, rgba(255,255,255,0.003) 0px, rgba(255,255,255,0.003) 1px, transparent 1px, transparent 60px),

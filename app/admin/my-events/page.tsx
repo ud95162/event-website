@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { Event } from "../../context/AdminDataContext";
 import { eventSlug } from "../../lib/slug";
+import { statusColor } from "../../data/events";
 import { Search, Calendar, MapPin, ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 
 const PER_PAGE_OPTIONS = [10, 25, 50];
@@ -14,14 +15,6 @@ const selectStyle: React.CSSProperties = {
   padding: "9px 12px", borderRadius: 8,
   background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
   color: "#fff", fontSize: 13, outline: "none", cursor: "pointer", fontFamily: "inherit",
-};
-
-const statusColor = (s: string) => {
-  const v = s.toLowerCase();
-  if (v.includes("cancel")) return "#ef4444";
-  if (v.includes("sold")) return "#f59e0b";
-  if (v.includes("postpone")) return "#f59e0b";
-  return "#39BD69";
 };
 
 // Read-only list of the events published by the signed-in organizer.
@@ -75,7 +68,7 @@ export default function MyEventsPage() {
   return (
     <div style={{ padding: 32 }}>
       <div style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>{orgName}</p>
+        <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>{orgName}</p>
         <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>My Events</h1>
         <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>Events published under your organizer account.</p>
       </div>
@@ -116,7 +109,7 @@ export default function MyEventsPage() {
                 <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,0.9) 0%, transparent 60%)" }} />
                 {ev.badge && (
-                  <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(57,189,105,0.9)", color: "#000" }}>{ev.badge}</span>
+                  <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(232,220,192,0.9)", color: "#000" }}>{ev.badge}</span>
                 )}
                 {ev.status && (
                   <span style={{ position: "absolute", top: 8, right: 8, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: `${statusColor(ev.status)}22`, color: statusColor(ev.status), border: `1px solid ${statusColor(ev.status)}66`, backdropFilter: "blur(4px)" }}>
@@ -137,7 +130,7 @@ export default function MyEventsPage() {
                 <Link
                   href={`/events/${eventSlug(ev)}`}
                   target="_blank"
-                  style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, height: 32, borderRadius: 6, background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69", fontSize: 11, fontWeight: 700, textDecoration: "none", letterSpacing: "0.05em" }}
+                  style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, height: 32, borderRadius: 6, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.25)", color: "#E8DCC0", fontSize: 11, fontWeight: 700, textDecoration: "none", letterSpacing: "0.05em" }}
                 >
                   <ExternalLink size={12} /> View on site
                 </Link>

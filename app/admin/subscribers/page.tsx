@@ -58,7 +58,7 @@ export default function SubscribersAdminPage() {
     <div style={{ padding: 32 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, gap: 16, flexWrap: "wrap" }}>
         <div>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Newsletter Subscribers</h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
             {loading ? "Loading…" : `${subs.length} subscriber${subs.length !== 1 ? "s" : ""} from the home newsletter form.`}
@@ -87,8 +87,8 @@ export default function SubscribersAdminPage() {
         {filtered.map((s, i) => (
           <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 18px", background: i % 2 ? "rgba(255,255,255,0.015)" : "transparent", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-              <div style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, background: "rgba(57,189,105,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Mail size={15} style={{ color: "#39BD69" }} />
+              <div style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, background: "rgba(232,220,192,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Mail size={15} style={{ color: "#E8DCC0" }} />
               </div>
               <div style={{ minWidth: 0 }}>
                 <p style={{ fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.email}</p>

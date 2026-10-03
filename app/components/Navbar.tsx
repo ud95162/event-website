@@ -98,19 +98,19 @@ function LocationPill() {
         ref={pillRef}
         className="flex items-center gap-2 px-4 py-1.5 rounded-full transition-all duration-300"
         style={{
-          border: isSet ? "1px solid rgba(57,189,105,0.6)" : "1px solid rgba(255,255,255,0.18)",
-          background: isSet ? "rgba(57,189,105,0.08)" : "rgba(255,255,255,0.04)",
-          boxShadow: isSet ? "0 0 14px rgba(57,189,105,0.25)" : "none",
+          border: isSet ? "1px solid rgba(232,220,192,0.6)" : "1px solid rgba(255,255,255,0.18)",
+          background: isSet ? "rgba(232,220,192,0.08)" : "rgba(255,255,255,0.04)",
+          boxShadow: isSet ? "0 0 14px rgba(232,220,192,0.25)" : "none",
           minWidth: 220,
         }}
       >
         {detecting ? (
           <span className="relative flex h-2 w-2 flex-shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39BD69] opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#39BD69]" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8DCC0] opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8DCC0]" />
           </span>
         ) : (
-          <MapPin size={13} strokeWidth={2.5} className="flex-shrink-0" style={{ color: isSet ? "#39BD69" : "rgba(255,255,255,0.4)" }} />
+          <MapPin size={13} strokeWidth={2.5} className="flex-shrink-0" style={{ color: isSet ? "#E8DCC0" : "rgba(255,255,255,0.4)" }} />
         )}
         <input
           ref={inputRef}
@@ -119,7 +119,7 @@ function LocationPill() {
           onFocus={() => { setOpen(true); if (isSet) setSearch(""); }}
           placeholder="SELECT CITY..."
           className="bg-transparent text-base font-bold tracking-widest uppercase w-full outline-none placeholder:text-white/35"
-          style={{ color: isSet ? "#39BD69" : "rgba(255,255,255,0.7)" }}
+          style={{ color: isSet ? "#E8DCC0" : "rgba(255,255,255,0.7)" }}
         />
         {isSet && (
           <button
@@ -155,9 +155,9 @@ function LocationPill() {
           >
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(57,189,105,0.15)", border: "1px solid rgba(57,189,105,0.3)" }}
+              style={{ background: "rgba(232,220,192,0.15)", border: "1px solid rgba(232,220,192,0.3)" }}
             >
-              <Navigation size={12} className="text-[#39BD69]" />
+              <Navigation size={12} className="text-[#E8DCC0]" />
             </div>
             <div className="text-left">
               <p className="text-white text-sm font-semibold tracking-wide">
@@ -181,11 +181,11 @@ function LocationPill() {
                     onClick={() => pick({ city, country, lat, lon })}
                     className="flex flex-col items-start px-3 py-1.5 rounded-xl text-left transition-all duration-200"
                     style={{
-                      background: isActive ? "rgba(57,189,105,0.15)" : "rgba(255,255,255,0.05)",
-                      border: isActive ? "1px solid rgba(57,189,105,0.45)" : "1px solid rgba(255,255,255,0.08)",
+                      background: isActive ? "rgba(232,220,192,0.15)" : "rgba(255,255,255,0.05)",
+                      border: isActive ? "1px solid rgba(232,220,192,0.45)" : "1px solid rgba(255,255,255,0.08)",
                     }}
                   >
-                    <span className="text-[12px] font-semibold leading-tight" style={{ color: isActive ? "#39BD69" : "rgba(255,255,255,0.8)" }}>
+                    <span className="text-[12px] font-semibold leading-tight" style={{ color: isActive ? "#E8DCC0" : "rgba(255,255,255,0.8)" }}>
                       {city}
                     </span>
                     <span className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.3)" }}>{country}</span>

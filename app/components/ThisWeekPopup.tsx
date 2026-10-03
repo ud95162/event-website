@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { thumb } from "../lib/images";
 import { useRouter } from "next/navigation";
 import { X, Calendar, MapPin, ArrowRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
@@ -81,8 +82,8 @@ export default function ThisWeekPopup() {
         onClick={e => e.stopPropagation()}
         style={{
           width: "100%", maxWidth: 480, maxHeight: "94dvh",
-          background: "#0b0b10", border: "1px solid rgba(57,189,105,0.25)", borderRadius: 24,
-          boxShadow: "0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.06)", overflow: "hidden",
+          background: "#0b0b10", border: "1px solid rgba(232,220,192,0.25)", borderRadius: 24,
+          boxShadow: "0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(232,220,192,0.06)", overflow: "hidden",
           animation: "twp-pop 0.3s ease", position: "relative",
           display: "flex", flexDirection: "column",
         }}
@@ -90,7 +91,7 @@ export default function ThisWeekPopup() {
         {/* Eyebrow header */}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 3, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}>
-            <Sparkles size={12} style={{ color: "#39BD69" }} /> {popupSettings.title || "Happening This Week"}
+            <Sparkles size={12} style={{ color: "#E8DCC0" }} /> {popupSettings.title || "Happening This Week"}
           </p>
           <button
             onClick={close}
@@ -105,21 +106,19 @@ export default function ThisWeekPopup() {
           onClick={() => go(ev)}
           style={{ position: "relative", aspectRatio: "4 / 5", width: "100%", minHeight: 0, flex: "1 1 auto", cursor: "pointer", overflow: "hidden" }}
         >
-          {/* Blurred backdrop fills the frame behind the full (uncropped) banner */}
-          <img key={`bg-${ev.id}`} src={ev.image} alt="" aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(26px) brightness(0.5)", transform: "scale(1.15)" }} />
-          {/* The actual banner, shown in full — never cropped */}
-          <img key={ev.id} src={ev.image} alt={ev.title} style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain", animation: "twp-slide 0.35s ease" }} />
+          {/* The banner fills the whole tile (cropped if its shape doesn't match), anchored to the top so headlines/faces stay in view */}
+          <img key={ev.id} src={thumb(ev.image, 1100)} alt={ev.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", animation: "twp-slide 0.35s ease" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(11,11,16,1) 0%, rgba(11,11,16,0.35) 45%, rgba(0,0,0,0.25) 100%)" }} />
 
           {/* Event info overlay */}
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 30px" }}>
             {ev.tag && (
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#39BD69" }}>{ev.tag}</span>
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0" }}>{ev.tag}</span>
             )}
             <h2 style={{ fontSize: 34, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05, margin: "8px 0 14px" }}>{ev.title}</h2>
             <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#39BD69" }} /> {ev.date}</span>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#39BD69" }} /> {ev.location}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#E8DCC0" }} /> {ev.date}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#E8DCC0" }} /> {ev.location}</span>
             </div>
           </div>
 
@@ -151,7 +150,7 @@ export default function ThisWeekPopup() {
                 style={{
                   height: 6, borderRadius: 999, border: "none", cursor: "pointer",
                   width: i === index ? 20 : 6,
-                  background: i === index ? "#39BD69" : "rgba(255,255,255,0.25)",
+                  background: i === index ? "#E8DCC0" : "rgba(255,255,255,0.25)",
                   transition: "all 0.25s ease",
                 }}
               />
@@ -163,7 +162,7 @@ export default function ThisWeekPopup() {
         <div style={{ display: "flex", gap: 10, padding: "10px 16px 18px" }}>
           <button
             onClick={() => go(ev)}
-            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
           >
             View Event <ArrowRight size={14} />
           </button>

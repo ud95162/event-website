@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { thumb } from "../lib/images";
 import { useAdminData } from "../context/AdminDataContext";
 
 /* ── Brand entries ────────────────────────────────────────────────────── */
@@ -36,7 +37,7 @@ const row2Brands: Brand[] = [
 function BrandCard({ brand }: { brand: Brand }) {
   const [hovered, setHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const color = brand.color || "#39BD69";
+  const color = brand.color || "#E8DCC0";
 
   return (
     <div
@@ -58,7 +59,7 @@ function BrandCard({ brand }: { brand: Brand }) {
     >
       {brand.logo ? (
         // Admin-uploaded logo
-        <img src={brand.logo} alt={brand.name} style={{ maxWidth: 90, maxHeight: 52, objectFit: "contain", flexShrink: 0 }} />
+        <img src={thumb(brand.logo, 240)} alt={brand.name} style={{ maxWidth: 90, maxHeight: 52, objectFit: "contain", flexShrink: 0 }} />
       ) : !imgError && brand.slug ? (
         // Fallback demo icon (simpleicons)
         <img src={`https://cdn.simpleicons.org/${brand.slug}`} alt={brand.name} width={52} height={52} style={{ flexShrink: 0 }} onError={() => setImgError(true)} />

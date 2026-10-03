@@ -166,15 +166,15 @@ export default function PrivacyPolicyPage() {
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 padding: "6px 14px", borderRadius: 999, marginBottom: 20,
-                background: "rgba(57,189,105,0.1)", border: "1px solid rgba(57,189,105,0.3)",
-                color: "#39BD69", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase",
+                background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.3)",
+                color: "#E8DCC0", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase",
               }}
             >
               <ShieldCheck size={13} /> Legal
             </span>
             <h1 style={{ fontSize: "clamp(2rem,5vw,3.25rem)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05 }}>
               Privacy{" "}
-              <span style={{ background: "linear-gradient(90deg,#39BD69,#e91e8c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              <span style={{ background: "linear-gradient(90deg,#E8DCC0,#e91e8c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 Policy
               </span>
             </h1>
@@ -211,15 +211,15 @@ export default function PrivacyPolicyPage() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <MapPin size={15} style={{ color: "#39BD69", flexShrink: 0 }} />
+                  <MapPin size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
                   <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 }}>DiscoverEvents.lk, Colombo, Sri Lanka</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Mail size={15} style={{ color: "#39BD69", flexShrink: 0 }} />
+                  <Mail size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
                   <a href="mailto:info@discoverevents.lk" style={{ color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>info@discoverevents.lk</a>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Phone size={15} style={{ color: "#39BD69", flexShrink: 0 }} />
+                  <Phone size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
                   <span style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>+94 11 234 5678</span>
                 </div>
               </div>

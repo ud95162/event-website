@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }}>
         {/* Brand */}
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>Partner Portal</p>
+          <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>Partner Portal</p>
           <h1 style={{ margin: 0 }}>
             <img src="/logo.png" alt="DiscoverEvents.lk" style={{ height: 32, width: "auto", display: "block" }} />
           </h1>
@@ -80,9 +80,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "9px 12px", borderRadius: 8,
-                  background: isActive ? "rgba(57,189,105,0.12)" : "transparent",
-                  border: isActive ? "1px solid rgba(57,189,105,0.2)" : "1px solid transparent",
-                  color: isActive ? "#39BD69" : "rgba(255,255,255,0.45)",
+                  background: isActive ? "rgba(232,220,192,0.12)" : "transparent",
+                  border: isActive ? "1px solid rgba(232,220,192,0.2)" : "1px solid transparent",
+                  color: isActive ? "#E8DCC0" : "rgba(255,255,255,0.45)",
                   fontSize: 13, fontWeight: isActive ? 700 : 500,
                   cursor: "pointer", transition: "all 0.15s",
                   letterSpacing: "0.02em",
@@ -99,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div style={{ padding: "16px 12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.03)", marginBottom: 10 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{user.username}</p>
-            <p style={{ fontSize: 10, color: "#39BD69", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em" }}>{user.role}</p>
+            <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em" }}>{user.role}</p>
           </div>
           <button
             onClick={() => { logout(); router.push("/admin/login"); }}
