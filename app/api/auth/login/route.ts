@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
 import { ensureSchema } from "../../../lib/schema";
+import { signAdminToken } from "../../../lib/auth";
 
 // Built-in admin account (organizers authenticate against the DB below).
 const ADMIN = { username: "admin", password: "admin123" };
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (username === ADMIN.username && password === ADMIN.password) {
-    return NextResponse.json({ username: ADMIN.username, role: "admin" });
+    return NextResponse.json({ username: ADMIN.username, role: "admin", token: signAdminToken(ADMIN.username) });
   }
 
   const pool = getPool();

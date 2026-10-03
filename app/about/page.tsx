@@ -6,7 +6,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import NewsletterSection from "../components/NewsletterSection";
 import ParticleField from "../components/ParticleField";
-import { ArrowRight, Music2, Users, Globe, Zap, Heart, Star, MapPin, Mail, Phone } from "lucide-react";
+import { ArrowRight, Music2, Users, Globe, Zap, Heart, Star, MapPin, Mail, Phone, ChevronDown } from "lucide-react";
 
 /* ── Count-up hook ─────────────────────────────────────────────── */
 function useCountUp(target: number, duration: number, trigger: boolean) {
@@ -38,6 +38,45 @@ function useInView(threshold = 0.2) {
   return { ref, inView };
 }
 
+/* ── FAQ accordion ─────────────────────────────────────────────── */
+function FaqList({ inView }: { inView: boolean }) {
+  const [open, setOpen] = useState<number | null>(0);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 820, margin: "0 auto" }}>
+      {faqs.map(({ q, a }, i) => {
+        const isOpen = open === i;
+        return (
+          <div
+            key={q}
+            style={{
+              borderRadius: 14, overflow: "hidden",
+              border: `1px solid ${isOpen ? "rgba(232,220,192,0.3)" : "rgba(255,255,255,0.07)"}`,
+              background: isOpen ? "rgba(232,220,192,0.05)" : "rgba(255,255,255,0.02)",
+              opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(14px)",
+              transition: `opacity 0.5s ease ${i * 60}ms, transform 0.5s ease ${i * 60}ms, border-color 0.2s, background 0.2s`,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setOpen(isOpen ? null : i)}
+              aria-expanded={isOpen}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "clamp(14px,2vh,20px) clamp(16px,2vw,24px)", background: "none", border: "none", cursor: "pointer", textAlign: "left", color: "#fff", fontFamily: "inherit" }}
+            >
+              <span style={{ fontWeight: 700, fontSize: "clamp(0.9rem,1.1vw,1.05rem)", lineHeight: 1.35 }}>{q}</span>
+              <ChevronDown size={18} color="#E8DCC0" style={{ flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }} />
+            </button>
+            <div style={{ display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr", transition: "grid-template-rows 0.3s ease" }}>
+              <div style={{ overflow: "hidden" }}>
+                <p style={{ padding: "0 clamp(16px,2vw,24px) clamp(14px,2vh,20px)", color: "rgba(255,255,255,0.5)", fontSize: "clamp(0.82rem,1vw,0.95rem)", lineHeight: 1.7 }}>{a}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── Data ──────────────────────────────────────────────────────── */
 const team = [
   { name: "Ashan Perera",      role: "Founder & CEO",       img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&fit=crop", bio: "Passionate about connecting Sri Lanka's music lovers with world-class events." },
@@ -53,6 +92,16 @@ const values = [
   { icon: Zap,    title: "Seamless Experience",desc: "From discovery to the last note, we make every step of your event journey effortless." },
   { icon: Heart,  title: "Authentic Moments",  desc: "We believe live music creates memories that last a lifetime. We're here to make those moments." },
   { icon: Star,   title: "Quality Curation",   desc: "Only the best events make it to our platform. Every listing is verified and quality-checked." },
+];
+
+const faqs = [
+  { q: "What is DiscoverEvents.lk?", a: "DiscoverEvents.lk is Sri Lanka's home for live music and events — festivals, concerts, club nights and more — together with the artists and organizers behind them, all in one place." },
+  { q: "How do I find events near me?", a: "Choose your city from the location picker in the top bar to see how far events are from you, then search by name, artist or event type. The Calendar page shows what's on, day by day." },
+  { q: "Do I need an account to browse?", a: "No. You can explore every event, artist and organizer without signing up. Subscribe to our newsletter or join our WhatsApp community to hear about new events first." },
+  { q: "How do I get tickets?", a: "Each event page lists its ticket types and prices, along with the organizer's booking details or ticket link where one is provided. Tickets are sold by the event organizers." },
+  { q: "What do the event statuses mean?", a: "Confirmed means the event is going ahead. Postponed means the date or details are changing, and Cancelled means it will not take place. \"Happening Today\" and \"Happening Now\" show events that are on today or right now, and finished events are marked Completed." },
+  { q: "I'm an organizer — how can I list my event?", a: "Get in touch using the contact form below. Our team will set up your listing, and you'll receive a Partner Portal login (see \"List Your Event\" in the footer) where you can view your events and update your organizer profile and password." },
+  { q: "Something on an event page looks wrong. What should I do?", a: "Please let us know through the contact form below with the event name and what needs fixing, and we'll check it with the organizer." },
 ];
 
 const stats = [
@@ -82,8 +131,10 @@ function StatItem({ value, suffix, label, trigger, delay }: { value: number; suf
 
 /* ── Contact Form ──────────────────────────────────────────────── */
 function ContactForm() {
-  const [form, setForm]     = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm]     = useState({ name: "", email: "", subject: "", message: "", company: "" });   // "company" is a hidden spam trap
   const [sent, setSent]     = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError]   = useState("");
   const [focused, setFocused] = useState<string | null>(null);
 
   const inputStyle = (field: string): React.CSSProperties => ({
@@ -95,14 +146,38 @@ function ContactForm() {
     boxShadow: focused === field ? "0 0 0 3px rgba(232,220,192,0.08)" : "none",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(() => { setSent(false); setForm({ name: "", email: "", subject: "", message: "" }); }, 3000);
+    if (sending) return;
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Couldn't send your message. Please try again.");
+      } else {
+        setSent(true);
+        setTimeout(() => { setSent(false); setForm({ name: "", email: "", subject: "", message: "", company: "" }); }, 4000);
+      }
+    } catch {
+      setError("Couldn't reach the server. Please check your connection and try again.");
+    }
+    setSending(false);
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Spam trap: hidden from people, filled in by bots */}
+      <input
+        type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true"
+        value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+        style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+      />
       {/* Name + Email row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
@@ -151,9 +226,14 @@ function ContactForm() {
         />
       </div>
 
+      {error && (
+        <div role="alert" style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: 13 }}>{error}</div>
+      )}
+
       {/* Submit */}
       <button
         type="submit"
+        disabled={sending}
         style={{
           padding: "14px 32px", borderRadius: 12, cursor: "pointer",
           background: sent ? "rgba(232,220,192,0.2)" : "#2B2E36",
@@ -165,7 +245,7 @@ function ContactForm() {
           boxShadow: sent ? "none" : "0 4px 18px rgba(0,0,0,0.35)",
         } as React.CSSProperties}
       >
-        {sent ? "✓ Message Sent!" : "Send Message"}
+        {sent ? "✓ Message Sent!" : sending ? "Sending…" : "Send Message"}
       </button>
     </form>
   );
@@ -177,6 +257,7 @@ export default function AboutPage() {
   const missionV = useInView(0.15);
   const valuesV = useInView(0.1);
   const teamV   = useInView(0.1);
+  const faqV    = useInView(0.1);
 
   const sectionStyle: React.CSSProperties = {
     height: "calc(100dvh - 64px)",
@@ -292,6 +373,17 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* ── FAQ ──────────────────────────────────────────────── */}
+        <div ref={faqV.ref} className="snap-section" style={{ padding: "clamp(24px,4vh,60px) clamp(24px,5vw,80px)", borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.01)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ maxWidth: 1100, width: "100%", margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: "clamp(20px,3vh,40px)" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: 10 }}>GOT QUESTIONS?</p>
+              <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)", fontWeight: 900 }}>Frequently Asked Questions</h2>
+            </div>
+            <FaqList inView={faqV.inView} />
           </div>
         </div>
 

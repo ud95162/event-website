@@ -252,6 +252,19 @@ async function createAndSeed(): Promise<void> {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  // Messages sent from the About page "Get in touch" form, read in Admin -> Messages.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(120) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      subject VARCHAR(200) NOT NULL,
+      message TEXT NOT NULL,
+      is_read TINYINT(1) NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   // Analytics counters: page views + link clicks per event/organizer.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS analytics (

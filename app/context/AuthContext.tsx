@@ -7,7 +7,8 @@ export type UserRole = "admin" | "organizer";
 export type AuthUser = {
   username: string;
   role: UserRole;
-  orgName?: string;   // for organizer accounts — the organizer they manage (scopes analytics/events)
+  orgName?: string;
+  token?: string;     // admin accounts only — signed token sent to endpoints that expose private data   // for organizer accounts — the organizer they manage (scopes analytics/events)
 };
 
 type AuthContextType = {

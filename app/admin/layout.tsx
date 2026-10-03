@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { UserCircle, CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay, MessageSquareQuote, Mail } from "lucide-react";
+import { UserCircle, CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay, MessageSquareQuote, Mail, Inbox } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/admin/analytics",        label: "Analytics",        icon: BarChart3,       roles: ["admin", "organizer"] },
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/admin/genres",           label: "Genres",           icon: Tag,             roles: ["admin"] },
   { href: "/admin/banners",          label: "Banners",          icon: ImageIcon,       roles: ["admin"] },
   { href: "/admin/reviews",          label: "Reviews",          icon: MessageSquareQuote, roles: ["admin"] },
+  { href: "/admin/messages",         label: "Messages",         icon: Inbox,           roles: ["admin"] },
   { href: "/admin/subscribers",      label: "Subscribers",      icon: Mail,            roles: ["admin"] },
 ];
 
