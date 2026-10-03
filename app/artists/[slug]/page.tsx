@@ -1,6 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { isEventPast, eventStartMs } from "../../lib/eventTime";
+import { withAlpha } from "../../lib/genres";
+import { thumb } from "../../lib/images";
 import { useState, useEffect } from "react";
 import {
   Heart, ChevronLeft, MapPin, Calendar, Music2, ArrowRight,
@@ -56,7 +59,7 @@ import ParticleField from "../../components/ParticleField";
 
 /* ── Small helpers ─────────────────────────────────────────────────────────── */
 
-function Chip({ label, accent = false }: { label: string; accent?: boolean }) {
+function Chip({ label, accent = false, color }: { label: string; accent?: boolean; color?: string }) {
   return (
     <span
       style={{
@@ -67,9 +70,9 @@ function Chip({ label, accent = false }: { label: string; accent?: boolean }) {
         fontWeight: 700,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
-        background: accent ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
-        border: `1px solid ${accent ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)"}`,
-        color: accent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.6)",
+        background: color ? withAlpha(color, 0.14) : accent ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
+        border: `1px solid ${color ? withAlpha(color, 0.5) : accent ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)"}`,
+        color: color ?? (accent ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.6)"),
         marginRight: 8,
         marginBottom: 8,
       }}
@@ -124,11 +127,14 @@ export default function ArtistDetailPage() {
   const params  = useParams();
   const router  = useRouter();
   const slug    = String(params.slug);
-  const { artists, events, loading } = useAdminData();
+  const { artists, events, loading, genreColors } = useAdminData();
   const artist  = artists.find(a => artistSlug(a) === slug) ?? null;
   const { userLocation } = useUserLocation();
 
   const [followed, setFollowed] = useState(false);
+  // "now" is read after mount so server and client render the same markup.
+  const [nowMs, setNowMs] = useState(0);
+  useEffect(() => { setNowMs(Date.now()); }, []);
 
   // `members` (base64 band photos) is omitted from the shared list payload to keep it
   // small; fetch the full record here so the band roster still renders.
@@ -167,9 +173,73 @@ export default function ArtistDetailPage() {
   const displayName = artist.stageName || artist.name;
 
   /* Events this artist is performing in */
-  const artistEvents = events.filter(ev =>
+  const allArtistEvents = events.filter(ev =>
     ev.lineup.includes(displayName) || ev.lineup.includes(artist.name)
   );
+  // Upcoming first (soonest first), finished ones in their own "Past Events" section
+  // (most recent first). Until "now" is known every event counts as upcoming.
+  const artistEvents = (nowMs ? allArtistEvents.filter(ev => !isEventPast(ev, nowMs)) : allArtistEvents)
+    .sort((a, b) => eventStartMs(a) - eventStartMs(b));
+  const pastEvents = nowMs
+    ? allArtistEvents.filter(ev => isEventPast(ev, nowMs)).sort((a, b) => eventStartMs(b) - eventStartMs(a))
+    : [];
+
+  // One row in the "Performing at" / "Past events" lists (past ones are dimmed).
+  const renderEventCard = (event: (typeof events)[number], past: boolean) => {
+    const distance = userLocation
+      ? haversineKm(userLocation.lat, userLocation.lon, event.lat, event.lon)
+      : null;
+    return (
+      <div
+        key={event.id}
+        onClick={() => router.push(`/events/${eventSlug(event)}`)}
+        className="flex items-center gap-4 rounded-2xl p-4 cursor-pointer group transition-all duration-200"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", opacity: past ? 0.7 : 1 }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLDivElement).style.background   = "rgba(255,255,255,0.05)";
+          (e.currentTarget as HTMLDivElement).style.borderColor  = "rgba(255,255,255,0.2)";
+          (e.currentTarget as HTMLDivElement).style.opacity      = "1";
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLDivElement).style.background   = "rgba(255,255,255,0.03)";
+          (e.currentTarget as HTMLDivElement).style.borderColor  = "rgba(255,255,255,0.07)";
+          (e.currentTarget as HTMLDivElement).style.opacity      = past ? "0.7" : "1";
+        }}
+      >
+        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+          <img
+            src={thumb(event.image, 600)}
+            alt={event.title}
+            className="w-full h-full object-cover object-top"
+            style={past ? { filter: "grayscale(0.6)" } : undefined}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[#ffffff] text-[8px] font-bold tracking-[0.3em] uppercase mb-0.5">{event.tag}</p>
+          <h3 className="text-white font-black text-sm uppercase tracking-wide leading-tight mb-1 truncate">{event.title}</h3>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1 text-white/35 text-[10px]">
+              <Calendar size={9} className="text-white/25" /> {event.date}
+            </div>
+            <div className="flex items-center gap-1 text-white/35 text-[10px]">
+              <MapPin size={9} className="text-white/25" /> {event.location}
+            </div>
+            {!past && distance !== null && (
+              <span className="text-[#ffffff] text-[10px] font-semibold">{formatDistance(distance)}</span>
+            )}
+          </div>
+        </div>
+        <div className="flex-shrink-0 text-right">
+          {past ? (
+            <p className="text-white/40 text-[10px] font-bold tracking-[0.15em] uppercase mb-1">Completed</p>
+          ) : (
+            <p className="text-white/50 text-[11px] font-semibold mb-1">{fromPrice(event.tickets, event.price)}</p>
+          )}
+          <ArrowRight size={14} className="text-white/25 group-hover:text-[#ffffff] group-hover:translate-x-0.5 transition-all duration-200 ml-auto" />
+        </div>
+      </div>
+    );
+  };
 
   // Social links: prefer the new dynamic list, fall back to legacy fixed fields.
   const socials = (artist.socialLinks && artist.socialLinks.length > 0)
@@ -366,7 +436,7 @@ export default function ArtistDetailPage() {
                 <div>
                   <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">GENRES</p>
                   <div>
-                    {(artist.genres ?? []).map(g => <Chip key={g} label={g} accent />)}
+                    {(artist.genres ?? []).map(g => <Chip key={g} label={g} accent color={genreColors[g.toLowerCase()]} />)}
                     {(artist.subGenres ?? []).map(g => <Chip key={g} label={g} />)}
                   </div>
                 </div>
@@ -459,7 +529,7 @@ export default function ArtistDetailPage() {
                         style={{ border: "1px solid rgba(255,255,255,0.07)" }}
                       >
                         <div className="relative w-full overflow-hidden" style={{ height: 140 }}>
-                          <img src={rec.image} alt={rec.stageName || rec.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+                          <img src={thumb(rec.image, 600)} alt={rec.stageName || rec.name} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
                           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0F1116 0%, rgba(8,8,8,0.3) 60%, transparent 100%)" }} />
                         </div>
                         <div className="px-2.5 pb-2.5 pt-1.5 text-center">
@@ -472,60 +542,33 @@ export default function ArtistDetailPage() {
                 </div>
               )}
 
-              {/* Performing At */}
-              {artistEvents.length > 0 && (
+              {/* Performing At — upcoming events */}
+              {(artistEvents.length > 0 || pastEvents.length > 0) && (
                 <div>
                   <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-4">PERFORMING AT</p>
+                  {artistEvents.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {artistEvents.map(event => renderEventCard(event, false))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                      <p className="text-white/25 text-sm">No upcoming events scheduled.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Past events */}
+              {pastEvents.length > 0 && (
+                <div>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-4">PAST EVENTS</p>
                   <div className="flex flex-col gap-3">
-                    {artistEvents.map(event => {
-                      const distance = userLocation
-                        ? haversineKm(userLocation.lat, userLocation.lon, event.lat, event.lon)
-                        : null;
-                      return (
-                        <div
-                          key={event.id}
-                          onClick={() => router.push(`/events/${eventSlug(event)}`)}
-                          className="flex items-center gap-4 rounded-2xl p-4 cursor-pointer group transition-all duration-200"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-                          onMouseEnter={e => {
-                            (e.currentTarget as HTMLDivElement).style.background   = "rgba(255,255,255,0.05)";
-                            (e.currentTarget as HTMLDivElement).style.borderColor  = "rgba(255,255,255,0.2)";
-                          }}
-                          onMouseLeave={e => {
-                            (e.currentTarget as HTMLDivElement).style.background   = "rgba(255,255,255,0.03)";
-                            (e.currentTarget as HTMLDivElement).style.borderColor  = "rgba(255,255,255,0.07)";
-                          }}
-                        >
-                          <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
-                            <img src={event.image} alt={event.title} className="w-full h-full object-cover object-top" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[#ffffff] text-[8px] font-bold tracking-[0.3em] uppercase mb-0.5">{event.tag}</p>
-                            <h3 className="text-white font-black text-sm uppercase tracking-wide leading-tight mb-1 truncate">{event.title}</h3>
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <div className="flex items-center gap-1 text-white/35 text-[10px]">
-                                <Calendar size={9} className="text-white/25" /> {event.date}
-                              </div>
-                              <div className="flex items-center gap-1 text-white/35 text-[10px]">
-                                <MapPin size={9} className="text-white/25" /> {event.location}
-                              </div>
-                              {distance !== null && (
-                                <span className="text-[#ffffff] text-[10px] font-semibold">{formatDistance(distance)}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0 text-right">
-                            <p className="text-white/50 text-[11px] font-semibold mb-1">{fromPrice(event.tickets, event.price)}</p>
-                            <ArrowRight size={14} className="text-white/25 group-hover:text-[#ffffff] group-hover:translate-x-0.5 transition-all duration-200 ml-auto" />
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {pastEvents.map(event => renderEventCard(event, true))}
                   </div>
                 </div>
               )}
 
-              {artistEvents.length === 0 && (
+              {artistEvents.length === 0 && pastEvents.length === 0 && (
                 <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                   <p className="text-white/25 text-sm">No upcoming events scheduled.</p>
                 </div>

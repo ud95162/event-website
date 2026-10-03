@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { thumb } from "../lib/images";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2, Search, Sparkles } from "lucide-react";
@@ -214,7 +215,7 @@ function DayCard({
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              <img src={ev.image} alt={ev.title} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", objectPosition: "top", flexShrink: 0 }} />
+              <img src={thumb(ev.image, 128)} alt={ev.title} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", objectPosition: "top", flexShrink: 0 }} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <p style={{ fontSize: 11, fontWeight: 800, color: "#fff", textTransform: "uppercase", lineHeight: 1.2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{ev.title}</p>
                 <p style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
@@ -591,7 +592,7 @@ export default function CalendarPage() {
               style={{ fontSize: "clamp(1.2rem, 2.5vw, 2rem)" }}>
               {MONTHS[month]}{" "}
               <span style={{
-                background: "linear-gradient(90deg,#39BD69,#e91e8c)",
+                background: "linear-gradient(90deg,#E8DCC0,#e91e8c)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
@@ -609,7 +610,7 @@ export default function CalendarPage() {
               <button
                 onClick={() => setViewDate(new Date(today.getFullYear(), today.getMonth(), 1))}
                 className="px-5 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase transition-all hover:brightness-110"
-                style={{ border: "1px solid rgba(57,189,105,0.5)", color: "#39BD69", background: "rgba(57,189,105,0.08)" }}
+                style={{ border: "1px solid rgba(232,220,192,0.5)", color: "#E8DCC0", background: "rgba(232,220,192,0.08)" }}
               >
                 TODAY
               </button>
@@ -763,8 +764,8 @@ export default function CalendarPage() {
             onClick={e => e.stopPropagation()}
             style={{
               width: "100%", maxWidth: 480, maxHeight: "94dvh",
-              background: "#0b0b10", border: "1px solid rgba(57,189,105,0.25)", borderRadius: 24,
-              boxShadow: "0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.06)", overflow: "hidden",
+              background: "#0b0b10", border: "1px solid rgba(232,220,192,0.25)", borderRadius: 24,
+              boxShadow: "0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(232,220,192,0.06)", overflow: "hidden",
               animation: "cal-twp-pop 0.3s ease", position: "relative",
               display: "flex", flexDirection: "column",
             }}
@@ -772,7 +773,7 @@ export default function CalendarPage() {
             {/* Eyebrow header */}
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 3, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <p style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.7)" }}>
-                <Sparkles size={12} style={{ color: "#39BD69" }} /> Event Details
+                <Sparkles size={12} style={{ color: "#E8DCC0" }} /> Event Details
               </p>
               <button
                 onClick={() => setSelectedEvent(null)}
@@ -794,12 +795,12 @@ export default function CalendarPage() {
               {/* Event info overlay */}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 30px" }}>
                 {selectedEvent.tag && (
-                  <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#39BD69" }}>{selectedEvent.tag}</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0" }}>{selectedEvent.tag}</span>
                 )}
                 <h2 style={{ fontSize: 30, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05, margin: "8px 0 14px" }}>{selectedEvent.title}</h2>
                 <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#39BD69" }} /> {selectedEvent.date}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#39BD69" }} /> {selectedEvent.venue || selectedEvent.location}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#E8DCC0" }} /> {selectedEvent.date}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#E8DCC0" }} /> {selectedEvent.venue || selectedEvent.location}</span>
                 </div>
               </div>
             </div>
@@ -808,7 +809,7 @@ export default function CalendarPage() {
             <div style={{ display: "flex", gap: 10, padding: "12px 16px 18px" }}>
               <button
                 onClick={() => router.push(`/events/${eventSlug(selectedEvent)}`)}
-                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#39BD69", border: "none", color: "#000", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
               >
                 View Event <ArrowRight size={14} />
               </button>

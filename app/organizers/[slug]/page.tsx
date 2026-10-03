@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { thumb } from "../../lib/images";
 import { useState, useEffect } from "react";
 import { ChevronLeft, MapPin, Calendar, Music2, ArrowRight, Building2, Mail, Phone } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
@@ -31,7 +32,7 @@ export default function OrganizerDetailPage() {
   if (loading && !organizer) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#0F1116]">
-        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#39BD69] animate-spin mb-4" />
+        <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-[#E8DCC0] animate-spin mb-4" />
         <p className="text-white/30 text-xs tracking-widest uppercase">Loading organizer…</p>
       </main>
     );
@@ -74,16 +75,16 @@ export default function OrganizerDetailPage() {
         onClick={() => router.push(`/events/${eventSlug(event)}`)}
         className="group cursor-pointer rounded-2xl overflow-hidden transition-all duration-200"
         style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(57,189,105,0.3)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(232,220,192,0.3)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
         onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
       >
         {/* Square image */}
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
-          <img src={event.image} alt={event.title} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+          <img src={thumb(event.image, 600)} alt={event.title} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)" }} />
           {event.tag && (
             <span className="absolute top-2.5 left-2.5 text-[8px] font-bold tracking-[0.2em] uppercase px-2 py-1 rounded-full"
-              style={{ background: "rgba(0,0,0,0.55)", color: "#39BD69", backdropFilter: "blur(6px)" }}>{event.tag}</span>
+              style={{ background: "rgba(0,0,0,0.55)", color: "#E8DCC0", backdropFilter: "blur(6px)" }}>{event.tag}</span>
           )}
           {distance !== null && (
             <span className="absolute top-2.5 right-2.5 text-[8px] font-bold tracking-wide px-2 py-1 rounded-full"
@@ -98,7 +99,7 @@ export default function OrganizerDetailPage() {
           <div className="flex items-center gap-1.5 text-white/40 text-[10px] mb-2.5"><MapPin size={10} className="text-white/30 flex-shrink-0" /> <span className="truncate">{event.location}</span></div>
           <div className="flex items-center justify-between pt-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <span className="text-white/60 text-[11px] font-semibold truncate">{fromPrice(event.tickets, event.price)}</span>
-            <ArrowRight size={13} className="text-white/25 group-hover:text-[#39BD69] group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-2" />
+            <ArrowRight size={13} className="text-white/25 group-hover:text-[#E8DCC0] group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-2" />
           </div>
         </div>
       </div>
@@ -132,7 +133,7 @@ export default function OrganizerDetailPage() {
             {hasBanner ? (
               <img src={organizer.banner} alt={`${organizer.name} banner`} className="absolute inset-0 w-full h-full object-cover" />
             ) : (
-              <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(57,189,105,0.15) 0%, rgba(8,8,8,1) 70%)" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(232,220,192,0.15) 0%, rgba(8,8,8,1) 70%)" }} />
             )}
             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.55) 45%, rgba(8,8,8,0.3) 100%)" }} />
 
@@ -143,9 +144,9 @@ export default function OrganizerDetailPage() {
                 style={{ width: 110, height: 110, border: "3px solid rgba(255,255,255,0.9)", background: "#0a0a0a", boxShadow: "0 12px 40px rgba(0,0,0,0.6)" }}
               >
                 {organizer.logo && !imgError ? (
-                  <img src={organizer.logo} alt={organizer.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
+                  <img src={thumb(organizer.logo, 240)} alt={organizer.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
                 ) : (
-                  <span style={{ fontSize: 44, fontWeight: 900, color: "#39BD69" }}>{organizer.name.charAt(0)}</span>
+                  <span style={{ fontSize: 44, fontWeight: 900, color: "#E8DCC0" }}>{organizer.name.charAt(0)}</span>
                 )}
               </div>
 
@@ -178,8 +179,8 @@ export default function OrganizerDetailPage() {
               <div className="flex flex-wrap gap-3">
                 {organizer.email && (
                   <a href={`mailto:${organizer.email}`} onClick={() => track("organizer", organizer.id, "link_click")} className="flex items-center gap-2.5 rounded-xl px-4 py-3 transition-colors" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Mail size={14} className="text-[#39BD69]" />
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(232,220,192,0.12)", border: "1px solid rgba(232,220,192,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Mail size={14} className="text-[#E8DCC0]" />
                     </div>
                     <div>
                       <p className="text-white/35 text-[9px] uppercase tracking-wider">Email</p>
@@ -189,8 +190,8 @@ export default function OrganizerDetailPage() {
                 )}
                 {organizer.phone && (
                   <a href={`tel:${organizer.phone}`} onClick={() => track("organizer", organizer.id, "link_click")} className="flex items-center gap-2.5 rounded-xl px-4 py-3 transition-colors" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Phone size={14} className="text-[#39BD69]" />
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(232,220,192,0.12)", border: "1px solid rgba(232,220,192,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Phone size={14} className="text-[#E8DCC0]" />
                     </div>
                     <div>
                       <p className="text-white/35 text-[9px] uppercase tracking-wider">Phone</p>

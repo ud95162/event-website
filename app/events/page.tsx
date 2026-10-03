@@ -1,6 +1,8 @@
 "use client";
 
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
+import { genreColor, genreChipStyle } from "../lib/genres";
+import { thumb } from "../lib/images";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -37,7 +39,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
 }) {
   const router = useRouter();
   const { userLocation } = useUserLocation();
-  const { organizers } = useAdminData();
+  const { organizers, genreColors } = useAdminData();
   const [hovered, setHovered] = useState(false);
   const [orgHovered, setOrgHovered] = useState(false);
   const organizer = organizers.find(o => o.name === event.organizer);
@@ -118,8 +120,8 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
         overflow: "hidden",
         position: "relative",
         cursor: "pointer",
-        border: `1px solid ${hovered ? "rgba(57,189,105,0.4)" : "rgba(255,255,255,0.08)"}`,
-        boxShadow: hovered ? "0 0 28px rgba(57,189,105,0.15)" : "none",
+        border: `1px solid ${hovered ? "rgba(232,220,192,0.4)" : "rgba(255,255,255,0.08)"}`,
+        boxShadow: hovered ? "0 0 28px rgba(232,220,192,0.15)" : "none",
         transition: "border-color 0.3s, box-shadow 0.3s, transform 0.3s",
         transform: hovered ? "translateY(-4px)" : "translateY(0)",
         background: "#0a0a0a",
@@ -127,7 +129,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
     >
       {/* Image */}
       <img
-        src={event.image} alt={event.title}
+        src={thumb(event.image, 520)} alt={event.title}
         loading="lazy" decoding="async"
         style={{
           width: "100%", height: "68%", objectFit: "cover", objectPosition: "top",
@@ -165,8 +167,8 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
         </button>
         <button onClick={onShare} style={{
           width: 28, height: 28, borderRadius: "50%",
-          background: shared ? "rgba(57,189,105,0.85)" : "rgba(0,0,0,0.55)",
-          border: `1px solid ${shared ? "rgba(57,189,105,0.6)" : "rgba(255,255,255,0.15)"}`,
+          background: shared ? "rgba(232,220,192,0.85)" : "rgba(0,0,0,0.55)",
+          border: `1px solid ${shared ? "rgba(232,220,192,0.6)" : "rgba(255,255,255,0.15)"}`,
           backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
         }}>
           <Share2 size={11} strokeWidth={2.5} style={{ color: "#fff" }} />
@@ -175,7 +177,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
 
       {/* Info */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px" }}>
-        <p style={{ fontSize: 8, fontWeight: 700, color: "#39BD69", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 4 }}>
+        <p style={{ fontSize: 8, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 4 }}>
           {event.tag}
         </p>
         <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, marginBottom: 6, letterSpacing: "0.04em" }}>
@@ -184,7 +186,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
         {event.genres.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
             {event.genres.slice(0, 3).map(g => (
-              <span key={g} style={{ fontSize: 7, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 999, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}>
+              <span key={g} style={{ fontSize: 7, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 999, ...genreChipStyle(genreColor(genreColors, g)) }}>
                 {g}
               </span>
             ))}
@@ -199,7 +201,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
             <MapPin size={8} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
             <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>{event.location}</span>
             {distance !== null && (
-              <span style={{ fontSize: 9, color: "#39BD69", fontWeight: 600 }}>· {formatDistance(distance)}</span>
+              <span style={{ fontSize: 9, color: "#E8DCC0", fontWeight: 600 }}>· {formatDistance(distance)}</span>
             )}
           </div>
           <p style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
@@ -221,12 +223,12 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                   border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.06)",
                   display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
                   transition: "border-color 0.2s",
-                  ...(orgHovered ? { borderColor: "#39BD69" } : {}),
+                  ...(orgHovered ? { borderColor: "#E8DCC0" } : {}),
                 }}>
                   {organizer.logo ? (
-                    <img src={organizer.logo} alt={organizer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={thumb(organizer.logo, 128)} alt={organizer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <span style={{ fontSize: 9, fontWeight: 800, color: "#39BD69" }}>{organizer.name.charAt(0)}</span>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: "#E8DCC0" }}>{organizer.name.charAt(0)}</span>
                   )}
                 </div>
                 {/* Hover tooltip with name */}
@@ -234,7 +236,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                   <div style={{
                     position: "absolute", bottom: "calc(100% + 6px)", left: 0, zIndex: 20,
                     whiteSpace: "nowrap", padding: "4px 9px", borderRadius: 6,
-                    background: "rgba(0,0,0,0.92)", border: "1px solid rgba(57,189,105,0.4)",
+                    background: "rgba(0,0,0,0.92)", border: "1px solid rgba(232,220,192,0.4)",
                     fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.03em",
                     boxShadow: "0 6px 18px rgba(0,0,0,0.5)", pointerEvents: "none",
                   }}>
@@ -288,8 +290,8 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
           position: "fixed", top: preview.top, left: preview.left,
           width: PREVIEW_W, zIndex: 9999, pointerEvents: "auto", cursor: "pointer",
           borderRadius: 18, overflow: "hidden",
-          background: "#0b0b10", border: "1px solid rgba(57,189,105,0.35)",
-          boxShadow: "0 30px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(57,189,105,0.05)",
+          background: "#0b0b10", border: "1px solid rgba(232,220,192,0.35)",
+          boxShadow: "0 30px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(232,220,192,0.05)",
           animation: "hp-in 0.2s ease",
         }}
       >
@@ -315,13 +317,13 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
 
         {/* Body */}
         <div style={{ padding: "4px 18px 18px", marginTop: -6 }}>
-          <p style={{ fontSize: 9, fontWeight: 700, color: "#39BD69", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 6 }}>{event.tag}</p>
+          <p style={{ fontSize: 9, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 6 }}>{event.tag}</p>
           <h3 style={{ fontSize: 18, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.15, letterSpacing: "0.01em", marginBottom: 10 }}>{event.title}</h3>
 
           {event.genres.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
               {event.genres.slice(0, 4).map(g => (
-                <span key={g} style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, background: "rgba(57,189,105,0.12)", border: "1px solid rgba(57,189,105,0.25)", color: "#39BD69" }}>{g}</span>
+                <span key={g} style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, ...genreChipStyle(genreColor(genreColors, g)) }}>{g}</span>
               ))}
             </div>
           )}
@@ -332,22 +334,22 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <Calendar size={12} style={{ color: "#39BD69", flexShrink: 0 }} />
+              <Calendar size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
               <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{event.date}{event.startTime ? ` · ${event.startTime}` : ""}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <MapPin size={12} style={{ color: "#39BD69", flexShrink: 0 }} />
+              <MapPin size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
               <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{event.venue ? `${event.venue}, ` : ""}{event.location}{distance !== null ? ` · ${formatDistance(distance)}` : ""}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <Ticket size={12} style={{ color: "#39BD69", flexShrink: 0 }} />
+              <Ticket size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
               <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{ticketPrices(event.tickets, event.price)}</span>
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
             <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{organizer ? `By ${organizer.name}` : ""}</span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 800, color: "#39BD69", letterSpacing: "0.1em", textTransform: "uppercase" }}>View Details <ArrowRight size={12} /></span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.1em", textTransform: "uppercase" }}>View Details <ArrowRight size={12} /></span>
           </div>
         </div>
       </div>,
@@ -422,7 +424,7 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
   return (
     <div style={{ marginBottom: 40 }}>
       <div style={{ marginBottom: 16 }}>
-        {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#39BD69", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
+        {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
         <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
       </div>
 
@@ -521,7 +523,7 @@ function AllEventsSection({ liked, shared, onLike, onShare }: {
 
   return (
     <div style={{ padding: "8px 56px 0" }}>
-      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#39BD69", marginBottom: 6 }}>Browse Everything</p>
+      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: 6 }}>Browse Everything</p>
       <h2 style={{ fontSize: "clamp(1.2rem,2.4vw,1.8rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.01em", marginBottom: 20 }}>All Events</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
         {items.map(ev => (

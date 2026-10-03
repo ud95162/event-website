@@ -1,8 +1,11 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Mail, Link2, Check, Globe } from "lucide-react";
+import { toDateTime } from "../../lib/eventTime";
+import { genreColor, genreChipStyle } from "../../lib/genres";
+import { thumb } from "../../lib/images";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Maximize, Minimize, Mail, Link2, Check, Globe } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { artistSlug, organizerSlug } from "../../lib/slug";
@@ -82,7 +85,7 @@ export default function EventDetailPage() {
   const slug     = String(params.slug);
   // Lineup artists and organizers still come from context; the event itself is fetched
   // by slug so this page never loads the whole events table just to find one.
-  const { artists, organizers } = useAdminData();
+  const { artists, organizers, genreColors } = useAdminData();
   const { userLocation } = useUserLocation();
 
   const [event,   setEvent]   = useState<Event | null>(null);
@@ -241,8 +244,14 @@ export default function EventDetailPage() {
           {/* ══════════════════════════════════════════════════════════════
               TICKET STUB BANNER
              ══════════════════════════════════════════════════════════════ */}
+          {/* Consistent hero height that fits the screen at first glance instead of growing with
+              the ticket column (which scrolls if its content is taller). Desktop only. */}
+          <style>{`@media (min-width: 1024px) {
+            .event-hero-card { height: clamp(480px, calc(100dvh - 280px), 780px); }
+            .event-ticket-panel { overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+          }`}</style>
           <div
-            className="w-full flex items-stretch rounded-3xl overflow-hidden relative"
+            className="event-hero-card w-full flex items-stretch rounded-3xl overflow-hidden relative"
             style={{
               background: "#18181b",
               border: "1px solid rgba(255,255,255,0.08)",
@@ -253,7 +262,7 @@ export default function EventDetailPage() {
                    taller for vertical Instagram reels so the full video is visible ── */}
             <div
               className="relative flex-shrink-0 overflow-hidden"
-              style={{ width: "62%", ...(trailerIsInstagram ? { minHeight: "min(680px, 82vh)" } : {}) }}
+              style={{ width: "66%" }}
             >
               {/* Ambient blurred backdrop fills the whole panel behind the media */}
               <img
@@ -266,12 +275,6 @@ export default function EventDetailPage() {
 
               {/* Flyer → (after 5s) video slider — keyed so it resets per event */}
               <EventMedia key={event.id} image={event.image} title={event.title} trailer={trailer} />
-
-              {/* Right-side fade blends the panel edge into the ticket */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: "linear-gradient(to right, transparent 78%, #18181b 100%)" }}
-              />
 
               {/* Badge */}
               {event.badge && (
@@ -316,12 +319,12 @@ export default function EventDetailPage() {
             </div>
 
             {/* ── Right: Ticket panel ─────────────────────────────────── */}
-            <div className="flex-1 flex flex-col justify-between p-8">
+            <div className="event-ticket-panel flex-1 min-w-0 flex flex-col justify-between p-6">
 
               {/* Top: title + actions */}
               <div>
                 <div className="flex items-start justify-between gap-3 mb-5">
-                  <h1 className="text-white font-black text-3xl lg:text-4xl uppercase tracking-tight leading-tight">
+                  <h1 className={`text-white font-black uppercase tracking-tight leading-tight ${event.title.length > 40 ? "text-lg lg:text-xl" : event.title.length > 24 ? "text-xl lg:text-2xl" : "text-2xl lg:text-3xl"}`}>
                     {event.title}
                   </h1>
                   <div className="flex gap-2 flex-shrink-0">
@@ -485,7 +488,7 @@ export default function EventDetailPage() {
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.14)"; }}
                         >
                           {artist.image ? (
-                            <img src={artist.image} alt={artist.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                            <img src={thumb(artist.image, 96)} alt={artist.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                           ) : (
                             <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>{artist.name.charAt(0)}</span>
                           )}
@@ -522,7 +525,7 @@ export default function EventDetailPage() {
                       <span
                         key={g}
                         className="text-[10px] font-bold tracking-wide uppercase px-3 py-1.5 rounded-full"
-                        style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)", color: "#ffffff" }}
+                        style={genreChipStyle(genreColor(genreColors, g))}
                       >
                         {g}
                       </span>
@@ -575,7 +578,7 @@ export default function EventDetailPage() {
                 const L = event.links ?? {};
                 const items = [
                   { key: "website",   label: "Website",   url: L.website,   color: "#38bdf8", icon: <Globe size={15} /> },
-                  { key: "tickets",   label: "Tickets",   url: L.tickets,   color: "#39BD69", icon: <Ticket size={15} /> },
+                  { key: "tickets",   label: "Tickets",   url: L.tickets,   color: "#E8DCC0", icon: <Ticket size={15} /> },
                   { key: "instagram", label: "Instagram", url: L.instagram, color: "#E1306C", icon: <IgInstagram /> },
                   { key: "facebook",  label: "Facebook",  url: L.facebook,  color: "#1877F2", icon: <IgFacebook /> },
                   { key: "tiktok",    label: "TikTok",    url: L.tiktok,    color: "#FE2C55", icon: <IgTiktok /> },
@@ -703,7 +706,7 @@ export default function EventDetailPage() {
                       style={{ width: 44, height: 44, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)" }}
                     >
                       {organizer.logo ? (
-                        <img src={organizer.logo} alt={organizer.name} className="w-full h-full object-cover" />
+                        <img src={thumb(organizer.logo, 240)} alt={organizer.name} className="w-full h-full object-cover" />
                       ) : (
                         <span style={{ fontSize: 18, fontWeight: 900, color: "#ffffff" }}>{organizer.name.charAt(0)}</span>
                       )}
@@ -728,7 +731,7 @@ export default function EventDetailPage() {
                         className="flex items-center gap-3 cursor-pointer group"
                       >
                         <div className="flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center" style={{ width: 34, height: 34, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)" }}>
-                          {co.logo ? <img src={co.logo} alt={co.name} className="w-full h-full object-cover" /> : <span style={{ fontSize: 13, fontWeight: 800, color: "#ffffff" }}>{co.name.charAt(0)}</span>}
+                          {co.logo ? <img src={thumb(co.logo, 160)} alt={co.name} className="w-full h-full object-cover" /> : <span style={{ fontSize: 13, fontWeight: 800, color: "#ffffff" }}>{co.name.charAt(0)}</span>}
                         </div>
                         <p className="text-white/80 text-xs font-semibold truncate group-hover:text-[#ffffff] transition-colors">{co.name}</p>
                       </div>
@@ -771,6 +774,19 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
   const videoRef = useRef<HTMLVideoElement>(null);
   const ytRef = useRef<HTMLIFrameElement>(null);
 
+  // Instagram's embed has no fullscreen of its own, so we offer one that expands the reel.
+  const igRef = useRef<HTMLDivElement>(null);
+  const [igFs, setIgFs] = useState(false);
+  useEffect(() => {
+    const onChange = () => setIgFs(!!igRef.current && document.fullscreenElement === igRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  const toggleIgFullscreen = () => {
+    if (document.fullscreenElement) { document.exitFullscreen?.(); return; }
+    igRef.current?.requestFullscreen?.().catch(() => {});
+  };
+
   // Auto-advance from the flyer to the video 5 seconds after the page loads.
   useEffect(() => {
     if (!hasVideo) return;
@@ -795,11 +811,17 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
   // YouTube / Vimeo embed with autoplay + sound (mute toggled by state).
   // vq=hd1080 asks YouTube to start in 1080p (a hint — YouTube may still adapt to
   // bandwidth / player size); the IFrame API call below reinforces it.
-  const embed = yt
-    ? `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`
-    : vimeo
-    ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${muted ? 1 : 0}&playsinline=1&quality=1080p`
-    : "";
+  // Built once when the video slide opens. Muting/unmuting afterwards is sent to the running
+  // player (below) — changing this URL (or the iframe's key) would reload the video from 0:00.
+  const embed = useMemo(() => {
+    const m = muted ? 1 : 0;
+    return yt
+      ? `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=${m}&controls=1&rel=0&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`
+      : vimeo
+      ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${m}&playsinline=1&quality=1080p`
+      : "";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yt?.[1], vimeo?.[1], showVideo]);
 
   // Once the YouTube player is ready, request 1080p and (if unmuted) turn the sound on.
   const applyYtPrefs = () => {
@@ -819,7 +841,21 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
     const timers = [400, 1200, 2500].map(ms => window.setTimeout(applyYtPrefs, ms));
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showVideo, muted]);
+  }, [showVideo]);
+
+  // Sound toggle: tell the already-playing embed to mute/unmute instead of reloading it.
+  useEffect(() => {
+    if (!showVideo || insta) return;
+    const w = ytRef.current?.contentWindow;
+    if (!w) return;
+    if (yt) {
+      w.postMessage(JSON.stringify({ event: "command", func: muted ? "mute" : "unMute", args: [] }), "*");
+      if (!muted) w.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
+    } else if (vimeo) {
+      w.postMessage(JSON.stringify({ method: "setMuted", value: muted }), "*");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [muted]);
 
   return (
     <>
@@ -831,18 +867,42 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
         style={{ opacity: showVideo ? 0 : 1 }}
       />
 
+      {/* Right-side fade blends the flyer's edge into the ticket. Not shown over the video —
+          it dimmed the player's own fullscreen/settings icons on the right. */}
+      {!showVideo && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(to right, transparent 78%, #18181b 100%)" }}
+        />
+      )}
+
       {/* Instagram reel/post — embedded in Instagram's own vertical player */}
       {showVideo && insta && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ padding: 12 }}>
+        <div
+          ref={igRef}
+          className={`absolute inset-0 flex justify-center ${igFs ? "items-start overflow-hidden" : "items-center"}`}
+          style={{ padding: igFs ? 0 : 12, background: igFs ? "#000" : undefined }}
+        >
           <iframe
             src={`https://www.instagram.com/${insta.type}/${insta.code}/embed`}
             title="Event trailer"
             className="h-full"
-            style={{ border: 0, width: "min(100%, 400px)", borderRadius: 12, background: "#000" }}
-            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            // Fullscreen: as tall as the screen (plus a little, so Instagram's white caption/likes footer
+            // is pushed off the bottom) and wide enough for the reel to scale up.
+            style={{ border: 0, width: igFs ? "min(100vw, 68vh)" : "min(100%, 400px)", height: igFs ? "calc(100% + 130px)" : undefined, borderRadius: igFs ? 0 : 12, background: "#000" }}
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             scrolling="no"
           />
+          <button
+            onClick={toggleIgFullscreen}
+            aria-label={igFs ? "Exit fullscreen" : "Fullscreen"}
+            title={igFs ? "Exit fullscreen" : "Fullscreen"}
+            className="absolute top-5 right-5 z-30 flex items-center justify-center rounded-full transition-all hover:scale-105"
+            style={{ width: 40, height: 40, background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.45)", backdropFilter: "blur(6px)", boxShadow: "0 2px 10px rgba(0,0,0,0.45)" }}
+          >
+            {igFs ? <Minimize size={18} className="text-white" /> : <Maximize size={18} className="text-white" />}
+          </button>
         </div>
       )}
 
@@ -852,7 +912,6 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
           <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
             {embed ? (
               <iframe
-                key={muted ? "m" : "u"}
                 ref={ytRef}
                 src={embed}
                 title="Event trailer"
@@ -929,19 +988,6 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
 }
 
 /* ── Event countdown / completed indicator ─────────────────────────── */
-function toDateTime(dateStr?: string, timeStr?: string): Date | null {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  if (timeStr && /^\d{1,2}:\d{2}/.test(timeStr)) {
-    const [h, m] = timeStr.split(":").map(Number);
-    d.setHours(h, m, 0, 0);
-  } else {
-    d.setHours(0, 0, 0, 0);
-  }
-  return d;
-}
-
 function EventCountdown({ date, startTime, endDate, endTime }: {
   date: string; startTime?: string; endDate?: string; endTime?: string;
 }) {

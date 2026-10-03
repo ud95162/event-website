@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
+import { thumb } from "../lib/images";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Heart, Music2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Artist } from "../data/artists";
@@ -46,7 +47,7 @@ function ArtistCard({ artist, followed, onFollow }: {
         background: "#0b0a08",
       }}
     >
-      <img src={artist.image} alt={artist.name} style={{
+      <img src={thumb(artist.image, 600)} alt={artist.name} style={{
         width: "100%", height: "65%", objectFit: "cover", objectPosition: "top",
         transform: hovered ? "scale(1.06)" : "scale(1)",
         filter: hovered ? "grayscale(0%)" : "grayscale(30%)",
@@ -81,7 +82,7 @@ function ArtistCard({ artist, followed, onFollow }: {
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px", textAlign: "center" }}>
         <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 5 }}>{artist.role}</p>
         <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, letterSpacing: "0.04em", marginBottom: 6 }}>{artist.name}</h3>
-        <div style={{ height: 2, borderRadius: 999, margin: "0 auto", width: hovered ? "62%" : "32%", background: "linear-gradient(90deg, rgba(227,184,115,0), #F0D592 35%, #C9A24B 65%, rgba(227,184,115,0))", transition: "width 0.4s ease" }} />
+        <div style={{ height: 2, borderRadius: 999, margin: "0 auto", width: hovered ? "62%" : "32%", background: "linear-gradient(90deg, rgba(227,184,115,0), #f5ecd0 35%, #C9A24B 65%, rgba(227,184,115,0))", transition: "width 0.4s ease" }} />
       </div>
     </div>
   );
