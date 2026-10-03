@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay, MessageSquareQuote, Mail } from "lucide-react";
+import { UserCircle, CalendarDays, Users, Building2, ImageIcon, Tag, LogOut, Star, Sparkles, BarChart3, MonitorPlay, MessageSquareQuote, Mail } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/admin/analytics",        label: "Analytics",        icon: BarChart3,       roles: ["admin", "organizer"] },
+  { href: "/admin/my-events",        label: "My Events",        icon: CalendarDays,    roles: ["organizer"] },
+  { href: "/admin/profile",          label: "My Profile",       icon: UserCircle,      roles: ["organizer"] },
   { href: "/admin/events",           label: "Events",           icon: CalendarDays,    roles: ["admin"] },
   { href: "/admin/artists",          label: "Artists",          icon: Users,           roles: ["admin"] },
   { href: "/admin/featured-events",  label: "Featured Events",  icon: Star,            roles: ["admin"] },

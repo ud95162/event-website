@@ -144,7 +144,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   // The admin Events list pages through /api/events/admin and the edit form fetches its single
   // event, so neither needs the full list either.
   const skipEvents = pathname === "/" || pathname.startsWith("/events") || pathname === "/calendar"
-    || pathname === "/admin/events" || pathname === "/admin/events/new";
+    || pathname === "/admin/events" || pathname === "/admin/events/new" || pathname === "/admin/my-events";
   const skipArtists = pathname === "/" || pathname === "/events";
 
   const [events, setEvents] = useState<Event[]>([]);

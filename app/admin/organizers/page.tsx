@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Organizer } from "../../context/AdminDataContext";
 import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
 import ImageUpload from "../components/ImageUpload";
+import PasswordInput from "../components/PasswordInput";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "10px 14px", borderRadius: 8,
@@ -187,8 +188,7 @@ export default function OrganizersAdminPage() {
               </div>
               <div>
                 <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
+                <PasswordInput
                   style={inputStyle}
                   value={form.password}
                   onChange={e => set("password", e.target.value)}

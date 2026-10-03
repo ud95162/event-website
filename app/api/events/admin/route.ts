@@ -8,7 +8,7 @@ import { mapEventRow } from "../../../lib/mappers";
 // follow-up query loads full rows only for the requested page.
 //
 // Query: page (1-based, default 1), limit (default 10, max 100), q, location,
-//        date (yyyy-mm-dd), month (yyyy-mm), period (today|week|month), sort (asc|desc)
+//        organizer (exact name), date (yyyy-mm-dd), month (yyyy-mm), period (today|week|month), sort (asc|desc)
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
@@ -37,16 +37,20 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Math.max(parseInt(sp.get("limit") ?? "", 10) || DEFAULT_LIMIT, 1), MAX_LIMIT);
   const q = (sp.get("q") ?? "").trim().toLowerCase();
   const location = sp.get("location") ?? "";
+  const organizer = sp.get("organizer") ?? "";
   const date = sp.get("date") ?? "";
   const month = sp.get("month") ?? "";
   const period = sp.get("period") ?? "";
   const sort = sp.get("sort") === "asc" ? "asc" : sp.get("sort") === "desc" ? "desc" : "";
 
-  const [meta] = await pool.query<any[]>("SELECT id, title, date, location FROM events ORDER BY id");
+  const [meta] = await pool.query<any[]>("SELECT id, title, date, location, organizer FROM events ORDER BY id");
 
-  const locations = Array.from(new Set(meta.map((r) => r.location).filter(Boolean))).sort() as string[];
+  // Locations offered in the dropdown are scoped to the organizer when one is given.
+  const scoped = organizer ? meta.filter((r) => r.organizer === organizer) : meta;
+  const locations = Array.from(new Set(scoped.map((r) => r.location).filter(Boolean))).sort() as string[];
 
   let matches = meta.filter((r) => {
+    if (organizer && r.organizer !== organizer) return false;
     if (q && !String(r.title ?? "").toLowerCase().includes(q)) return false;
     if (location && r.location !== location) return false;
     if (date || month || period) {

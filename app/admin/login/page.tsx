@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
+import PasswordInput from "../components/PasswordInput";
 
 export default function AdminLoginPage() {
   const { login, user } = useAuth();
@@ -87,9 +88,8 @@ export default function AdminLoginPage() {
             <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>
               Password
             </label>
-            <input
+            <PasswordInput
               style={inputStyle}
-              type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Enter password"
