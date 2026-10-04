@@ -452,24 +452,7 @@ export default function EventDetailPage() {
                 {(event.tickets ?? []).filter(t => t.name || t.price).length > 0 && (
                   <div className="mb-6">
                     <p className="text-white/30 text-[8px] tracking-[0.35em] uppercase mb-2.5">TICKETS</p>
-                    <div className="flex flex-col gap-2">
-                      {(event.tickets ?? []).filter(t => t.name || t.price).map((t, i) => (
-                        <div
-                          key={i}
-                          className="rounded-xl px-3.5 py-2.5"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <Ticket size={12} className="text-[#ffffff] flex-shrink-0" />
-                              <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
-                            </div>
-                            <span className="text-[#ffffff] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
-                          </div>
-                          {t.desc && <p className="text-white/40 text-[10px] leading-snug mt-1.5 pl-[22px]">{t.desc}</p>}
-                        </div>
-                      ))}
-                    </div>
+                    <TicketCards tickets={event.tickets ?? []} />
                   </div>
                 )}
 
@@ -515,6 +498,14 @@ export default function EventDetailPage() {
                 <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">ABOUT THIS EVENT</p>
                 <p className="text-white/65 text-sm leading-relaxed">{event.description}</p>
               </div>
+
+              {/* Tickets — repeated here so they're always visible without scrolling the ticket panel above */}
+              {(event.tickets ?? []).filter(t => t.name || t.price).length > 0 && (
+                <div>
+                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">TICKETS</p>
+                  <TicketCards tickets={event.tickets ?? []} columns />
+                </div>
+              )}
 
               {/* Genres */}
               {event.genres.length > 0 && (
@@ -755,6 +746,31 @@ export default function EventDetailPage() {
       </div>
       <Footer />
     </main>
+  );
+}
+
+/* ── Ticket types (shown in the ticket panel and again in the event details) ── */
+function TicketCards({ tickets, columns = false }: { tickets: NonNullable<Event["tickets"]>; columns?: boolean }) {
+  const list = tickets.filter(t => t.name || t.price);
+  return (
+    <div className={columns ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "flex flex-col gap-2"}>
+      {list.map((t, i) => (
+        <div
+          key={i}
+          className="rounded-xl px-3.5 py-2.5"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Ticket size={12} className="text-[#ffffff] flex-shrink-0" />
+              <span className="text-white/85 text-xs font-semibold truncate">{t.name || "Ticket"}</span>
+            </div>
+            <span className="text-[#ffffff] text-xs font-bold flex-shrink-0 ml-3">{/^[\d,]+$/.test(t.price) ? `LKR ${t.price}` : t.price}</span>
+          </div>
+          {t.desc && <p className="text-white/40 text-[10px] leading-snug mt-1.5 pl-[22px]">{t.desc}</p>}
+        </div>
+      ))}
+    </div>
   );
 }
 
