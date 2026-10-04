@@ -32,11 +32,17 @@ function signature(value: string): string {
 // instead (see lib/select.ts), carrying just a content signature for the ?v= cache-buster.
 export const IMG_MARK = "@img:";
 
-/** Data URIs (or the SQL marker standing in for one) become /api/img/... URLs; ordinary
- *  http(s)/relative URLs pass through untouched. */
+// Pictures that live in /public (the original demo events/artists). They're multi-MB PNGs, so they
+// are served through the same resizing endpoint: /api/img/pub/<dir>/<file>.
+const PUBLIC_PIC = /^\/(events|artists)\/([\w.-]+\.(?:png|jpe?g|webp))$/i;
+
+/** Data URIs (or the SQL marker standing in for one) become /api/img/... URLs; local /public
+ *  pictures are routed through the optimiser too; other http(s)/relative URLs pass through. */
 export function imgUrl(table: string, id: number | string, field: string, value: string | null | undefined): string | null | undefined {
   if (!value) return value;
   if (value.startsWith(IMG_MARK)) return `${IMG_PREFIX}${table}/${id}/${field}?v=${value.slice(IMG_MARK.length)}`;
+  const pub = value.match(PUBLIC_PIC);
+  if (pub) return `${IMG_PREFIX}pub/${pub[1]}/${pub[2]}`;
   if (!value.startsWith("data:")) return value;
   return `${IMG_PREFIX}${table}/${id}/${field}?v=${signature(value)}`;
 }

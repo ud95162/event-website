@@ -1,3 +1,5 @@
+import { promises as fs } from "fs";
+import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { getPool } from "../../../../../lib/db";
@@ -38,6 +40,10 @@ export async function GET(
   { params }: { params: Promise<{ table: string; id: string; field: string }> }
 ) {
   const { table, id, field } = await params;
+
+  // /api/img/pub/<events|artists>/<file> — a picture from /public, resized + re-encoded.
+  if (table === "pub") return servePublic(req, id, field);
+
   const col = IMG_COLUMNS[table]?.[field];
   if (!col || !/^\d+$/.test(id)) return new NextResponse("Not found", { status: 404 });
 
@@ -90,5 +96,36 @@ export async function GET(
   }
 
   cacheSet(key, { buf, type });
+  return new NextResponse(new Uint8Array(buf), { headers: { ...headers, "Content-Type": type } });
+}
+
+// Only these folders / file names can be read (no path tricks).
+async function servePublic(req: NextRequest, dir: string, file: string) {
+  if (!/^(events|artists)$/.test(dir) || !/^[\w.-]+\.(png|jpe?g|webp)$/i.test(file)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+  const sp = req.nextUrl.searchParams;
+  const wParam = parseInt(sp.get("w") ?? "", 10);
+  const width = Math.min(Math.max(Number.isFinite(wParam) ? wParam : DEFAULT_MAX_W, MIN_W), MAX_W);
+
+  const abs = path.join(process.cwd(), "public", dir, file);
+  let stat;
+  try { stat = await fs.stat(abs); } catch { return new NextResponse("Not found", { status: 404 }); }
+
+  const etag = `"pub-${dir}-${file}-${stat.size}-${Math.round(stat.mtimeMs)}-${width}"`;
+  const headers: Record<string, string> = { "Cache-Control": "public, max-age=2592000", ETag: etag };
+  if (req.headers.get("if-none-match") === etag) return new NextResponse(null, { status: 304, headers });
+
+  const hit = cacheGet(etag);
+  if (hit) return new NextResponse(new Uint8Array(hit.buf), { headers: { ...headers, "Content-Type": hit.type } });
+
+  const raw = await fs.readFile(abs);
+  let buf: Buffer = raw;
+  let type = /\.png$/i.test(file) ? "image/png" : /\.webp$/i.test(file) ? "image/webp" : "image/jpeg";
+  try {
+    buf = await sharp(raw, { failOn: "none" }).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    type = "image/webp";
+  } catch { /* serve the original */ }
+  cacheSet(etag, { buf, type });
   return new NextResponse(new Uint8Array(buf), { headers: { ...headers, "Content-Type": type } });
 }
