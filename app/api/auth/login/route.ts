@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
 import { ensureSchema } from "../../../lib/schema";
-import { signAdminToken } from "../../../lib/auth";
+import { signAdminToken, signOrganizerToken } from "../../../lib/auth";
 
 // Built-in admin account (organizers authenticate against the DB below).
 const ADMIN = { username: "admin", password: "admin123" };
@@ -20,11 +20,11 @@ export async function POST(req: NextRequest) {
 
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
-    "SELECT name FROM organizers WHERE username = ? AND password = ? LIMIT 1",
+    "SELECT id, name FROM organizers WHERE username = ? AND password = ? LIMIT 1",
     [username, password]
   );
   if (rows.length > 0) {
-    return NextResponse.json({ username, role: "organizer", orgName: rows[0].name });
+    return NextResponse.json({ username, role: "organizer", orgName: rows[0].name, token: signOrganizerToken(username, rows[0].id) });
   }
 
   return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });

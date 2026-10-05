@@ -21,7 +21,17 @@ const selectStyle: React.CSSProperties = {
 export default function MyEventsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const orgName = user?.orgName ?? "";
+  // The organizer's current name comes from the server (their record may have been renamed since
+  // they signed in); the session's copy is only the fallback.
+  const [freshName, setFreshName] = useState("");
+  useEffect(() => {
+    if (!user?.token) return;
+    fetch("/api/organizers/me", { headers: { Authorization: `Bearer ${user.token}` }, cache: "no-store" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(o => { if (o?.name) setFreshName(o.name); })
+      .catch(() => {});
+  }, [user?.token]);
+  const orgName = freshName || user?.orgName || "";
 
   // Admins manage events from the Events page.
   useEffect(() => {

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import { useAdminData } from "../../context/AdminDataContext";
 import { Check, Lock } from "lucide-react";
 import ImageUpload from "../components/ImageUpload";
 import PasswordInput from "../components/PasswordInput";
@@ -28,15 +27,37 @@ const note = (ok: boolean): React.CSSProperties => ({
 });
 
 // The signed-in organizer's own profile: view/edit details and change password.
+type OrgRecord = { id: number; name: string; username?: string; logo?: string | null; banner?: string | null; description?: string | null; email?: string | null; phone?: string | null };
+
 export default function ProfilePage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { organizers, updateOrganizer } = useAdminData();
-  const org = organizers.find(o => o.name === user?.orgName);
+  const { user, logout } = useAuth();
+  const token = user?.token;
 
   useEffect(() => {
     if (user && user.role !== "organizer") router.replace("/admin");
   }, [user, router]);
+
+  // ── The organizer's own record, fetched by identity (not looked up by name in a shared list) ──
+  const [org, setOrg] = useState<OrgRecord | null>(null);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "expired" | "missing" | "error">("loading");
+
+  const loadOrg = useCallback(async () => {
+    if (!user || user.role !== "organizer") return;
+    if (!token) { setLoadState("expired"); return; }          // session from before sign-in tokens existed
+    setLoadState("loading");
+    try {
+      const res = await fetch("/api/organizers/me", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      if (res.status === 401) { setLoadState("expired"); return; }
+      if (res.status === 404) { setLoadState("missing"); return; }
+      if (!res.ok) throw new Error(String(res.status));
+      setOrg(await res.json());
+      setLoadState("ready");
+    } catch {
+      setLoadState("error");
+    }
+  }, [user, token]);
+  useEffect(() => { loadOrg(); }, [loadOrg]);
 
   // ── Details ──
   const [logo, setLogo] = useState("");
@@ -47,11 +68,13 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [detailsMsg, setDetailsMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const fillForm = (o: OrgRecord) => {
+    setLogo(o.logo ?? ""); setBanner(o.banner ?? ""); setDescription(o.description ?? "");
+    setEmail(o.email ?? ""); setPhone(o.phone ?? "");
+  };
   const orgId = org?.id;
   useEffect(() => {
-    if (!org) return;
-    setLogo(org.logo ?? ""); setBanner(org.banner ?? ""); setDescription(org.description ?? "");
-    setEmail(org.email ?? ""); setPhone(org.phone ?? "");
+    if (org) fillForm(org);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
 
@@ -60,13 +83,23 @@ export default function ProfilePage() {
     if (!org || saving) return;
     setSaving(true); setDetailsMsg(null);
     // Name and username stay as set by the admin; only the profile fields change.
-    const ok = await updateOrganizer({
-      id: org.id, name: org.name, username: org.username,
-      logo: logo || undefined, banner: banner || undefined, description: description || undefined,
-      email: email || undefined, phone: phone || undefined,
-    });
+    try {
+      const res = await fetch("/api/organizers/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ logo, banner, description, email, phone }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setOrg(body); fillForm(body);
+        setDetailsMsg({ ok: true, text: "Your details have been saved." });
+      } else {
+        setDetailsMsg({ ok: false, text: res.status === 401 ? "Your session has expired — please sign in again." : body.error || "Couldn't save — please try again." });
+      }
+    } catch {
+      setDetailsMsg({ ok: false, text: "Couldn't reach the server — please check your connection and try again." });
+    }
     setSaving(false);
-    setDetailsMsg(ok ? { ok: true, text: "Your details have been saved." } : { ok: false, text: "Couldn't save — please check your connection and try again." });
   };
 
   // ── Password ──
@@ -116,7 +149,22 @@ export default function ProfilePage() {
         <p style={sectionHead}>Organizer Details</p>
 
         {!org ? (
-          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Loading your details…</p>
+          loadState === "loading" ? (
+            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Loading your details…</p>
+          ) : (
+            <div style={note(false)}>
+              {loadState === "expired" && "Your session is out of date. Please sign out and sign in again to see and edit your details."}
+              {loadState === "missing" && "We couldn't find your organizer record. Please contact the DiscoverEvents.lk team."}
+              {loadState === "error" && "We couldn't load your details. Please check your connection and try again."}
+              <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                {loadState === "expired" ? (
+                  <button type="button" onClick={() => { logout(); router.replace("/admin/login"); }} style={{ padding: "8px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Sign in again</button>
+                ) : loadState === "error" ? (
+                  <button type="button" onClick={loadOrg} style={{ padding: "8px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Try again</button>
+                ) : null}
+              </div>
+            </div>
+          )
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
