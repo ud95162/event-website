@@ -282,9 +282,14 @@ export default function Navbar() {
             ))}
             <LocationPill />
             <CalendarPicker />
-            <button className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors">
+            <Link
+              href="/admin/login"
+              title="Partner login"
+              aria-label="Partner login"
+              className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"
+            >
               <User size={20} className="text-white/60" />
-            </button>
+            </Link>
           </div>
 
           {/* Mobile toggle */}
