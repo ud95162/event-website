@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect } from "react";
+import { eventSlug } from "../lib/slug";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown, Search, Calendar, Check, X } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
@@ -373,6 +374,7 @@ export default function StickySearchFilters() {
   const [catOpen,      setCatOpen]      = useState(false);
   const [selectedCat,  setSelectedCat]  = useState<typeof CAT_OPTIONS[0] | null>(null);
   const [searchQuery,  setSearchQuery]  = useState("");
+  const [eventHits,    setEventHits]    = useState<{ id: number; title: string; date: string; location: string; tag: string }[]>([]);
   const [resultsOpen,  setResultsOpen]  = useState(false);
   const [dateOpen,     setDateOpen]     = useState(false);
   const [dateVal,      setDateVal]      = useState("");   // "", "today", "this-week", "this-month", "custom:from:to"
@@ -424,8 +426,22 @@ export default function StickySearchFilters() {
     router.push(`/events?${params.toString()}`);
   };
 
+  // Event-name suggestions (only with "All categories" on the events/home pages).
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (artistsMode || selectedCat || q.length < 2) { setEventHits([]); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      fetch(`/api/events/suggest?q=${encodeURIComponent(q)}&limit=6`)
+        .then(r => (r.ok ? r.json() : []))
+        .then(d => { if (!cancelled) setEventHits(Array.isArray(d) ? d : []); })
+        .catch(() => {});
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [searchQuery, artistsMode, selectedCat]);
+
   // Compute matching results based on category + query
-  const matchedResults: { label: string; color: string; type: string; value?: string }[] = (() => {
+  const matchedResults: { label: string; color: string; type: string; value?: string; meta?: string }[] = (() => {
     const q = searchQuery.trim().toLowerCase();
 
     // Artists pages: show the whole saved genre list, narrowed as the user types.
@@ -454,13 +470,22 @@ export default function StickySearchFilters() {
         .filter(a => a.toLowerCase().includes(q))
         .map(a => ({ label: a, color: "#e879f9", type: "Artist" }));
       if (selectedCat?.key === "artists") return artists;
-      return [...artists, ...genreMatches, ...orgMatches];
+      const events = eventHits.map(e => ({
+        label: e.title, color: "#ffffff", type: "Event", value: eventSlug(e),
+        meta: [e.date, e.location].filter(Boolean).join(" · "),
+      }));
+      return [...events, ...artists, ...genreMatches, ...orgMatches];
     }
     return [];
   })();
 
   // Route a picked result to the right query param.
   const pickResult = (r: { label: string; type: string; value?: string }) => {
+    if (r.type === "Event" && r.value) {            // an event suggestion opens that event
+      router.push(`/events/${r.value}`);
+      setResultsOpen(false);
+      return;
+    }
     if ((r.type === "Event Type" || r.type === "Genre") && r.value) {
       const params = new URLSearchParams();
       params.set("genre", r.value);
@@ -610,7 +635,10 @@ export default function StickySearchFilters() {
                     className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/06 transition-colors text-left group"
                   >
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.color }} />
-                    <span className="flex-1 text-sm font-medium text-white/80 group-hover:text-white transition-colors">{r.label}</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-white/80 group-hover:text-white transition-colors truncate">{r.label}</span>
+                      {r.meta && <span className="block text-[11px] text-white/35 truncate mt-0.5">{r.meta}</span>}
+                    </span>
                     <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full flex-shrink-0"
                       style={{ background: r.color + "22", color: r.color }}>
                       {r.type}
