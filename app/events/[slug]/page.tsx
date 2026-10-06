@@ -4,8 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { toDateTime } from "../../lib/eventTime";
 import { genreColor, genreChipStyle } from "../../lib/genres";
 import { thumb } from "../../lib/images";
-import { useState, useEffect, useRef, useMemo } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Maximize, Minimize, Mail, Link2, Check, Globe } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Maximize, Minimize, Play, Pause, Mail, Link2, Check, Globe } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { artistSlug, organizerSlug } from "../../lib/slug";
@@ -284,16 +284,6 @@ export default function EventDetailPage() {
                   </span>
                 </div>
               )}
-
-              {/* Tag bottom-left */}
-              <div className="absolute bottom-5 left-5 z-20">
-                <span
-                  className="text-[9px] font-bold tracking-[0.3em] uppercase px-3 py-1.5 rounded-full"
-                  style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)" }}
-                >
-                  {event.tag}
-                </span>
-              </div>
 
             </div>
 
@@ -824,52 +814,19 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
 
   const showVideo = hasVideo && slide === 1;
 
-  // YouTube / Vimeo embed with autoplay + sound (mute toggled by state).
-  // vq=hd1080 asks YouTube to start in 1080p (a hint — YouTube may still adapt to
-  // bandwidth / player size); the IFrame API call below reinforces it.
-  // Built once when the video slide opens. Muting/unmuting afterwards is sent to the running
-  // player (below) — changing this URL (or the iframe's key) would reload the video from 0:00.
+  // Vimeo embed with autoplay + sound. (YouTube has its own player, below.) Built once when the
+  // video slide opens — muting/unmuting afterwards is sent to the running player; changing this
+  // URL would reload the video from 0:00.
   const embed = useMemo(() => {
     const m = muted ? 1 : 0;
-    return yt
-      ? `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=${m}&controls=1&rel=0&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`
-      : vimeo
-      ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${m}&playsinline=1&quality=1080p`
-      : "";
+    return vimeo ? `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=${m}&playsinline=1&quality=1080p` : "";
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [yt?.[1], vimeo?.[1], showVideo]);
-
-  // Once the YouTube player is ready, request 1080p and (if unmuted) turn the sound on.
-  const applyYtPrefs = () => {
-    const w = ytRef.current?.contentWindow;
-    if (!w) return;
-    const cmd = (func: string, args: unknown[] = []) =>
-      w.postMessage(JSON.stringify({ event: "command", func, args }), "*");
-    cmd("setPlaybackQualityRange", ["hd1080", "hd1080"]);
-    cmd("setPlaybackQuality", ["hd1080"]);
-    if (!muted) { cmd("unMute"); cmd("setVolume", [100]); }
-    cmd("playVideo");
-  };
-
-  useEffect(() => {
-    if (!showVideo || !yt) return;
-    // The player isn't ready the instant the iframe loads — nudge it a few times.
-    const timers = [400, 1200, 2500].map(ms => window.setTimeout(applyYtPrefs, ms));
-    return () => timers.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showVideo]);
+  }, [vimeo?.[1], showVideo]);
 
   // Sound toggle: tell the already-playing embed to mute/unmute instead of reloading it.
   useEffect(() => {
-    if (!showVideo || insta) return;
-    const w = ytRef.current?.contentWindow;
-    if (!w) return;
-    if (yt) {
-      w.postMessage(JSON.stringify({ event: "command", func: muted ? "mute" : "unMute", args: [] }), "*");
-      if (!muted) w.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
-    } else if (vimeo) {
-      w.postMessage(JSON.stringify({ method: "setMuted", value: muted }), "*");
-    }
+    if (!showVideo || insta || !vimeo) return;
+    ytRef.current?.contentWindow?.postMessage(JSON.stringify({ method: "setMuted", value: muted }), "*");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [muted]);
 
@@ -926,7 +883,9 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
       {showVideo && !insta && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-            {embed ? (
+            {yt ? (
+              <YtPlayer videoId={yt[1]} muted={muted} onToggleMute={() => setMuted(m => !m)} />
+            ) : embed ? (
               <iframe
                 ref={ytRef}
                 src={embed}
@@ -935,7 +894,6 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
                 style={{ border: 0 }}
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 allowFullScreen
-                onLoad={applyYtPrefs}
               />
             ) : (
               <video
@@ -1000,6 +958,158 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
         </div>
       )}
     </>
+  );
+}
+
+/* ── YouTube player with our own controls ──────────────────────────────
+   YouTube's embedded UI (title bar, captions button, "More videos", small icons) can't be styled,
+   so we run the player chromeless and draw our own: a big play/pause button in the middle, a
+   progress bar, sound and fullscreen. Captions are switched off. Driven through YouTube's
+   postMessage API. */
+const fmtTime = (t: number) => {
+  if (!isFinite(t) || t < 0) t = 0;
+  const m = Math.floor(t / 60), sec = Math.floor(t % 60);
+  return `${m}:${String(sec).padStart(2, "0")}`;
+};
+
+function YtPlayer({ videoId, muted, onToggleMute }: { videoId: string; muted: boolean; onToggleMute: () => void }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const startMuted = useRef(muted);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+  const [state, setState] = useState(-1);      // YouTube playerState: -1 not started, 0 ended, 1 playing, 2 paused, 3 buffering
+  const [time, setTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isFs, setIsFs] = useState(false);
+
+  const src = useMemo(
+    () => `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${startMuted.current ? 1 : 0}&controls=0&rel=0&playsinline=1&enablejsapi=1&iv_load_policy=3&cc_load_policy=0&disablekb=1&fs=0&modestbranding=1&vq=hd1080&hd=1&origin=${encodeURIComponent(window.location.origin)}`,
+    [videoId]
+  );
+
+  const cmd = useCallback((func: string, args: unknown[] = []) => {
+    frameRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
+  }, []);
+
+  // Subscribe to player events, then apply our preferences once it is up.
+  useEffect(() => {
+    const w = frameRef.current?.contentWindow;
+    const onMessage = (e: MessageEvent) => {
+      if (e.source !== frameRef.current?.contentWindow || typeof e.data !== "string") return;
+      let d: { event?: string; info?: unknown };
+      try { d = JSON.parse(e.data); } catch { return; }
+      if (d.event === "onStateChange" && typeof d.info === "number") setState(d.info);
+      if (d.event === "infoDelivery" && d.info && typeof d.info === "object") {
+        const i = d.info as { playerState?: number; currentTime?: number; duration?: number };
+        if (typeof i.playerState === "number") setState(i.playerState);
+        if (typeof i.currentTime === "number") setTime(i.currentTime);
+        if (typeof i.duration === "number" && i.duration > 0) setDuration(i.duration);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    const listen = () => w?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*");
+    const prefs = () => {
+      cmd("setPlaybackQualityRange", ["hd1080", "hd1080"]);
+      cmd("setPlaybackQuality", ["hd1080"]);
+      cmd("unloadModule", ["captions"]);          // never show (auto-generated) subtitles
+      cmd("unloadModule", ["cc"]);
+      if (!mutedRef.current) { cmd("unMute"); cmd("setVolume", [100]); }
+      cmd("playVideo");
+    };
+    const timers = [300, 1000, 2000, 3500].flatMap(ms => [window.setTimeout(listen, ms), window.setTimeout(prefs, ms + 100)]);
+    return () => { window.removeEventListener("message", onMessage); timers.forEach(clearTimeout); };
+  }, [cmd]);
+
+  // When it finishes, go back to the start paused (YouTube would otherwise show its end-screen).
+  useEffect(() => {
+    if (state === 0) { cmd("seekTo", [0, true]); cmd("pauseVideo"); setTime(0); setState(2); }
+  }, [state, cmd]);
+
+  // Sound toggle (also driven by the pill at the top-right of the media panel).
+  useEffect(() => {
+    cmd(muted ? "mute" : "unMute");
+    if (!muted) cmd("setVolume", [100]);
+  }, [muted, cmd]);
+
+  useEffect(() => {
+    const onChange = () => setIsFs(document.fullscreenElement === wrapRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const playing = state === 1 || state === 3;
+  const toggle = () => {
+    if (playing) { cmd("pauseVideo"); setState(2); }
+    else { cmd("playVideo"); setState(1); }
+  };
+  const seek = (t: number) => { setTime(t); cmd("seekTo", [t, true]); };
+  const toggleFs = () => {
+    if (document.fullscreenElement) { document.exitFullscreen?.(); return; }
+    wrapRef.current?.requestFullscreen?.().catch(() => {});
+  };
+
+  const btn: React.CSSProperties = { width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", color: "#fff", flexShrink: 0 };
+
+  return (
+    <div ref={wrapRef} className="group absolute inset-0 bg-black overflow-hidden">
+      <iframe
+        ref={frameRef}
+        src={src}
+        title="Event trailer"
+        className="absolute inset-0 w-full h-full"
+        // YouTube's own UI never gets clicks or hovers — ours sits on top.
+        style={{ border: 0, pointerEvents: "none" }}
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+      />
+
+      {/* Click anywhere on the picture to play / pause */}
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? "Pause" : "Play"}
+        className="absolute inset-0 z-10 w-full h-full flex items-center justify-center cursor-pointer"
+        style={{ background: "none", border: "none" }}
+      >
+        <span
+          className={`flex items-center justify-center rounded-full transition-opacity duration-200 ${playing ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}
+          style={{ width: 68, height: 68, background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.5)", backdropFilter: "blur(6px)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}
+        >
+          {playing
+            ? <Pause size={28} className="text-white" fill="#fff" />
+            : <Play size={28} className="text-white" fill="#fff" style={{ marginLeft: 3 }} />}
+        </span>
+      </button>
+
+      {/* Control bar: visible while paused or when hovering */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 z-20 flex items-center gap-2 px-3 pt-8 pb-2 transition-opacity duration-200 ${playing ? "opacity-0 group-hover:opacity-100 focus-within:opacity-100" : "opacity-100"}`}
+        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }}
+      >
+        <button type="button" onClick={toggle} aria-label={playing ? "Pause" : "Play"} style={btn}>
+          {playing ? <Pause size={18} fill="#fff" /> : <Play size={18} fill="#fff" />}
+        </button>
+        <span className="text-white/80 text-[11px] tabular-nums flex-shrink-0">{fmtTime(time)}</span>
+        <input
+          type="range"
+          min={0}
+          max={duration || 1}
+          step={0.1}
+          value={Math.min(time, duration || 1)}
+          onChange={e => seek(Number(e.target.value))}
+          aria-label="Seek"
+          className="flex-1 min-w-0 cursor-pointer"
+          style={{ accentColor: "#ffffff", height: 4 }}
+        />
+        <span className="text-white/80 text-[11px] tabular-nums flex-shrink-0">{fmtTime(duration)}</span>
+        <button type="button" onClick={onToggleMute} aria-label={muted ? "Unmute" : "Mute"} style={btn}>
+          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>
+        <button type="button" onClick={toggleFs} aria-label={isFs ? "Exit fullscreen" : "Fullscreen"} title={isFs ? "Exit fullscreen" : "Fullscreen"} style={btn}>
+          {isFs ? <Minimize size={18} /> : <Maximize size={18} />}
+        </button>
+      </div>
+    </div>
   );
 }
 
