@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Eye, MousePointerClick, TrendingUp, CalendarDays, Percent, Building2, Info } from "lucide-react";
+import { Eye, MousePointerClick, TrendingUp, CalendarDays, Percent, Building2, Info, Music2, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData } from "../../context/AdminDataContext";
 
@@ -37,9 +37,11 @@ function StatCard({ icon, label, value, accent, suffix }: { icon: React.ReactNod
 
 export default function AdminAnalytics() {
   const { user } = useAuth();
-  const { events, organizers, loading } = useAdminData();
+  const { events, organizers, artists, loading } = useAdminData();
   const [data, setData] = useState<Analytics | null>(null);
   const [orgFilter, setOrgFilter] = useState<string>("all");
+  const [eventFilter, setEventFilter] = useState<string>("all");     // an event id, or "all"
+  const [artistFilter, setArtistFilter] = useState<string>("all");   // an artist's display name, or "all"
 
   const isOrganizer = user?.role === "organizer";
   const scopedOrgName = isOrganizer ? user?.orgName : orgFilter === "all" ? null : orgFilter;
@@ -65,14 +67,18 @@ export default function AdminAnalytics() {
   const scopedEvents = useMemo(() => {
     const belongs = (ev: typeof events[number]) =>
       !scopedOrgName || ev.organizer === scopedOrgName || (ev.coOrganizers ?? []).includes(scopedOrgName);
+    // Admin filters, combined: a chosen event, and/or events an artist performs in.
+    const picked = (ev: typeof events[number]) =>
+      isOrganizer || ((eventFilter === "all" || String(ev.id) === eventFilter) &&
+        (artistFilter === "all" || (ev.lineup ?? []).some(n => n === artistFilter)));
     return events
-      .filter(belongs)
+      .filter(ev => belongs(ev) && picked(ev))
       .map(ev => {
         const c = eventCounts.get(ev.id) ?? { views: 0, clicks: 0 };
         return { ...ev, views: c.views, clicks: c.clicks };
       })
       .sort((a, b) => b.views - a.views || b.clicks - a.clicks);
-  }, [events, eventCounts, scopedOrgName]);
+  }, [events, eventCounts, scopedOrgName, eventFilter, artistFilter, isOrganizer]);
 
   const totals = useMemo(() => {
     const views = scopedEvents.reduce((s, e) => s + e.views, 0);
@@ -85,6 +91,17 @@ export default function AdminAnalytics() {
     () => [...organizers].map(o => o.name).sort((a, b) => a.localeCompare(b)),
     [organizers]
   );
+
+  const eventOptions = useMemo(
+    () => [...events].sort((a, b) => (a.title || "").localeCompare(b.title || "")).map(e => ({ id: String(e.id), title: e.title || "Untitled" })),
+    [events]
+  );
+  const artistOptions = useMemo(
+    () => Array.from(new Set(artists.map(a => a.stageName || a.name).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [artists]
+  );
+  const anyFilter = orgFilter !== "all" || eventFilter !== "all" || artistFilter !== "all";
+  const clearFilters = () => { setOrgFilter("all"); setEventFilter("all"); setArtistFilter("all"); };
 
   // Per-organizer rollup (admin overview): totals across every event they host.
   const orgRollup = useMemo(() => {
@@ -110,38 +127,62 @@ export default function AdminAnalytics() {
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8, maxWidth: 620 }}>
             {isOrganizer
               ? <>Page views and ticket-link clicks for events by <strong style={{ color: "#E8DCC0" }}>{user?.orgName}</strong> — measure how well your promotion is converting.</>
-              : "Page views and ticket-link clicks per event — filter by organizer to measure promotion effectiveness."}
+              : "Page views and ticket-link clicks per event — filter by event, organizer or artist to measure promotion effectiveness."}
           </p>
         </div>
 
-        {/* Admin-only organizer filter */}
+        {/* Admin-only filters: event, organizer, artist */}
         {!isOrganizer && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Organizer</label>
-            <select
-              value={orgFilter}
-              onChange={e => setOrgFilter(e.target.value)}
-              style={{
-                padding: "9px 14px", borderRadius: 9, minWidth: 220,
-                background: "#0d0d12", border: "1px solid rgba(255,255,255,0.12)",
-                color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit", cursor: "pointer",
-              }}
-            >
-              <option value="all">All organizers</option>
-              {orgOptions.map(name => <option key={name} value={name}>{name}</option>)}
-            </select>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
+            {([
+              { label: "Event", value: eventFilter, set: setEventFilter, all: "All events", width: 240, options: eventOptions.map(o => ({ value: o.id, label: o.title })) },
+              { label: "Organizer", value: orgFilter, set: setOrgFilter, all: "All organizers", width: 200, options: orgOptions.map(n => ({ value: n, label: n })) },
+              { label: "Artist", value: artistFilter, set: setArtistFilter, all: "All artists", width: 200, options: artistOptions.map(n => ({ value: n, label: n })) },
+            ]).map(f => (
+              <div key={f.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{f.label}</label>
+                <select
+                  value={f.value}
+                  onChange={e => f.set(e.target.value)}
+                  style={{
+                    padding: "9px 14px", borderRadius: 9, width: f.width, maxWidth: "100%",
+                    background: "#0d0d12", border: `1px solid ${f.value !== "all" ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.12)"}`,
+                    color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit", cursor: "pointer",
+                  }}
+                >
+                  <option value="all">{f.all}</option>
+                  {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            ))}
+            {anyFilter && (
+              <button
+                onClick={clearFilters}
+                style={{ display: "flex", alignItems: "center", gap: 5, height: 38, padding: "0 14px", borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                <X size={12} /> Clear
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 16, marginBottom: 16 }}>
         <StatCard icon={<Eye size={16} />} label="Page Views" value={totals.views.toLocaleString()} accent="#E8DCC0" />
         <StatCard icon={<MousePointerClick size={16} />} label="Ticket / Link Clicks" value={totals.clicks.toLocaleString()} accent="#60a5fa" />
         <StatCard icon={<Percent size={16} />} label="Click-through Rate" value={ctr(totals.clicks, totals.views).toFixed(1)} suffix="%" accent="#e879f9" />
         {scopedOrgName
           ? <StatCard icon={<Building2 size={16} />} label="Profile Views" value={(totals.profileViews ?? 0).toLocaleString()} accent="#f59e0b" />
           : <StatCard icon={<CalendarDays size={16} />} label="Events Tracked" value={scopedEvents.length.toLocaleString()} accent="#f59e0b" />}
+        {/* Admin: how much has been added to the site overall (not affected by the filters) */}
+        {!isOrganizer && (
+          <>
+            <StatCard icon={<CalendarDays size={16} />} label="Total Events" value={events.length.toLocaleString()} accent="#38bdf8" />
+            <StatCard icon={<Music2 size={16} />} label="Total Artists" value={artists.length.toLocaleString()} accent="#f472b6" />
+            <StatCard icon={<Building2 size={16} />} label="Total Organizers" value={organizers.length.toLocaleString()} accent="#a78bfa" />
+          </>
+        )}
       </div>
 
       {/* Ticket-sales note (no checkout integration yet) */}

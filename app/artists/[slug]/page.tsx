@@ -6,7 +6,7 @@ import { withAlpha } from "../../lib/genres";
 import { thumb } from "../../lib/images";
 import { useState, useEffect } from "react";
 import {
-  Heart, ChevronLeft, MapPin, Calendar, Music2, ArrowRight,
+  Heart, ChevronLeft, MapPin, Calendar, MicVocal, ArrowRight,
   Star, Mail, Phone,
 } from "lucide-react";
 
@@ -376,7 +376,7 @@ export default function ArtistDetailPage() {
                   className="flex-shrink-0 text-center px-6 py-4 rounded-2xl hidden sm:block"
                   style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}
                 >
-                  <Music2 size={18} className="text-[#ffffff] mx-auto mb-1" />
+                  <MicVocal size={18} className="text-[#ffffff] mx-auto mb-1" />
                   <p className="text-white font-black text-3xl leading-none">{artistEvents.length}</p>
                   <p className="text-white/40 text-[9px] tracking-[0.3em] uppercase mt-1">
                     Upcoming {artistEvents.length === 1 ? "Event" : "Events"}

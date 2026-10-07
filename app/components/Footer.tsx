@@ -112,13 +112,13 @@ export default function Footer() {
             </p>
             <p>
               Email:{" "}
-              <a href="mailto:info@discoverevents.lk" className="text-white font-semibold hover:underline">
-                info@discoverevents.lk
+              <a href="mailto:discovereventslk@gmail.com" className="text-white font-semibold hover:underline">
+                discovereventslk@gmail.com
               </a>
             </p>
             <p>
-              Telephone:{" "}
-              <span className="text-white font-semibold">+94 11 234 5678</span>
+              Mobile:{" "}
+              <a href="tel:+94765370521" className="text-white font-semibold hover:underline">076 537 0521</a>
             </p>
           </div>
 
@@ -129,7 +129,6 @@ export default function Footer() {
               {[
                 { label: "Privacy Policy", href: "/privacy" },
                 { label: "Terms and Conditions", href: "#" },
-                { label: "Site Map", href: "#" },
               ].map((item) => (
                 <li key={item.label}>
                   <a href={item.href} className="text-white font-semibold text-base hover:text-white/70 transition-colors">

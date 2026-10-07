@@ -16,13 +16,14 @@ export async function PUT(
   await ensureSchema();
   const { id } = await params;
   const pool = getPool();
-  const { name, image, review, rating } = await req.json();
+  const { name, title, image, review, rating } = await req.json();
+  const cleanTitle = typeof title === "string" && title.trim() ? title.trim().slice(0, 255) : null;
   const r = clampRating(rating);
   await pool.query(
-    `UPDATE reviews SET name = ?, ${keepImg("image")}, review = ?, rating = ? WHERE id = ?`,
-    [name, ...keepImgParams(image), review, r, id]
+    `UPDATE reviews SET name = ?, title = ?, ${keepImg("image")}, review = ?, rating = ? WHERE id = ?`,
+    [name, cleanTitle, ...keepImgParams(image), review, r, id]
   );
-  const [rows] = await pool.query<any[]>(`SELECT id, name, ${imgMarker("image")}, review, rating FROM reviews WHERE id = ?`, [id]);
+  const [rows] = await pool.query<any[]>(`SELECT id, name, title, ${imgMarker("image")}, review, rating FROM reviews WHERE id = ?`, [id]);
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const row = rows[0];
   return NextResponse.json({ ...row, image: imgUrl("reviews", row.id, "image", row.image) });

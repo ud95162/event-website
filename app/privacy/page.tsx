@@ -174,7 +174,7 @@ export default function PrivacyPolicyPage() {
             </span>
             <h1 style={{ fontSize: "clamp(2rem,5vw,3.25rem)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05 }}>
               Privacy{" "}
-              <span style={{ background: "linear-gradient(90deg,#E8DCC0,#e91e8c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              <span style={{ color: "#E8DCC0" }}>
                 Policy
               </span>
             </h1>
@@ -216,11 +216,11 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Mail size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-                  <a href="mailto:info@discoverevents.lk" style={{ color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>info@discoverevents.lk</a>
+                  <a href="mailto:discovereventslk@gmail.com" style={{ color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>discovereventslk@gmail.com</a>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Phone size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-                  <span style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>+94 11 234 5678</span>
+                  <a href="tel:+94765370521" style={{ color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>076 537 0521</a>
                 </div>
               </div>
             </section>

@@ -242,6 +242,13 @@ async function createAndSeed(): Promise<void> {
       rating TINYINT DEFAULT 5
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  // Optional line shown next to a reviewer's name (e.g. "DJ & Producer"). Idempotent migration.
+  {
+    const [c] = await pool.query<any[]>(
+      "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'title'"
+    );
+    if (c[0].c === 0) await pool.query("ALTER TABLE reviews ADD COLUMN title VARCHAR(255) NULL");
+  }
 
   // Newsletter subscribers (collected from the home "Never Miss An Event" form).
   await pool.query(`

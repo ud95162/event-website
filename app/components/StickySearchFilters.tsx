@@ -522,7 +522,7 @@ export default function StickySearchFilters() {
       <Suspense fallback={null}><UrlSync onSync={syncFromUrl} /></Suspense>
 
       {/* Search bar */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-3">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
         <div className="bg-black/60 backdrop-blur-md rounded-full flex items-center px-2 py-1.5 border border-white/12 relative">
 
           {/* Category button + dropdown */}

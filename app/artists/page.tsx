@@ -3,10 +3,11 @@
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
 import { thumb } from "../lib/images";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Heart, Music2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Artist } from "../data/artists";
 import { useAdminData } from "../context/AdminDataContext";
 import { artistSlug } from "../lib/slug";
+import { isEventPast } from "../lib/eventTime";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import StickySearchFilters from "../components/StickySearchFilters";
@@ -17,7 +18,12 @@ import { hasPreloaderShown, markPreloaderShown } from "../preloaderState";
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// eventCountFor is injected via prop to ArtistCard
+// Number of UPCOMING events an artist is performing in (finished events don't count).
+// Matches on the stage name or the real name, like the artist's own page does.
+function upcomingEventCount(events: { lineup: string[]; date: string; startTime?: string; endDate?: string; endTime?: string }[], names: string[]): number {
+  const now = Date.now();
+  return events.filter(ev => ev.lineup.some(n => names.includes(n)) && !isEventPast(ev, now)).length;
+}
 
 
 /* ── Artist Card ────────────────────────────────────────────────── */
@@ -29,7 +35,7 @@ function ArtistCard({ artist, followed, onFollow }: {
   const router = useRouter();
   const { events } = useAdminData();
   const [hovered, setHovered] = useState(false);
-  const eventCount = events.filter(ev => ev.lineup.includes(artist.name)).length;
+  const eventCount = upcomingEventCount(events, [artist.stageName || artist.name, artist.name]);
 
   return (
     <div
@@ -67,15 +73,15 @@ function ArtistCard({ artist, followed, onFollow }: {
       </button>
 
       {eventCount > 0 && (
-        <div style={{
+        <div title={`${eventCount} upcoming event${eventCount !== 1 ? "s" : ""}`} style={{
           position: "absolute", top: 10, left: 10,
-          display: "flex", alignItems: "center", gap: 4,
+          display: "flex", alignItems: "center", gap: 6,
           padding: "4px 10px", borderRadius: 999,
           background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.12)",
           backdropFilter: "blur(6px)",
         }}>
-          <Music2 size={12} style={{ color: "#E3B873" }} />
-          <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{eventCount}</span>
+          <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>{eventCount}</span>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "#E8DCC0" }}>Upcoming</span>
         </div>
       )}
 
@@ -200,7 +206,7 @@ function ArtistsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { artists, events } = useAdminData();
-  const eventCountFor = (name: string) => events.filter(ev => ev.lineup.includes(name)).length;
+  const eventCountFor = (a: Artist) => upcomingEventCount(events, [a.stageName || a.name, a.name]);
   const [followed, setFollowed] = useState<Set<number>>(new Set());
   const queryParam  = searchParams.get("q")      ?? "";
   const filterParam = searchParams.get("filter") ?? "";
@@ -213,7 +219,7 @@ function ArtistsContent() {
   if (isFiltered) {
     let filtered = [...artists];
     if (filterParam === "followed")    filtered = filtered.filter(a => followed.has(a.id));
-    if (filterParam === "recommended") filtered = filtered.sort((a, b) => eventCountFor(b.name) - eventCountFor(a.name));
+    if (filterParam === "recommended") filtered = filtered.sort((a, b) => eventCountFor(b) - eventCountFor(a));
     if (genreParam) {
       const g = genreParam.toLowerCase();
       filtered = filtered.filter(a => [...(a.genres ?? []), ...(a.subGenres ?? [])].some(x => x.toLowerCase() === g));
@@ -242,7 +248,7 @@ function ArtistsContent() {
     );
   }
 
-  const topPicks    = [...artists].sort((a, b) => eventCountFor(b.name) - eventCountFor(a.name));
+  const topPicks    = [...artists].sort((a, b) => eventCountFor(b) - eventCountFor(a));
   const edm         = artists.filter(a => a.role.includes("EDM") || a.role.includes("HOUSE"));
   const sriLankan   = artists.filter(a => a.role.includes("SRI LANKAN"));
   const rbSoulPop   = artists.filter(a => a.role.includes("R&B") || a.role.includes("SOUL") || a.role.includes("POP"));

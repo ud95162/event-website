@@ -285,7 +285,7 @@ export default function AboutPage() {
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: "clamp(10px,2vh,20px)" }}>WHO WE ARE</p>
           <h1 style={{ fontSize: "clamp(2rem, 6vw, 5.5rem)", fontWeight: 900, letterSpacing: "-0.02em", lineHeight: 1.05, marginBottom: "clamp(12px,2.5vh,28px)", maxWidth: 900 }}>
             Sri Lanka's Premier<br />
-            <span style={{ background: "linear-gradient(90deg, #E8DCC0, #e91e8c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ color: "#E8DCC0" }}>
               Event Discovery
             </span>{" "}Platform
           </h1>
@@ -400,15 +400,17 @@ export default function AboutPage() {
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   {[
-                    { icon: Mail,   label: "hello@events.lk"      },
-                    { icon: Phone,  label: "+94 11 234 5678"       },
-                    { icon: MapPin, label: "Colombo 03, Sri Lanka" },
-                  ].map(({ icon: Icon, label }) => (
+                    { icon: Mail,   label: "discovereventslk@gmail.com", href: "mailto:discovereventslk@gmail.com" },
+                    { icon: Phone,  label: "076 537 0521",                 href: "tel:+94765370521" },
+                    { icon: MapPin, label: "Colombo, Sri Lanka" },
+                  ].map(({ icon: Icon, label, href }: { icon: typeof Mail; label: string; href?: string }) => (
                     <div key={label} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(232,220,192,0.1)", border: "1px solid rgba(232,220,192,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Icon size={15} color="#E8DCC0" />
                       </div>
-                      <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.85rem,1vw,1rem)" }}>{label}</span>
+                      {href
+                        ? <a href={href} style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.85rem,1vw,1rem)", textDecoration: "none" }}>{label}</a>
+                        : <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.85rem,1vw,1rem)" }}>{label}</span>}
                     </div>
                   ))}
                 </div>

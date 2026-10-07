@@ -31,6 +31,7 @@ export type Brand = {
 export type Review = {
   id: number;
   name: string;
+  title?: string | null;  // optional job title / description shown by the name (e.g. "DJ & Producer")
   image?: string | null;  // reviewer photo (base64 / URL)
   review: string;
   rating: number;         // 1–5

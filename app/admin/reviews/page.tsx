@@ -30,14 +30,14 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-const EMPTY = { name: "", image: "", review: "", rating: 5 };
+const EMPTY = { name: "", title: "", image: "", review: "", rating: 5 };
 
 export default function ReviewsAdminPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { reviews, addReview, updateReview, deleteReview } = useAdminData();
 
-  const [form, setForm] = useState<{ name: string; image: string; review: string; rating: number }>(EMPTY);
+  const [form, setForm] = useState<{ name: string; title: string; image: string; review: string; rating: number }>(EMPTY);
   const [editId, setEditId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -50,7 +50,7 @@ export default function ReviewsAdminPage() {
 
   const openAdd = () => { setForm(EMPTY); setEditId(null); setError(""); setShowForm(true); };
   const openEdit = (r: Review) => {
-    setForm({ name: r.name, image: r.image ?? "", review: r.review, rating: r.rating });
+    setForm({ name: r.name, title: r.title ?? "", image: r.image ?? "", review: r.review, rating: r.rating });
     setEditId(r.id); setError(""); setShowForm(true);
   };
   const close = () => { setShowForm(false); setForm(EMPTY); setEditId(null); setError(""); };
@@ -61,7 +61,7 @@ export default function ReviewsAdminPage() {
     if (!canSave) return;
     setSaving(true);
     setError("");
-    const payload = { name: form.name.trim(), image: form.image || null, review: form.review.trim(), rating: form.rating };
+    const payload = { name: form.name.trim(), title: form.title.trim() || null, image: form.image || null, review: form.review.trim(), rating: form.rating };
     const ok = editId != null
       ? await updateReview({ id: editId, ...payload })
       : await addReview(payload);
@@ -106,6 +106,10 @@ export default function ReviewsAdminPage() {
                 <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Nimal Perera" />
               </div>
               <div>
+                <label style={labelStyle}>Title <span style={{ color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>(optional — shown by the name)</span></label>
+                <input style={inputStyle} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. DJ & Producer, Event Organizer" maxLength={255} />
+              </div>
+              <div>
                 <label style={labelStyle}>Rating</label>
                 <StarPicker value={form.rating} onChange={(v) => setForm(f => ({ ...f, rating: v }))} />
               </div>
@@ -139,6 +143,7 @@ export default function ReviewsAdminPage() {
               )}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
+                {r.title && <p style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{r.title}</p>}
                 <div style={{ display: "flex", gap: 1, marginTop: 3 }}>
                   {[1, 2, 3, 4, 5].map(n => <Star key={n} size={12} style={{ color: n <= r.rating ? "#F5B301" : "rgba(255,255,255,0.18)" }} fill={n <= r.rating ? "#F5B301" : "none"} />)}
                 </div>

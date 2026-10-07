@@ -26,6 +26,7 @@ function ReviewCard({ review }: { review: Review }) {
           )}
           <div className="min-w-0">
             <p className="text-white font-bold text-[15px] truncate">{review.name}</p>
+            {review.title && <p className="text-white/45 text-[12px] truncate -mt-0.5">{review.title}</p>}
             <div className="flex gap-0.5 mt-1">
               {[1, 2, 3, 4, 5].map(n => (
                 <Star key={n} size={13} style={{ color: n <= review.rating ? "#F5B301" : "rgba(255,255,255,0.18)" }} fill={n <= review.rating ? "#F5B301" : "none"} />
