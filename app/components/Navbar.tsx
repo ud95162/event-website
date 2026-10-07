@@ -15,11 +15,14 @@ const navLinks = [
 ];
 
 const POPULAR_CITIES: UserLocation[] = [
-  { city: "Nugegoda",   country: "Sri Lanka", lat:  6.8728, lon:  79.8878 },
-  { city: "Colombo",    country: "Sri Lanka", lat:  6.9271, lon:  79.8612 },
-  { city: "Maharagama", country: "Sri Lanka", lat:  6.8478, lon:  79.9256 },
-  { city: "Kandy",      country: "Sri Lanka", lat:  7.2906, lon:  80.6337 },
-  { city: "Galle",      country: "Sri Lanka", lat:  6.0329, lon:  80.2168 },
+  { city: "Colombo",      country: "Sri Lanka", lat: 6.9271, lon: 79.8612 },
+  { city: "Galle",        country: "Sri Lanka", lat: 6.0329, lon: 80.2168 },
+  { city: "Hikkaduwa",    country: "Sri Lanka", lat: 6.1395, lon: 80.1063 },
+  { city: "Kandy",        country: "Sri Lanka", lat: 7.2906, lon: 80.6337 },
+  { city: "Nuwara Eliya", country: "Sri Lanka", lat: 6.9497, lon: 80.7891 },
+  { city: "Arugam Bay",   country: "Sri Lanka", lat: 6.8397, lon: 81.8359 },
+  { city: "Mirissa",      country: "Sri Lanka", lat: 5.9483, lon: 80.4716 },
+  { city: "Negombo",      country: "Sri Lanka", lat: 7.2008, lon: 79.8737 },
 ];
 
 /* ── Location Pill ─────────────────────────────────────────────────── */
