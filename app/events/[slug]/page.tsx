@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Maximize, Minimize, Play, Pause, Mail, Link2, Check, Globe } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
-import { artistSlug, organizerSlug } from "../../lib/slug";
+import { artistSlug, organizerSlug, eventSlug } from "../../lib/slug";
 import { track } from "../../lib/track";
 import { statusColor, Event } from "../../data/events";
 import Navbar from "../../components/Navbar";
@@ -112,6 +112,18 @@ export default function EventDetailPage() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [slug]);
+
+  // A few of this organizer's past events, shown in the organizer card.
+  const [pastByOrg, setPastByOrg] = useState<{ id: number; title: string; date: string; location: string; image: string }[]>([]);
+  useEffect(() => {
+    if (!event?.id || !event.organizer) { setPastByOrg([]); return; }
+    let cancelled = false;
+    fetch(`/api/events/by-organizer?organizer=${encodeURIComponent(event.organizer)}&exclude=${event.id}&limit=3`)
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => { if (!cancelled) setPastByOrg(Array.isArray(d) ? d : []); })
+      .catch(() => { if (!cancelled) setPastByOrg([]); });
+    return () => { cancelled = true; };
+  }, [event?.id, event?.organizer]);
 
   // Track a page view once per event load.
   useEffect(() => {
@@ -489,14 +501,6 @@ export default function EventDetailPage() {
                 <p className="text-white/65 text-sm leading-relaxed">{event.description}</p>
               </div>
 
-              {/* Tickets — repeated here so they're always visible without scrolling the ticket panel above */}
-              {(event.tickets ?? []).filter(t => t.name || t.price).length > 0 && (
-                <div>
-                  <p className="text-white/30 text-[10px] font-bold tracking-[0.35em] uppercase mb-3">TICKETS</p>
-                  <TicketCards tickets={event.tickets ?? []} columns />
-                </div>
-              )}
-
               {/* Genres */}
               {event.genres.length > 0 && (
                 <div>
@@ -697,6 +701,28 @@ export default function EventDetailPage() {
                       <p className="text-white/35 text-[10px] tracking-wide uppercase mt-0.5">View organizer →</p>
                     </div>
                   </div>
+
+                  {/* A few of their past events */}
+                  {pastByOrg.length > 0 && (
+                    <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                      <p className="text-white/30 text-[9px] font-bold tracking-[0.35em] uppercase mb-2.5">PAST EVENTS</p>
+                      <div className="flex flex-col gap-2">
+                        {pastByOrg.map(pe => (
+                          <div
+                            key={pe.id}
+                            onClick={e => { e.stopPropagation(); router.push(`/events/${eventSlug(pe)}`); }}
+                            className="flex items-center gap-3 rounded-xl p-1.5 -mx-1.5 cursor-pointer transition-colors hover:bg-white/5"
+                          >
+                            <img src={thumb(pe.image, 128)} alt="" className="flex-shrink-0 rounded-lg object-cover object-top" style={{ width: 40, height: 40, opacity: 0.85 }} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-white/85 text-xs font-semibold leading-snug truncate">{pe.title}</p>
+                              <p className="text-white/40 text-[10px] mt-0.5 truncate">{pe.date}{pe.location ? ` · ${pe.location}` : ""}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -880,12 +906,13 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
       )}
 
       {/* Video (16:9, autoplays with sound when it becomes active) */}
-      {showVideo && !insta && (
+      {showVideo && !insta && yt && (
+        <YtPlayer videoId={yt[1]} muted={muted} onToggleMute={() => setMuted(m => !m)} />
+      )}
+      {showVideo && !insta && !yt && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-            {yt ? (
-              <YtPlayer videoId={yt[1]} muted={muted} onToggleMute={() => setMuted(m => !m)} />
-            ) : embed ? (
+            {embed ? (
               <iframe
                 ref={ytRef}
                 src={embed}
@@ -983,6 +1010,26 @@ function YtPlayer({ videoId, muted, onToggleMute }: { videoId: string; muted: bo
   const [duration, setDuration] = useState(0);
   const [isFs, setIsFs] = useState(false);
 
+  // Fill the box: scale the (16:9) video up until it covers the whole box, trimming whatever
+  // sticks out — but only while that trims at most MAX_CROP of the picture; otherwise (and in
+  // fullscreen) show the whole video.
+  const MAX_CROP = 0.3;
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setBox({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const VIDEO_AR = 16 / 9;
+  const boxAR = box.h > 0 ? box.w / box.h : VIDEO_AR;
+  const crop = boxAR < VIDEO_AR ? 1 - boxAR / VIDEO_AR : 1 - VIDEO_AR / boxAR;   // share of the picture lost when covering
+  const cover = !isFs && box.w > 0 && crop <= MAX_CROP;
+  const frameStyle: React.CSSProperties = cover
+    ? { position: "absolute", left: "50%", top: "50%", width: Math.max(box.w, box.h * VIDEO_AR), height: Math.max(box.h, box.w / VIDEO_AR), transform: "translate(-50%, -50%)", border: 0, pointerEvents: "none" }
+    : { position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, pointerEvents: "none" };
+
   const src = useMemo(
     () => `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${startMuted.current ? 1 : 0}&controls=0&rel=0&playsinline=1&enablejsapi=1&iv_load_policy=3&cc_load_policy=0&disablekb=1&fs=0&modestbranding=1&vq=hd1080&hd=1&origin=${encodeURIComponent(window.location.origin)}`,
     [videoId]
@@ -1057,9 +1104,8 @@ function YtPlayer({ videoId, muted, onToggleMute }: { videoId: string; muted: bo
         ref={frameRef}
         src={src}
         title="Event trailer"
-        className="absolute inset-0 w-full h-full"
         // YouTube's own UI never gets clicks or hovers — ours sits on top.
-        style={{ border: 0, pointerEvents: "none" }}
+        style={frameStyle}
         allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
       />
 

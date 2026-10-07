@@ -25,6 +25,11 @@ const POPULAR_CITIES: UserLocation[] = [
 /* ── Location Pill ─────────────────────────────────────────────────── */
 function LocationPill() {
   const { userLocation, setUserLocation } = useUserLocation();
+  const router   = useRouter();
+  const pathname = usePathname();
+  // Picking a city should show the events near it: take people to the events page (where the
+  // "Near <city>" row is first), unless they're already on a page that responds to the city.
+  const showNearby = () => { if (pathname !== "/events" && pathname !== "/calendar") router.push("/events"); };
   const [detecting, setDetecting] = useState(false);
   const [open,      setOpen]      = useState(false);
   const [search,    setSearch]    = useState("");
@@ -61,6 +66,7 @@ function LocationPill() {
           setUserLocation({ city, country, lat, lon });
           setOpen(false);
           setSearch("");
+          showNearby();
         } catch {
           setError("Could not fetch location");
         } finally {
@@ -71,14 +77,14 @@ function LocationPill() {
     );
   };
 
-  const pick = (loc: UserLocation) => { setUserLocation(loc); setOpen(false); setSearch(""); setError(null); };
+  const pick = (loc: UserLocation) => { setUserLocation(loc); setOpen(false); setSearch(""); setError(null); showNearby(); };
 
   const filtered = POPULAR_CITIES.filter(({ city, country }) =>
     `${city} ${country}`.toLowerCase().includes(search.toLowerCase())
   );
 
   const isSet = !!userLocation && !detecting;
-  const label = userLocation ? `${userLocation.city}, ${userLocation.country}` : "Select City";
+  const label = userLocation ? userLocation.city : "Select City";   // city only — "City, Country" was clipped by the pill
 
   const inputRef = useRef<HTMLInputElement>(null);
   const pillRef  = useRef<HTMLDivElement>(null);
@@ -114,6 +120,7 @@ function LocationPill() {
         )}
         <input
           ref={inputRef}
+          title={userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined}
           value={isSet && !open ? label : search}
           onChange={e => { setSearch(e.target.value); setOpen(true); }}
           onFocus={() => { setOpen(true); if (isSet) setSearch(""); }}

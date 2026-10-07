@@ -15,7 +15,7 @@ import { mapEventRow } from "../../../lib/mappers";
 //   /api/events/category?type=dj
 //   /api/events/category?type=genre&value=electronic
 //   /api/events/category?type=city&value=Colombo
-//   /api/events/category?type=near-you&lat=..&lon=..
+//   /api/events/category?type=near-you&lat=..&lon=..&radius=50   (upcoming events within `radius` km, nearest first)
 
 const CAP = 12;
 
@@ -84,7 +84,14 @@ export async function GET(req: NextRequest) {
       const lat = parseFloat(sp.get("lat") ?? "");
       const lon = parseFloat(sp.get("lon") ?? "");
       if (isNaN(lat) || isNaN(lon)) { picked = []; break; }
-      picked = [...rows].sort((a, b) => haversineKm(lat, lon, a.lat, a.lon) - haversineKm(lat, lon, b.lat, b.lon));
+      const radius = Math.min(Math.max(parseFloat(sp.get("radius") ?? "") || 50, 1), 500);
+      // Only upcoming events with real coordinates, within the radius, nearest first.
+      picked = rows
+        .filter((e) => {
+          const d = parseEventDate(e.date);
+          return !!d && d >= now && !(e.lat === 0 && e.lon === 0) && haversineKm(lat, lon, e.lat, e.lon) <= radius;
+        })
+        .sort((a, b) => haversineKm(lat, lon, a.lat, a.lon) - haversineKm(lat, lon, b.lat, b.lon));
       break;
     }
     default:

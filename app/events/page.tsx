@@ -114,8 +114,8 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
       onMouseLeave={leave}
       style={{
         flexShrink: 0,
-        width: 230,
-        height: 320,
+        width: 270,
+        height: 400,
         borderRadius: 16,
         overflow: "hidden",
         position: "relative",
@@ -149,8 +149,8 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
         <div style={{ position: "absolute", top: 10, left: 10 }}>
           <span style={{
             background: "#fff", color: "#000",
-            fontSize: 8, fontWeight: 900, letterSpacing: "0.18em",
-            textTransform: "uppercase", padding: "3px 8px", borderRadius: 999,
+            fontSize: 10, fontWeight: 900, letterSpacing: "0.18em",
+            textTransform: "uppercase", padding: "4px 10px", borderRadius: 999,
           }}>{event.badge}</span>
         </div>
       )}
@@ -158,60 +158,60 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
       {/* Actions */}
       <div style={{ position: "absolute", top: 10, right: 10, display: "flex", flexDirection: "column", gap: 6 }}>
         <button onClick={onLike} style={{
-          width: 28, height: 28, borderRadius: "50%",
+          width: 32, height: 32, borderRadius: "50%",
           background: liked ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.55)",
           border: `1px solid ${liked ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.15)"}`,
           backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
         }}>
-          <Heart size={11} strokeWidth={2.5} fill={liked ? "#fff" : "none"} style={{ color: "#fff" }} />
+          <Heart size={13} strokeWidth={2.5} fill={liked ? "#fff" : "none"} style={{ color: "#fff" }} />
         </button>
         <button onClick={onShare} style={{
-          width: 28, height: 28, borderRadius: "50%",
+          width: 32, height: 32, borderRadius: "50%",
           background: shared ? "rgba(232,220,192,0.85)" : "rgba(0,0,0,0.55)",
           border: `1px solid ${shared ? "rgba(232,220,192,0.6)" : "rgba(255,255,255,0.15)"}`,
           backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
         }}>
-          <Share2 size={11} strokeWidth={2.5} style={{ color: "#fff" }} />
+          <Share2 size={13} strokeWidth={2.5} style={{ color: "#fff" }} />
         </button>
       </div>
 
       {/* Info */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px" }}>
-        <p style={{ fontSize: 8, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 4 }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px" }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 5 }}>
           {event.tag}
         </p>
-        <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, marginBottom: 6, letterSpacing: "0.04em" }}>
+        <h3 style={{ fontSize: 15, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, marginBottom: 8, letterSpacing: "0.03em" }}>
           {event.title}
         </h3>
         {event.genres.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
             {event.genres.slice(0, 3).map(g => (
-              <span key={g} style={{ fontSize: 7, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 999, ...genreChipStyle(genreColor(genreColors, g)) }}>
+              <span key={g} style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, ...genreChipStyle(genreColor(genreColors, g)) }}>
                 {g}
               </span>
             ))}
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Calendar size={8} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
-            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>{event.date}</span>
+            <Calendar size={12} style={{ color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{event.date}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <MapPin size={8} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
-            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>{event.location}</span>
+            <MapPin size={12} style={{ color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{event.location}</span>
             {distance !== null && (
-              <span style={{ fontSize: 9, color: "#E8DCC0", fontWeight: 600 }}>· {formatDistance(distance)}</span>
+              <span style={{ fontSize: 12, color: "#E8DCC0", fontWeight: 600 }}>· {formatDistance(distance)}</span>
             )}
           </div>
-          <p style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
             {ticketPrices(event.tickets, event.price)}
           </p>
 
           {/* Organized by */}
           {organizer && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ fontSize: 8, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Organized by</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ fontSize: 10, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Organized by</span>
               <div
                 style={{ position: "relative", display: "flex", alignItems: "center" }}
                 onMouseEnter={() => setOrgHovered(true)}
@@ -219,16 +219,15 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                 onClick={(e) => { e.stopPropagation(); router.push(`/organizers/${organizerSlug(organizer)}`); }}
               >
                 <div style={{
-                  width: 22, height: 22, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
-                  border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.06)",
+                  width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                  border: `1px solid ${orgHovered ? "#E8DCC0" : "rgba(255,255,255,0.2)"}`, background: "rgba(255,255,255,0.06)",
                   display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
                   transition: "border-color 0.2s",
-                  ...(orgHovered ? { borderColor: "#E8DCC0" } : {}),
                 }}>
                   {organizer.logo ? (
                     <img src={thumb(organizer.logo, 128)} alt={organizer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <span style={{ fontSize: 9, fontWeight: 800, color: "#E8DCC0" }}>{organizer.name.charAt(0)}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#E8DCC0" }}>{organizer.name.charAt(0)}</span>
                   )}
                 </div>
                 {/* Hover tooltip with name */}
@@ -237,7 +236,7 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                     position: "absolute", bottom: "calc(100% + 6px)", left: 0, zIndex: 20,
                     whiteSpace: "nowrap", padding: "4px 9px", borderRadius: 6,
                     background: "rgba(0,0,0,0.92)", border: "1px solid rgba(232,220,192,0.4)",
-                    fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.03em",
+                    fontSize: 11, fontWeight: 700, color: "#fff", letterSpacing: "0.03em",
                     boxShadow: "0 6px 18px rgba(0,0,0,0.5)", pointerEvents: "none",
                   }}>
                     {organizer.name}
@@ -251,10 +250,10 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                   display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto",
                   background: `${statusColor(event.status)}22`, color: statusColor(event.status),
                   border: `1px solid ${statusColor(event.status)}66`,
-                  fontSize: 8, fontWeight: 800, letterSpacing: "0.12em",
-                  textTransform: "uppercase", padding: "3px 7px", borderRadius: 999,
+                  fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
+                  textTransform: "uppercase", padding: "4px 9px", borderRadius: 999,
                 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusColor(event.status) }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor(event.status) }} />
                   {event.status}
                 </span>
               )}
@@ -268,10 +267,10 @@ function EventCard({ event, liked, shared, onLike, onShare }: {
                 display: "inline-flex", alignItems: "center", gap: 4,
                 background: `${statusColor(event.status)}22`, color: statusColor(event.status),
                 border: `1px solid ${statusColor(event.status)}66`,
-                fontSize: 8, fontWeight: 800, letterSpacing: "0.12em",
-                textTransform: "uppercase", padding: "3px 7px", borderRadius: 999,
+                fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
+                textTransform: "uppercase", padding: "4px 9px", borderRadius: 999,
               }}>
-                <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusColor(event.status) }} />
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor(event.status) }} />
                 {event.status}
               </span>
             </div>
@@ -372,13 +371,16 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
   const animating = useRef(false);
   const posRef    = useRef(0);
   const rafRef    = useRef<number>(0);
-  const CARD_STEP = 244 * 3; // 3 cards
+  const CARD_STEP = 284 * 3; // 3 cards (card 270 + gap 14)
 
-  const items = [...rowEvents, ...rowEvents];
+  // A row with only a few events just sits still — a scrolling loop of one or two repeated cards
+  // looks broken.
+  const isStatic = rowEvents.length <= 3;
+  const items = isStatic ? rowEvents : [...rowEvents, ...rowEvents];
 
   useEffect(() => {
     const el = trackRef.current;
-    if (!el) return;
+    if (!el || isStatic) return;
     const speed = 0.4;
     posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
 
@@ -394,7 +396,7 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
     };
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [direction, rowEvents.length]);
+  }, [direction, rowEvents.length, isStatic]);
 
   const slideTo = (delta: number) => {
     const el = trackRef.current;
@@ -420,6 +422,27 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
   };
 
   if (!rowEvents.length) return null;
+
+  if (isStatic) {
+    return (
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ marginBottom: 16 }}>
+          {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
+          <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, paddingBottom: 6 }}>
+          {rowEvents.map(ev => (
+            <EventCard
+              key={ev.id} event={ev}
+              liked={liked.has(ev.id)} shared={shared.has(ev.id)}
+              onLike={e => onLike(ev.id, e)}
+              onShare={e => onShare(ev.id, ev.title, e)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ marginBottom: 40 }}>
@@ -470,7 +493,7 @@ function SkeletonRow() {
       </div>
       <div style={{ display: "flex", gap: 20, padding: "0 56px", overflow: "hidden" }}>
         {[...Array(6)].map((_, i) => (
-          <div key={i} style={{ flexShrink: 0, width: 230, height: 320, borderRadius: 16, overflow: "hidden", background: "#0d0d12", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div key={i} style={{ flexShrink: 0, width: 270, height: 400, borderRadius: 16, overflow: "hidden", background: "#0d0d12", border: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ width: "100%", height: "100%", background: "linear-gradient(110deg, #0d0d12 30%, #16161f 50%, #0d0d12 70%)", backgroundSize: "200% 100%", animation: "evt-skel 1.3s ease-in-out infinite" }} />
           </div>
         ))}
@@ -549,7 +572,7 @@ function AllEventsSection({ liked, shared, onLike, onShare }: {
 }
 
 /* ── One category row — fetches its own data on mount (all rows in parallel) ── */
-function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLike, onShare }: {
+function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLike, onShare, emptyMessage, fallback }: {
   title: string;
   subtitle: string;
   endpoint: string;
@@ -558,9 +581,27 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
   shared: Set<number>;
   onLike: (id: number, e: React.MouseEvent) => void;
   onShare: (id: number, title: string, e: React.MouseEvent) => void;
+  emptyMessage?: string;   // shown instead of hiding the row when it has no events
+  // If this row is empty, load this instead (e.g. the nearest upcoming events anywhere).
+  fallback?: { endpoint: string; title: string; subtitle: string };
 }) {
   // Hydrate instantly from cache (if we've loaded this row before this session).
   const [data, setData] = useState<Event[] | null>(() => getCache<Event[]>(endpoint) ?? null);
+
+  const [fallbackData, setFallbackData] = useState<Event[] | null>(null);
+  const fallbackEndpoint = fallback?.endpoint;
+  useEffect(() => {
+    // Only look for the fallback once the main row has loaded and turned out empty.
+    if (!fallbackEndpoint || !data || data.length > 0) { setFallbackData(null); return; }
+    let cancelled = false;
+    const cached = getCache<Event[]>(fallbackEndpoint);
+    if (cached) setFallbackData(cached);
+    fetch(fallbackEndpoint)
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => { const arr = Array.isArray(d) ? d : []; setCache(fallbackEndpoint, arr); if (!cancelled) setFallbackData(arr); })
+      .catch(() => { if (!cancelled && !cached) setFallbackData([]); });
+    return () => { cancelled = true; };
+  }, [fallbackEndpoint, data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -574,8 +615,25 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
     return () => { cancelled = true; };
   }, [endpoint]);
 
-  // Loaded but empty → render nothing (keeps empty categories off the page).
-  if (data && data.length === 0) return null;
+  // Loaded but empty → render nothing (keeps empty categories off the page), unless the row
+  // has a message to show (e.g. "no events near you").
+  if (data && data.length === 0) {
+    // Nothing in range: show the closest upcoming events anywhere, clearly labelled.
+    if (fallback && fallbackData === null) return <SkeletonRow />;
+    if (fallback && fallbackData && fallbackData.length > 0) {
+      return (
+        <EventRow title={fallback.title} subtitle={fallback.subtitle} events={fallbackData}
+          liked={liked} shared={shared} onLike={onLike} onShare={onShare} direction={direction} />
+      );
+    }
+    return emptyMessage ? (
+      <div style={{ marginBottom: 32 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>{subtitle}</p>
+        <h2 style={{ fontSize: "clamp(1.2rem,2.2vw,1.75rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.01em", marginBottom: 14 }}>{title}</h2>
+        <div style={{ padding: "22px 20px", borderRadius: 14, border: "1px dashed rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", fontSize: 14 }}>{emptyMessage}</div>
+      </div>
+    ) : null;
+  }
 
   return data === null ? (
     <SkeletonRow />
@@ -585,10 +643,12 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
   );
 }
 
+const NEAR_RADIUS_KM = 50;
+
 function EventsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { userLocation } = useUserLocation();
+  const { userLocation, setUserLocation } = useUserLocation();
 
   const [liked,  setLiked]  = useState<Set<number>>(new Set());
   const [shared, setShared] = useState<Set<number>>(new Set());
@@ -668,8 +728,9 @@ function EventsContent() {
 
   /* ── Default view: each category row loads itself lazily ──────────── */
   const rowDefs: { title: string; subtitle: string; type: string; value?: string }[] = [
+    // With a city selected, the events closest to it come first.
+    ...(userLocation ? [{ title: `Near ${userLocation.city}`, subtitle: `Within ${NEAR_RADIUS_KM} km · nearest first`, type: "near-you" }] : []),
     { title: "Hot & Trending",   subtitle: "Don't Miss Out",         type: "hot" },
-    ...(userLocation ? [{ title: "Near You", subtitle: "Based on Your Location", type: "near-you" }] : []),
     { title: "Upcoming Events",  subtitle: "Coming Soon",            type: "upcoming" },
     { title: "Electronic / EDM", subtitle: "Event Type",             type: "genre", value: "electronic" },
     { title: "Sinhala Music",    subtitle: "Event Type",             type: "genre", value: "sinhala" },
@@ -678,21 +739,43 @@ function EventsContent() {
     { title: "Coming Soon",      subtitle: "Save the Date",          type: "coming-soon" },
   ];
 
+  // Nothing within the radius → the nearest upcoming events anywhere (up to 500 km), nearest first.
+  const nearFallbackUrl = userLocation
+    ? `/api/events/category?${new URLSearchParams({ type: "near-you", lat: String(userLocation.lat), lon: String(userLocation.lon), radius: "500" }).toString()}`
+    : "";
+
   const buildUrl = (def: { type: string; value?: string }) => {
     const p = new URLSearchParams({ type: def.type });
     if (def.value) p.set("value", def.value);
     if (def.type === "near-you" && userLocation) {
       p.set("lat", String(userLocation.lat));
       p.set("lon", String(userLocation.lon));
+      p.set("radius", String(NEAR_RADIUS_KM));
     }
     return `/api/events/category?${p.toString()}`;
   };
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
+      {userLocation && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 20, padding: "10px 16px", borderRadius: 12, background: "rgba(232,220,192,0.08)", border: "1px solid rgba(232,220,192,0.25)" }}>
+          <MapPin size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>Showing events near <strong style={{ color: "#fff" }}>{userLocation.city}</strong></span>
+          <button
+            onClick={() => setUserLocation(null)}
+            style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+          >
+            <X size={10} /> Clear location
+          </button>
+        </div>
+      )}
       {rowDefs.map((def, i) => (
         <CategoryRow
           key={def.title}
+          emptyMessage={def.type === "near-you" ? `No upcoming events near ${userLocation?.city} yet — browse everything below. (Events that have already happened aren't shown here.)` : undefined}
+          fallback={def.type === "near-you" && userLocation
+            ? { endpoint: nearFallbackUrl, title: "Nearest upcoming events", subtitle: `None within ${NEAR_RADIUS_KM} km of ${userLocation.city} — closest first` }
+            : undefined}
           title={def.title}
           subtitle={def.subtitle}
           endpoint={buildUrl(def)}
@@ -741,7 +824,7 @@ export default function EventsPage() {
                     <div style={{ height: 24, width: 200, borderRadius: 8, background: "rgba(255,255,255,0.04)", marginBottom: 16 }} />
                     <div style={{ display: "flex", gap: 14 }}>
                       {[...Array(5)].map((_, j) => (
-                        <div key={j} style={{ width: 230, height: 320, borderRadius: 16, background: "rgba(255,255,255,0.03)", flexShrink: 0 }} />
+                        <div key={j} style={{ width: 270, height: 400, borderRadius: 16, background: "rgba(255,255,255,0.03)", flexShrink: 0 }} />
                       ))}
                     </div>
                   </div>
