@@ -96,9 +96,7 @@ export default function FeaturedEvents() {
         <div className="relative w-full" style={{ maxWidth: 1200 }}>
           <style>{`.fe-row::-webkit-scrollbar{display:none}`}</style>
 
-          {/* Fade edges */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to right, #0F1116, transparent)" }} />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-[150]" style={{ width: 60, background: "linear-gradient(to left, #0F1116, transparent)" }} />
+          {/* Edges fade out via a mask on the scroll track (below) — no coloured overlay, so no visible slab */}
 
           {/* Prev arrow */}
           <button
@@ -113,7 +111,7 @@ export default function FeaturedEvents() {
           <div
             ref={scrollRef}
             className="fe-row flex overflow-x-auto"
-            style={{ gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
+            style={{ maskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
           >
             {/* Skeleton placeholders while data is loading (no cached data yet) */}
             {mounted && loading && events.length === 0 && [...Array(5)].map((_, i) => (

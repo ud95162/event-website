@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "../../../lib/db";
-import { imgMarker } from "../../../lib/select";
+import { selectBanners } from "../../../lib/banners";
 import { ensureSchema } from "../../../lib/schema";
-import { imgUrl, keepImg, keepImgParams } from "../../../lib/images";
+import { keepImg, keepImgParams } from "../../../lib/images";
 
 export async function PUT(
   req: NextRequest,
@@ -16,9 +16,9 @@ export async function PUT(
     `UPDATE banners SET ${keepImg("url")}, event_id = ?, title = ?, description = ? WHERE id = ?`,
     [...keepImgParams(url), eventId ?? null, title ?? null, description ?? null, id]
   );
-  const [rows] = await pool.query<any[]>(`SELECT id, ${imgMarker("url")}, event_id AS eventId, title, description FROM banners WHERE id = ?`, [id]);
-  const r = rows[0];
-  return NextResponse.json({ ...r, url: imgUrl("banners", r.id, "url", r.url) });
+  const [banner] = await selectBanners(id);
+  if (!banner) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(banner);
 }
 
 export async function DELETE(

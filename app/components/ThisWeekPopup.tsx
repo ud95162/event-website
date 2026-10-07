@@ -113,12 +113,12 @@ export default function ThisWeekPopup() {
           {/* Event info overlay */}
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 30px" }}>
             {ev.tag && (
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0" }}>{ev.tag}</span>
+              <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0", textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>{ev.tag}</span>
             )}
             <h2 style={{ fontSize: 34, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05, margin: "8px 0 14px" }}>{ev.title}</h2>
             <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#E8DCC0" }} /> {ev.date}</span>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#E8DCC0" }} /> {ev.location}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 600, color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}><Calendar size={17} style={{ color: "#E8DCC0" }} /> {ev.date}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 600, color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}><MapPin size={17} style={{ color: "#E8DCC0" }} /> {ev.location}</span>
             </div>
           </div>
 
@@ -162,7 +162,7 @@ export default function ThisWeekPopup() {
         <div style={{ display: "flex", gap: 10, padding: "10px 16px 18px" }}>
           <button
             onClick={() => go(ev)}
-            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#E9184F", border: "none", boxShadow: "0 6px 22px rgba(233,24,79,0.4)", color: "#fff", fontSize: 13, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
           >
             View Event <ArrowRight size={14} />
           </button>

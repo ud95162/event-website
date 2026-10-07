@@ -18,8 +18,8 @@ const MONTHS = [
   "July","August","September","October","November","December",
 ];
 
-/* ── Day card: one clean cover + an "N events" badge; multi-event days open a
-      readable list popup on click instead of stacking unreadable slivers ───── */
+/* ── Day card: a single event gets one clean cover; a day with several events is drawn
+      as a mosaic of clickable blocks (picture + title each), with "+N more" past four ───── */
 function DayCard({
   date, dayEvents, isToday: todayCell, onSelect,
 }: {
@@ -36,12 +36,13 @@ function DayCard({
   const listRef = useRef<HTMLDivElement>(null);
 
   const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
+  const [previewEv, setPreviewEv] = useState<Event | null>(null);   // the event the hover preview shows
   const [listOpen, setListOpen] = useState(false);
   const [listPos, setListPos] = useState<{ top: number; left: number } | null>(null);
 
-  // Position a popup to the side of the cell, flipping/clamping to stay on screen.
-  const place = (w: number, h: number) => {
-    const el = cellRef.current;
+  // Position a popup to the side of an element (the cell, or one block inside it), flipping/clamping to stay on screen.
+  const place = (w: number, h: number, target?: HTMLElement | null) => {
+    const el = target ?? cellRef.current;
     if (!el) return null;
     const r = el.getBoundingClientRect();
     let left = r.right + 8;
@@ -52,13 +53,21 @@ function DayCard({
     return { top, left };
   };
 
-  const onCellEnter = () => { if (!multi && hasEvents) { const p = place(240, 280); if (p) setPreview(p); } };
-  const onCellLeave = () => setPreview(null);
+  const onCellEnter = () => { if (!multi && hasEvents) { const p = place(240, 280); if (p) { setPreview(p); setPreviewEv(cover); } } };
+  const onCellLeave = () => { setPreview(null); setPreviewEv(null); };
   const onCellClick = () => {
-    if (!hasEvents) return;
-    if (multi) { const p = place(268, 340); if (p) { setListPos(p); setListOpen(true); } }
-    else onSelect(cover);
+    if (hasEvents && !multi) onSelect(cover);          // multi-event days are clicked block by block
   };
+  const openList = () => { const p = place(268, 340); if (p) { setListPos(p); setListOpen(true); } };
+
+  // Multi-event days are drawn as a mosaic of blocks: 2 stacked, 3 = one wide + two, 4+ = 2×2
+  // (the 4th block turns into "+N more" when there are more than 4).
+  const MAX_BLOCKS = 4;
+  const blocks = multi ? dayEvents.slice(0, MAX_BLOCKS) : [];
+  const overflow = n > MAX_BLOCKS ? n - (MAX_BLOCKS - 1) : 0;      // events hidden behind the "+N more" block
+  const mosaic: React.CSSProperties =
+    n === 2 ? { gridTemplateColumns: "1fr", gridTemplateRows: "1fr 1fr" }
+    : { gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" };
 
   // Close the list popup on outside click / resize / page scroll — but NOT when the
   // scroll happens inside the popup itself (so the user can scroll its event list).
@@ -97,8 +106,54 @@ function DayCard({
           zIndex: 1,
         }}
       >
+        {/* Several events on this day: a mosaic of clickable blocks, each with its own picture + title */}
+        {multi && (
+          <div style={{ position: "absolute", inset: 0, display: "grid", gap: 2, background: "#0a0a0a", ...mosaic }}>
+            {blocks.map((ev, i) => {
+              const isMore = overflow > 0 && i === MAX_BLOCKS - 1;
+              return (
+                <div
+                  key={ev.id}
+                  onClick={e => { e.stopPropagation(); if (isMore) openList(); else onSelect(ev); }}
+                  onMouseEnter={e => {
+                    if (isMore) return;
+                    const p = place(240, 280, e.currentTarget as HTMLElement);
+                    if (p) { setPreview(p); setPreviewEv(ev); }
+                  }}
+                  onMouseLeave={() => { setPreview(null); setPreviewEv(null); }}
+                  title={isMore ? `${overflow} more events` : ev.title}
+                  style={{
+                    position: "relative", overflow: "hidden", cursor: "pointer", minWidth: 0, minHeight: 0,
+                    gridColumn: n === 3 && i === 0 ? "1 / span 2" : undefined,
+                  }}
+                >
+                  <img
+                    src={thumb(ev.image, 320)} alt={ev.title}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", filter: isMore ? "brightness(0.35)" : "none" }}
+                  />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 70%)" }} />
+                  {isMore ? (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                      <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1 }}>+{overflow}</span>
+                      <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 3 }}>more</span>
+                    </div>
+                  ) : (
+                    <p style={{
+                      position: "absolute", left: 6, right: 6, bottom: 5,
+                      fontSize: 9, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.15,
+                      overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
+                    }}>
+                      {ev.title}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Cover (first event) fills the whole cell */}
-        {hasEvents && (
+        {hasEvents && !multi && (
           <>
             <img
               src={cover.image} alt={cover.title}
@@ -122,20 +177,8 @@ function DayCard({
           </span>
         </div>
 
-        {/* Count badge for multi-event days */}
-        {multi && (
-          <div style={{
-            position: "absolute", top: 6, right: 6, zIndex: 10,
-            padding: "3px 8px", borderRadius: 999,
-            background: "rgba(255,255,255,0.92)", color: "#000",
-            fontSize: 9, fontWeight: 900, letterSpacing: "0.02em",
-          }}>
-            {n} EVENTS
-          </div>
-        )}
-
-        {/* Title (+N more) at the bottom */}
-        {hasEvents && (
+        {/* Title at the bottom (single-event days) */}
+        {hasEvents && !multi && (
           <div style={{ position: "absolute", left: 8, right: 8, bottom: 7, zIndex: 10 }}>
             <p style={{
               fontSize: 10, fontWeight: 800, color: "#fff",
@@ -144,17 +187,12 @@ function DayCard({
             }}>
               {cover.title}
             </p>
-            {multi && (
-              <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>
-                +{n - 1} more
-              </p>
-            )}
           </div>
         )}
       </div>
 
-      {/* Single-event hover preview */}
-      {!multi && preview && hasEvents && typeof document !== "undefined" && createPortal(
+      {/* Hover preview (single-event days, and each block of a multi-event day) */}
+      {preview && previewEv && typeof document !== "undefined" && createPortal(
         <div style={{
           position: "fixed", top: preview.top, left: preview.left,
           width: 240, borderRadius: 16, overflow: "hidden",
@@ -164,16 +202,16 @@ function DayCard({
         }}>
           <style>{`@keyframes fadeInPopup { from { opacity:0; transform:translateY(6px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }`}</style>
           <div style={{ position: "relative", height: 120 }}>
-            <img src={cover.image} alt={cover.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+            <img src={thumb(previewEv.image, 480)} alt={previewEv.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0a0a0a 0%, transparent 60%)" }} />
-            <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#000", background: "#fff", borderRadius: 999, padding: "2px 8px" }}>{cover.tag}</span>
+            <span style={{ position: "absolute", top: 8, left: 8, fontSize: 8, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#000", background: "#fff", borderRadius: 999, padding: "2px 8px" }}>{previewEv.tag}</span>
           </div>
           <div style={{ padding: "10px 12px 12px" }}>
-            <p style={{ fontSize: 13, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, lineHeight: 1.25 }}>{cover.title}</p>
+            <p style={{ fontSize: 13, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, lineHeight: 1.25 }}>{previewEv.title}</p>
             {[
-              { Icon: Calendar, text: cover.date },
-              { Icon: MapPin,   text: cover.location },
-              { Icon: Ticket,   text: fromPrice(cover.tickets, cover.price) },
+              { Icon: Calendar, text: previewEv.date },
+              { Icon: MapPin,   text: previewEv.location },
+              { Icon: Ticket,   text: fromPrice(previewEv.tickets, previewEv.price) },
             ].map(({ Icon, text }) => (
               <div key={text} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                 <Icon size={9} style={{ color: "#C0C0C0", flexShrink: 0 }} />
@@ -591,13 +629,7 @@ export default function CalendarPage() {
             <h1 className="text-white font-black uppercase tracking-tight"
               style={{ fontSize: "clamp(1.2rem, 2.5vw, 2rem)" }}>
               {MONTHS[month]}{" "}
-              <span style={{
-                background: "linear-gradient(90deg,#E8DCC0,#e91e8c)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}>
-                {year}
-              </span>
+              <span style={{ color: "#E8DCC0" }}>{year}</span>
             </h1>
 
             <div className="flex items-center gap-3">
@@ -795,12 +827,12 @@ export default function CalendarPage() {
               {/* Event info overlay */}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 30px" }}>
                 {selectedEvent.tag && (
-                  <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0" }}>{selectedEvent.tag}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0", textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>{selectedEvent.tag}</span>
                 )}
                 <h2 style={{ fontSize: 30, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.02em", lineHeight: 1.05, margin: "8px 0 14px" }}>{selectedEvent.title}</h2>
                 <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><Calendar size={14} style={{ color: "#E8DCC0" }} /> {selectedEvent.date}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.8)" }}><MapPin size={14} style={{ color: "#E8DCC0" }} /> {selectedEvent.venue || selectedEvent.location}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 600, color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}><Calendar size={17} style={{ color: "#E8DCC0" }} /> {selectedEvent.date}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 600, color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.85)" }}><MapPin size={17} style={{ color: "#E8DCC0" }} /> {selectedEvent.venue || selectedEvent.location}</span>
                 </div>
               </div>
             </div>
@@ -809,7 +841,7 @@ export default function CalendarPage() {
             <div style={{ display: "flex", gap: 10, padding: "12px 16px 18px" }}>
               <button
                 onClick={() => router.push(`/events/${eventSlug(selectedEvent)}`)}
-                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 12, background: "#E9184F", border: "none", boxShadow: "0 6px 22px rgba(233,24,79,0.4)", color: "#fff", fontSize: 13, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
               >
                 View Event <ArrowRight size={14} />
               </button>

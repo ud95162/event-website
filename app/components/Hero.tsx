@@ -75,7 +75,7 @@ export default function Hero() {
   // Slides come ONLY from admin-added banners (no public-folder fallback flashing
   // while data loads). Text defaults per index still reuse FALLBACK_PANELS.
   const panels: {
-    image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null;
+    image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null; eventId: number | null;
   }[] = banners.map((b, i) => {
     const fb = FALLBACK_PANELS[i % FALLBACK_PANELS.length];
     // The linked event's metadata is joined into the banner by the API (no events list needed).
@@ -88,9 +88,23 @@ export default function Hero() {
     const venue = b.eventVenue || b.eventLocation || "";
     const date = hasEvent ? `${b.eventDate}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
     const tag = b.eventTag ? b.eventTag.toUpperCase() : fb.tag;
-    return { image: b.url, tag, date, title, desc, slug: hasEvent ? eventSlug({ title: b.eventTitle! }) : null };
+    return { image: b.url, tag, date, title, desc, slug: hasEvent ? eventSlug({ title: b.eventTitle! }) : null, eventId: b.eventId ?? null };
   });
   const hasPanels = panels.length > 0;
+
+  // Open the slide's event. If the banner is linked to an event but its details didn't come with
+  // the banner (e.g. stale cached data), look the event up by id instead of falling back to /events.
+  const openPanel = async (p: { slug: string | null; eventId: number | null }) => {
+    if (p.slug) { router.push(`/events/${p.slug}`); return; }
+    if (p.eventId != null) {
+      try {
+        const res = await fetch(`/api/events/${p.eventId}`);
+        const ev = res.ok ? await res.json() : null;
+        if (ev?.title) { router.push(`/events/${eventSlug(ev)}`); return; }
+      } catch { /* fall through */ }
+    }
+    router.push("/events");
+  };
 
   const [current,       setCurrent]       = useState(0);
   const [prevIdx,       setPrevIdx]       = useState<number | null>(null);
@@ -144,7 +158,7 @@ export default function Hero() {
   const bigIdx  = current;
 
   return (
-    <section className="flex flex-col flex-1 min-h-0 relative" style={{ padding: "clamp(4px, 1vh, 16px) 0 clamp(8px, 2vh, 24px)" }}>
+    <section className="flex flex-col flex-1 min-h-0 relative" style={{ padding: "clamp(8px, 1.6vh, 16px) 0 clamp(20px, 3.4vh, 32px)" }}>
 
       {/* Background overlay */}
       <div className="absolute inset-0 pointer-events-none">
@@ -215,7 +229,9 @@ export default function Hero() {
                   transform: `translateX(${translateX})`,
                   transition,
                   zIndex:    isCurrent ? 2 : 1,
+                  cursor:    isBig ? "pointer" : "default",
                 }}
+                onClick={() => { if (isBig) openPanel(p); }}
               >
                 {/* Blurred backdrop fills the frame behind the full (uncropped) banner */}
                 <img
@@ -332,7 +348,7 @@ export default function Hero() {
                   {/* CTA */}
                   <button
                     key={`cta-${i}-${bigIdx}`}
-                    onClick={() => router.push(p.slug ? `/events/${p.slug}` : "/events")}
+                    onClick={(e) => { e.stopPropagation(); openPanel(p); }}
                     className="flex items-center gap-3 group/btn cursor-pointer"
                     style={{
                       opacity: isBig ? 1 : 0,
@@ -368,29 +384,32 @@ export default function Hero() {
             ))}
           </div>
 
-          {/* ── Arrows + scroll ───────────────────────────────────────── */}
-          <div
-            className="absolute bottom-4 flex flex-col items-end gap-2"
-            style={{ right: "8px", zIndex: 20 }}
-          >
-            <div className="flex items-center gap-2">
+          {/* ── Arrows: left / right edges, vertically centred ─────────── */}
+          {panels.length > 1 && (
+            <>
               <button
                 onClick={goPrev}
-                className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/a"
+                aria-label="Previous slide"
+                className="absolute top-1/2 -translate-y-1/2 w-11 h-11 rounded-full border border-white/25 bg-black/50 flex items-center justify-center hover:bg-white hover:border-white transition-all group/a"
+                style={{ left: 14, zIndex: 20, backdropFilter: "blur(6px)" }}
               >
-                <ArrowRight size={14} className="text-white group-hover/a:text-black transition-colors rotate-180" />
+                <ArrowRight size={16} className="text-white group-hover/a:text-black transition-colors rotate-180" />
               </button>
               <button
                 onClick={goNext}
-                className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all group/b"
+                aria-label="Next slide"
+                className="absolute top-1/2 -translate-y-1/2 w-11 h-11 rounded-full border border-white/25 bg-black/50 flex items-center justify-center hover:bg-white hover:border-white transition-all group/b"
+                style={{ right: 14, zIndex: 20, backdropFilter: "blur(6px)" }}
               >
-                <ArrowRight size={14} className="text-white group-hover/b:text-black transition-colors" />
+                <ArrowRight size={16} className="text-white group-hover/b:text-black transition-colors" />
               </button>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <p className="text-white/30 text-[11px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
-              <ChevronDown size={13} className="text-white/30" />
-            </div>
+            </>
+          )}
+
+          {/* ── Scroll hint ───────────────────────────────────────────── */}
+          <div className="absolute bottom-4 flex items-center gap-1.5 pointer-events-none" style={{ right: "16px", zIndex: 20 }}>
+            <p className="text-white/30 text-[11px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
+            <ChevronDown size={13} className="text-white/30" />
           </div>
 
         </div>
