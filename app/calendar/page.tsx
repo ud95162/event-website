@@ -60,13 +60,15 @@ function DayCard({
   };
   const openList = () => { const p = place(268, 340); if (p) { setListPos(p); setListOpen(true); } };
 
-  // Multi-event days are drawn as a mosaic of blocks: 2 stacked, 3 = one wide + two, 4+ = 2×2
+  // Multi-event days are drawn as a mosaic of blocks: 2 side by side, 3 = one tall + two, 4+ = 2×2
   // (the 4th block turns into "+N more" when there are more than 4).
   const MAX_BLOCKS = 4;
   const blocks = multi ? dayEvents.slice(0, MAX_BLOCKS) : [];
   const overflow = n > MAX_BLOCKS ? n - (MAX_BLOCKS - 1) : 0;      // events hidden behind the "+N more" block
+  // Flyers are mostly portrait, so the blocks are tall rather than wide strips:
+  //   2 = two tall side-by-side blocks, 3 = one tall block + two stacked, 4+ = 2×2.
   const mosaic: React.CSSProperties =
-    n === 2 ? { gridTemplateColumns: "1fr", gridTemplateRows: "1fr 1fr" }
+    n === 2 ? { gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr" }
     : { gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" };
 
   // Close the list popup on outside click / resize / page scroll — but NOT when the
@@ -124,7 +126,7 @@ function DayCard({
                   title={isMore ? `${overflow} more events` : ev.title}
                   style={{
                     position: "relative", overflow: "hidden", cursor: "pointer", minWidth: 0, minHeight: 0,
-                    gridColumn: n === 3 && i === 0 ? "1 / span 2" : undefined,
+                    gridRow: n === 3 && i === 0 ? "1 / span 2" : undefined,
                   }}
                 >
                   <img
