@@ -179,8 +179,8 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lon, ready]);
 
-  const search = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const search = async (e?: React.SyntheticEvent) => {
+    e?.preventDefault();
     if (!query.trim()) return;
     setSearching(true);
     setSearchErr("");
@@ -212,8 +212,9 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
 
   return (
     <div>
-      {/* Search bar */}
-      <form onSubmit={search} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+      {/* Search bar — a plain div, NOT a <form>: this picker sits inside the event form, and a nested form
+          made "Find" / Enter submit the whole event form (saving + leaving the page, losing the draft). */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <div style={{ position: "relative", flex: 1 }}>
           <Search size={13} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", pointerEvents: "none" }} />
           <input
@@ -221,6 +222,7 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
             onChange={e => setQuery(e.target.value)}
             onFocus={() => suggestions.length > 0 && setShowSug(true)}
             onBlur={() => setTimeout(() => setShowSug(false), 150)}
+            onKeyDown={e => { if (e.key === "Enter") search(e); }}
             placeholder="Search a place, venue or address…"
             autoComplete="off"
             style={{ width: "100%", padding: "9px 12px 9px 32px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
@@ -255,10 +257,10 @@ export default function MapPicker({ lat, lon, onChange }: Props) {
             </div>
           )}
         </div>
-        <button type="submit" disabled={searching} style={{ padding: "9px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: searching ? "default" : "pointer", opacity: searching ? 0.6 : 1 }}>
+        <button type="button" onClick={search} disabled={searching} style={{ padding: "9px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: searching ? "default" : "pointer", opacity: searching ? 0.6 : 1 }}>
           {searching ? "…" : "Find"}
         </button>
-      </form>
+      </div>
       {searchErr && <p style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>{searchErr}</p>}
 
       {/* Map */}
