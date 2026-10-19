@@ -48,7 +48,7 @@ export default function RootLayout({
           />
         ))}
         {/* Preload the logo first so it's ready when the preloader shows it */}
-        <link rel="preload" as="image" href="/preloader-logo.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/logo.png" fetchPriority="high" />
       </head>
       <body className="antialiased">
         <AuthProvider>

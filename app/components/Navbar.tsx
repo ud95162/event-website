@@ -284,7 +284,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex flex-col items-start justify-center shrink-0">
             <img src="/logo.png" alt="DiscoverEvents.lk" className="w-auto object-contain" style={{ height: "calc(40px * var(--nav-s))" }} />
-            <span style={{ marginTop: 3, fontSize: "calc(9.5px * var(--nav-s))", lineHeight: 1, fontWeight: 600, letterSpacing: "0.12em", whiteSpace: "nowrap", textTransform: "uppercase", color: "#E8DCC0", opacity: 0.8 }}>
+            <span style={{ marginTop: 3, fontSize: "calc(9.5px * var(--nav-s))", lineHeight: 1, fontWeight: 700, letterSpacing: "0.12em", whiteSpace: "nowrap", textTransform: "uppercase", color: "#fff", opacity: 0.95, textShadow: "0 0 10px rgba(255,255,255,0.3)" }}>
               Sri Lanka’s home for events and talent
             </span>
           </Link>

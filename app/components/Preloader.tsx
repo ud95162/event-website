@@ -230,7 +230,7 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
 
         {/* ── Logo ─────────────────────────────────────────────────────── */}
         <img
-          src="/preloader-logo.png"
+          src="/logo.png"
           alt="DiscoverEvents.lk"
           onLoad={() => setLogoLoaded(true)}
           onError={() => setLogoLoaded(true)}
@@ -250,13 +250,14 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
         <p
           style={{
             marginTop: 18,
-            color: "#E8DCC0",
-            fontSize: "clamp(12px, 2.4vw, 17px)",
-            fontWeight: 500,
-            letterSpacing: "0.22em",
+            color: "#fff",
+            fontSize: "clamp(13px, 2.6vw, 19px)",
+            fontWeight: 700,
+            letterSpacing: "0.24em",
             textTransform: "uppercase",
             textAlign: "center",
-            opacity: showEmblem ? 0.85 : 0,
+            textShadow: "0 0 18px rgba(255,255,255,0.45), 0 2px 10px rgba(0,0,0,0.6)",
+            opacity: showEmblem ? 1 : 0,
             transform: showEmblem ? "translateY(0)" : "translateY(6px)",
             transition: "opacity 0.8s 0.35s ease, transform 0.8s 0.35s ease",
           }}
