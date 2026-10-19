@@ -13,6 +13,8 @@ export type Banner = {
   eventId?: number | null;   // event the banner's "Explore Event" CTA links to (date/venue come from it)
   title?: string | null;     // banner's own headline
   description?: string | null; // banner's own description
+  sponsored?: boolean;       // "Sponsored" tag shown (also on when the linked event is sponsored)
+  sponsoredOwn?: boolean;    // the banner's own Sponsored switch (admin)
   // Linked event's metadata, joined by the API so the Hero needs no full events list.
   eventTitle?: string | null;
   eventDescription?: string | null;
@@ -47,6 +49,8 @@ const DEFAULT_POPUP: PopupSettings = { enabled: true, title: "Happening This Wee
 
 export type Organizer = {
   id: number;
+  createdAt?: string;   // when the entry was added (ISO)
+  updatedAt?: string;   // when it was last modified (ISO)
   name: string;
   logo?: string;
   description?: string;

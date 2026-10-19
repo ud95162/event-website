@@ -1,15 +1,7 @@
 "use client";
 
-import { CalendarPlus } from "lucide-react";
-
 const SvgFacebook = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={15} height={15}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-);
-const SvgTwitter = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width={15} height={15}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-);
-const SvgYoutube = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width={15} height={15}><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.95C5.12 20 12 20 12 20s6.88 0 8.59-.47a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="#000" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
 );
 const SvgTiktok = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={15} height={15}><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.7a8.19 8.19 0 0 0 4.76 1.52v-3.4a4.85 4.85 0 0 1-1-.13z"/></svg>
@@ -22,17 +14,15 @@ const SvgWhatsapp = ({ size = 18 }: { size?: number }) => (
 );
 
 const socials = [
-  { Icon: SvgFacebook },
-  { Icon: SvgTwitter },
-  { Icon: SvgYoutube },
-  { Icon: SvgTiktok },
   { Icon: SvgInstagram },
+  { Icon: SvgFacebook },
+  { Icon: SvgTiktok },
 ];
 
 const navLinks = [
   { label: "Home",     href: "/"        },
   { label: "Events",   href: "/events"  },
-  { label: "Artists",  href: "/artists" },
+  { label: "Talent",   href: "/artists" },
   { label: "About Us", href: "/#about"  },
 ];
 
@@ -41,7 +31,7 @@ export default function Footer() {
     <footer id="contact" className="bg-[#0F1116] flex-1 flex flex-col justify-center py-6">
 
       {/* ── Main grid ─────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-[2.6fr_0.7fr_1.7fr_1fr] gap-12 lg:gap-16">
 
           {/* Logo */}
@@ -106,10 +96,7 @@ export default function Footer() {
           {/* Contact info */}
           <div className="md:col-span-1 flex flex-col gap-5 text-white/55 text-base leading-relaxed">
             <p className="text-white/30 text-[11px] font-semibold tracking-[0.3em] uppercase">Contact</p>
-            <p>
-              DiscoverEvents.lk<br />
-              Colombo, Sri Lanka
-            </p>
+            <p>Colombo, Sri Lanka</p>
             <p>
               Email:{" "}
               <a href="mailto:discovereventslk@gmail.com" className="text-white font-semibold hover:underline">
@@ -136,14 +123,6 @@ export default function Footer() {
                   </a>
                 </li>
               ))}
-              <li>
-                <a
-                  href="/admin/login"
-                  className="inline-flex items-center gap-2 whitespace-nowrap text-[#E8DCC0] font-semibold text-base hover:text-[#F7F1E1] transition-colors"
-                >
-                  <CalendarPlus size={18} /> List Your Event
-                </a>
-              </li>
             </ul>
           </div>
 

@@ -138,8 +138,8 @@ body {
 
 .snap-container {
   width: 100%;
-  height: calc(100dvh - 64px);
-  margin-top: 64px;
+  height: calc(100dvh - var(--nav-h, 64px));
+  margin-top: var(--nav-h, 64px);
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
@@ -152,7 +152,7 @@ body {
 .snap-section {
   scroll-snap-align: start;
   width: 100%;
-  height: calc(100dvh - 64px) !important;
+  height: calc(100dvh - var(--nav-h, 64px)) !important;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -433,4 +433,29 @@ select option:hover {
 @keyframes hp-in {
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
   to   { opacity: 1; transform: none; }
+}
+
+/* ── Motion ────────────────────────────────────────────────────────────── */
+:root { --ease-out: cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Page load / route change */
+@keyframes page-enter { from { opacity: 0; } to { opacity: 1; } }
+.page-enter { animation: page-enter 0.55s var(--ease-out) both; }
+
+/* Scroll reveal (driven by ScrollReveal.tsx) */
+[data-rv="hidden"] { opacity: 0; transform: translateY(32px); }
+[data-rv="shown"] {
+  opacity: 1; transform: none;
+  transition: opacity 0.9s var(--ease-out) var(--rv-delay, 0s), transform 0.9s var(--ease-out) var(--rv-delay, 0s);
+}
+
+/* Press feedback */
+button:not(:disabled):active, [role="button"]:active { transform: scale(0.96); }
+a[href]:active { opacity: 0.8; }
+
+::selection { background: rgba(232, 220, 192, 0.3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter { animation: none; }
+  [data-rv] { opacity: 1 !important; transform: none !important; transition: none !important; }
 }

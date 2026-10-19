@@ -3,6 +3,7 @@ import { getPool } from "../../../lib/db";
 import { cols } from "../../../lib/select";
 import { ensureSchema } from "../../../lib/schema";
 import { mapEventRow } from "../../../lib/mappers";
+import { eventCategory } from "../../../lib/eventCategories";
 
 // One category row at a time, so the /events page can lazy-load each row (Hot & Trending,
 // Upcoming, a genre, a city, …) independently as it scrolls into view — instead of
@@ -16,6 +17,10 @@ import { mapEventRow } from "../../../lib/mappers";
 //   /api/events/category?type=genre&value=electronic
 //   /api/events/category?type=city&value=Colombo
 //   /api/events/category?type=near-you&lat=..&lon=..&radius=50   (upcoming events within `radius` km, nearest first)
+//   /api/events/category?type=week            upcoming events in the next 7 days, soonest first
+//   /api/events/category?type=month           upcoming events this calendar month, soonest first
+//   /api/events/category?type=category&value=Music%20%26%20Nightlife   upcoming events in one Events-page section, soonest first
+//   any type + &lat=..&lon=..&within=50   keeps only events within `within` km of that point (the chosen city)
 
 const CAP = 12;
 
@@ -43,7 +48,7 @@ export async function GET(req: NextRequest) {
   const value = (sp.get("value") ?? "").toLowerCase();
 
   const [meta] = await pool.query<any[]>(
-    "SELECT id, badge, date, tag, location, genres, lat, lon FROM events ORDER BY id"
+    "SELECT id, badge, date, tag, location, genres, lat, lon, category FROM events ORDER BY id"
   );
   const rows = meta.map((r) => ({
     id: r.id as number,
@@ -54,6 +59,7 @@ export async function GET(req: NextRequest) {
     genres: parseGenres(r.genres),
     lat: r.lat as number,
     lon: r.lon as number,
+    category: eventCategory(r.category, r.tag, parseGenres(r.genres)) as string,
   }));
 
   const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -62,6 +68,23 @@ export async function GET(req: NextRequest) {
   switch (type) {
     case "hot":
       picked = rows.filter((e) => e.badge === "HOT" || e.badge === "NEW");
+      break;
+    case "week": {
+      const end = new Date(now); end.setDate(now.getDate() + 7);
+      picked = rows
+        .filter((e) => { const d = parseEventDate(e.date); return !!d && d >= now && d < end; })
+        .sort((a, b) => parseEventDate(a.date)!.getTime() - parseEventDate(b.date)!.getTime());
+      break;
+    }
+    case "month":
+      picked = rows
+        .filter((e) => { const d = parseEventDate(e.date); return !!d && d >= now && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })
+        .sort((a, b) => parseEventDate(a.date)!.getTime() - parseEventDate(b.date)!.getTime());
+      break;
+    case "category":
+      picked = rows
+        .filter((e) => { const d = parseEventDate(e.date); return e.category === (sp.get("value") ?? "") && !!d && d >= now; })
+        .sort((a, b) => parseEventDate(a.date)!.getTime() - parseEventDate(b.date)!.getTime());
       break;
     case "coming-soon":
       picked = rows.filter((e) => e.badge === "COMING SOON");
@@ -96,6 +119,13 @@ export async function GET(req: NextRequest) {
     }
     default:
       return NextResponse.json({ error: "Unknown category type" }, { status: 400 });
+  }
+
+  // A chosen city limits every row to events near it (events without coordinates are left out).
+  const wLat = parseFloat(sp.get("lat") ?? ""), wLon = parseFloat(sp.get("lon") ?? "");
+  const within = parseFloat(sp.get("within") ?? "");
+  if (!isNaN(wLat) && !isNaN(wLon) && within > 0) {
+    picked = picked.filter((e) => !(e.lat === 0 && e.lon === 0) && haversineKm(wLat, wLon, e.lat, e.lon) <= Math.min(within, 500));
   }
 
   const ids = picked.slice(0, CAP).map((e) => e.id);

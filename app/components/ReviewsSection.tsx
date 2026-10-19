@@ -119,7 +119,7 @@ export default function ReviewsSection() {
 
   return (
     <section className="snap-section overflow-hidden flex flex-col items-center justify-evenly" style={{ gap: 24 }}>
-      <div className="text-center relative z-[200] select-none flex flex-col items-center" style={{ gap: "clamp(4px, 1vh, 12px)" }}>
+      <div data-reveal className="text-center relative z-[200] select-none flex flex-col items-center" style={{ gap: "clamp(4px, 1vh, 12px)" }}>
         <p className="text-white/30 text-[12px] font-semibold tracking-[0.4em] uppercase">
           LOVED BY FANS
         </p>
@@ -128,7 +128,7 @@ export default function ReviewsSection() {
         </h2>
       </div>
 
-      <div className="w-full flex flex-col" style={{ gap: 20 }}>
+      <div data-reveal data-reveal-delay="0.15" className="w-full flex flex-col" style={{ gap: 20 }}>
         <MarqueeRow reviews={r1} direction="left" />
         {reviews.length > 3 && <MarqueeRow reviews={r2} direction="right" />}
       </div>

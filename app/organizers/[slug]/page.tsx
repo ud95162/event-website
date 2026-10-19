@@ -111,7 +111,7 @@ export default function OrganizerDetailPage() {
       <ParticleField />
       <Navbar />
 
-      <div className="pt-16 relative z-10">
+      <div className="relative z-10" style={{ paddingTop: "var(--nav-h, 64px)" }}>
         <StickySearchFilters />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

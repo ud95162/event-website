@@ -12,6 +12,9 @@ export type BandMember = {
 
 export type Artist = {
   id:              number;
+  sponsored?:      boolean;  // shows a "Sponsored" tag wherever the artist appears
+  createdAt?:      string;   // when the entry was added (ISO)
+  updatedAt?:      string;   // when it was last modified (ISO)
   artistType?:     "solo" | "band";   // "band" = live band with multiple members
   members?:        BandMember[];       // band members (when artistType === "band")
   name:            string;   // kept for backward compat (used as stageName fallback)

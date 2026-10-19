@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect } from "react";
+import { Suspense, useState, useEffect, useLayoutEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import FeaturedEvents from "./components/FeaturedEvents";
@@ -16,6 +17,7 @@ import StickySearchFilters from "./components/StickySearchFilters";
 import ThisWeekPopup from "./components/ThisWeekPopup";
 import StatsCounter from "./components/StatsCounter";
 import ReviewsSection from "./components/ReviewsSection";
+import HomeResults from "./components/HomeResults";
 import { useAdminData } from "./context/AdminDataContext";
 import { hasPreloaderShown, markPreloaderShown } from "./preloaderState";
 
@@ -24,7 +26,21 @@ import { hasPreloaderShown, markPreloaderShown } from "./preloaderState";
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+// Searching or filtering from the home page shows the matches right here (see HomeResults),
+// in place of the usual sections, instead of sending the visitor to another page.
+// Reports the address's query string. Isolated in its own Suspense boundary so reading it doesn't
+// push the whole home page to client-only rendering.
+function ParamsWatcher({ onChange }: { onChange: (qs: string) => void }) {
+  const sp = useSearchParams();
+  const qs = sp.toString();
+  useEffect(() => { onChange(qs); }, [qs, onChange]);
+  return null;
+}
+
 export default function Home() {
+  const [qs, setQs] = useState("");
+  const sp = new URLSearchParams(qs);
+  const filtered = !!(sp.get("q") || sp.get("genre") || sp.get("date") || sp.get("category"));
   // "checking" = haven't read localStorage yet (Preloader not rendered at all)
   // "idle"     = first visit confirmed, show preloader
   // "exit"     = preloader animating out
@@ -53,6 +69,7 @@ export default function Home() {
 
   return (
     <main className="relative" style={{ width: "100%", height: "100dvh", overflow: "hidden" }}>
+      <Suspense fallback={null}><ParamsWatcher onChange={setQs} /></Suspense>
       {/* This week's events pop-up — only after the preloader has finished */}
       {preloaderPhase === "gone" && <ThisWeekPopup />}
       {/* Preloader — only mounted once we know it's a first-time visit */}
@@ -73,11 +90,12 @@ export default function Home() {
 
       {/* Layer 3 – page content with slow motion portal entrance reveal */}
       <div
-        className="snap-container relative"
+        className={filtered ? "relative" : "snap-container relative"}
         style={{
           zIndex: 10,
-          marginTop: 64,
-          height: "calc(100dvh - 64px)",
+          ...(filtered ? { overflowY: "auto" as const } : {}),
+          marginTop: "var(--nav-h, 64px)",
+          height: "calc(100dvh - var(--nav-h, 64px))",
           opacity: (preloaderPhase === "checking" || preloaderPhase === "idle") ? 0 : 1,
           transform: (preloaderPhase === "checking" || preloaderPhase === "idle")
             ? "translateY(80px) scale(0.98)"
@@ -96,20 +114,32 @@ export default function Home() {
       >
         <Navbar />
 
-        {/* Hero + search bar */}
-        <div className="snap-section flex flex-col">
-          <StickySearchFilters />
-          <Hero />
-        </div>
-        <FeaturedEvents />
-        <FeaturedArtists />
-        <ReviewsSection />
-        <StatsCounter />
+        {filtered ? (
+          <>
+            <div style={{ position: "sticky", top: 0, zIndex: 290 }}><StickySearchFilters /></div>
+            <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 10 }}>
+              <HomeResults params={qs} />
+            </div>
+            <Footer />
+          </>
+        ) : (
+          <>
+            {/* Hero + search bar */}
+            <div className="snap-section flex flex-col">
+              <StickySearchFilters />
+              <Hero />
+            </div>
+            <FeaturedEvents />
+            <FeaturedArtists />
+            <ReviewsSection />
+            <StatsCounter />
 
-        <div className="snap-section flex flex-col">
-          <NewsletterSection />
-          <Footer />
-        </div>
+            <div className="snap-section flex flex-col">
+              <NewsletterSection />
+              <Footer />
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

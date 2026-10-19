@@ -7,6 +7,7 @@ import { X, Calendar, MapPin, ArrowRight, Sparkles, ChevronLeft, ChevronRight } 
 import { useAdminData } from "../context/AdminDataContext";
 import type { Event } from "../data/events";
 import { eventSlug } from "../lib/slug";
+import SponsoredTag from "./SponsoredTag";
 
 export default function ThisWeekPopup() {
   const router = useRouter();
@@ -112,6 +113,7 @@ export default function ThisWeekPopup() {
 
           {/* Event info overlay */}
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 30px" }}>
+            {ev.sponsored && <div style={{ marginBottom: 10 }}><SponsoredTag size="md" /></div>}
             {ev.tag && (
               <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.28em", textTransform: "uppercase", color: "#E8DCC0", textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>{ev.tag}</span>
             )}
@@ -179,7 +181,7 @@ export default function ThisWeekPopup() {
 }
 
 const arrowStyle = (side: "left" | "right"): React.CSSProperties => ({
-  position: "absolute", top: "38%", [side]: 16, transform: "translateY(-50%)",
+  position: "absolute", top: "50%", [side]: 16, transform: "translateY(-50%)",
   width: 44, height: 44, borderRadius: "50%", cursor: "pointer", zIndex: 2,
   background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.25)",
   backdropFilter: "blur(8px)", color: "#fff",

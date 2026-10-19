@@ -1,6 +1,8 @@
 // Maps snake_case DB rows to the camelCase shapes the frontend expects.
 // Stored base64 pictures are replaced by small /api/img/ URLs (see lib/images.ts).
 import { imgUrl } from "./images";
+import { toIso } from "./stamps";
+import { eventCategory } from "./eventCategories";
 
 function parseJson(v: any, fallback: any) {
   if (v == null) return fallback;
@@ -43,6 +45,10 @@ export function mapEventRow(r: any) {
     links: parseJson(r.links, {}),
     featured: !!r.featured,
     popup: !!r.popup,
+    sponsored: !!r.sponsored,
+    category: eventCategory(r.category, r.tag, parseJson(r.genres, [])),
+    createdAt: toIso(r.created_at),
+    updatedAt: toIso(r.updated_at),
   };
 }
 
@@ -78,7 +84,10 @@ export function mapArtistRow(r: any) {
     bookingPhone: r.booking_phone ?? undefined,
     level: r.level ?? undefined,
     featured: !!r.featured,
+    sponsored: !!r.sponsored,
     artistType: r.artist_type ?? undefined,
     members: parseJson(r.members, []),
+    createdAt: toIso(r.created_at),
+    updatedAt: toIso(r.updated_at),
   };
 }

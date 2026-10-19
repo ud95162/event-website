@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, ChevronDown, Search } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
+import SponsoredTag from "./SponsoredTag";
 
 // Split an event title into up to two balanced lines for the hero headline.
 const splitTitle = (t: string): string[] => {
@@ -75,7 +76,7 @@ export default function Hero() {
   // Slides come ONLY from admin-added banners (no public-folder fallback flashing
   // while data loads). Text defaults per index still reuse FALLBACK_PANELS.
   const panels: {
-    image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null; eventId: number | null;
+    image: string; tag: string; date: string; title: string[]; desc: string; slug: string | null; eventId: number | null; sponsored: boolean;
   }[] = banners.map((b, i) => {
     const fb = FALLBACK_PANELS[i % FALLBACK_PANELS.length];
     // The linked event's metadata is joined into the banner by the API (no events list needed).
@@ -88,7 +89,7 @@ export default function Hero() {
     const venue = b.eventVenue || b.eventLocation || "";
     const date = hasEvent ? `${b.eventDate}${venue ? " • " + venue.toUpperCase() : ""}` : fb.date;
     const tag = b.eventTag ? b.eventTag.toUpperCase() : fb.tag;
-    return { image: b.url, tag, date, title, desc, slug: hasEvent ? eventSlug({ title: b.eventTitle! }) : null, eventId: b.eventId ?? null };
+    return { image: b.url, tag, date, title, desc, slug: hasEvent ? eventSlug({ title: b.eventTitle! }) : null, eventId: b.eventId ?? null, sponsored: !!b.sponsored };
   });
   const hasPanels = panels.length > 0;
 
@@ -265,6 +266,7 @@ export default function Hero() {
                   >
                     {p.tag}
                   </span>
+                  {p.sponsored && <div style={{ marginTop: 8 }}><SponsoredTag /></div>}
                 </div>
 
                 {/* Text — only when big, each element animates in with stagger */}

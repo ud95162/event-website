@@ -84,6 +84,8 @@ async function createAndSeed(): Promise<void> {
   await addColumn("links", "links JSON");
   await addColumn("featured", "featured TINYINT(1) DEFAULT 0");
   await addColumn("popup", "popup TINYINT(1) DEFAULT 0");
+  await addColumn("sponsored", "sponsored TINYINT(1) DEFAULT 0");
+  await addColumn("category", "category VARCHAR(60) NULL");
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS artists (
@@ -130,6 +132,7 @@ async function createAndSeed(): Promise<void> {
     );
     if (rows[0].c === 0) await pool.query(`ALTER TABLE artists ADD COLUMN ${ddl}`);
   };
+  await addArtistCol("sponsored", "sponsored TINYINT(1) DEFAULT 0");
   await addArtistCol("bpm", "bpm INT NULL");
   await addArtistCol("social_links", "social_links JSON");
   await addArtistCol("booking_email", "booking_email VARCHAR(255)");
@@ -215,6 +218,7 @@ async function createAndSeed(): Promise<void> {
     ["event_id", "event_id INT NULL"],
     ["title", "title VARCHAR(255) NULL"],
     ["description", "description TEXT NULL"],
+    ["sponsored", "sponsored TINYINT(1) DEFAULT 0"],
   ] as const) {
     const [cols] = await pool.query<any[]>(
       "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'banners' AND COLUMN_NAME = ?",
@@ -271,6 +275,13 @@ async function createAndSeed(): Promise<void> {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  // The sender's contact number (added later). Idempotent migration.
+  {
+    const [c] = await pool.query<any[]>(
+      "SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'contact_messages' AND COLUMN_NAME = 'phone'"
+    );
+    if (c[0].c === 0) await pool.query("ALTER TABLE contact_messages ADD COLUMN phone VARCHAR(40) NULL AFTER email");
+  }
 
   // Analytics counters: page views + link clicks per event/organizer.
   await pool.query(`
@@ -385,6 +396,18 @@ async function createAndSeed(): Promise<void> {
     for (const b of SEED_BANNERS) {
       await pool.query("INSERT INTO banners (id, url) VALUES (?, ?)", [b.id, b.url]);
     }
+  }
+
+  // ---- Added / last-modified stamps on every content table (idempotent) ----
+  // Existing rows get the time of this migration, since their real dates were never recorded.
+  for (const table of ["events", "artists", "organizers", "banners", "brands", "reviews", "genres", "badges"]) {
+    const [have] = await pool.query<any[]>(
+      "SELECT COLUMN_NAME AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME IN ('created_at','updated_at')",
+      [table]
+    );
+    const names = new Set(have.map((r) => r.n));
+    if (!names.has("created_at")) await pool.query(`ALTER TABLE ${table} ADD COLUMN created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP`);
+    if (!names.has("updated_at")) await pool.query(`ALTER TABLE ${table} ADD COLUMN updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`);
   }
 }
 

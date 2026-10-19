@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { Trash2, X, Check, Mail, MailOpen, Search, Reply } from "lucide-react";
 
-type Message = { id: number; name: string; email: string; subject: string; message: string; isRead: boolean; createdAt: string };
+type Message = { id: number; name: string; email: string; phone?: string | null; subject: string; message: string; isRead: boolean; createdAt: string };
 
 // Messages sent from the About page "Get in touch" form.
 export default function MessagesAdminPage() {
@@ -69,7 +69,7 @@ export default function MessagesAdminPage() {
   const q = query.trim().toLowerCase();
   const shown = messages.filter(m =>
     (!unreadOnly || !m.isRead) &&
-    (!q || `${m.name} ${m.email} ${m.subject} ${m.message}`.toLowerCase().includes(q))
+    (!q || `${m.name} ${m.email} ${m.phone ?? ""} ${m.subject} ${m.message}`.toLowerCase().includes(q))
   );
   const unread = messages.filter(m => !m.isRead).length;
 
@@ -116,6 +116,7 @@ export default function MessagesAdminPage() {
                     <span style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 14, fontWeight: m.isRead ? 600 : 800 }}>{m.name}</span>
                       <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{m.email}</span>
+                      {m.phone && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{m.phone}</span>}
                     </span>
                     <span style={{ display: "block", fontSize: 13, color: m.isRead ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.8)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       <strong style={{ fontWeight: 700 }}>{m.subject}</strong>{isOpen ? "" : ` — ${m.message}`}
@@ -141,6 +142,12 @@ export default function MessagesAdminPage() {
                       href={`mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject}`)}`}
                       style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, textDecoration: "none" }}
                     ><Reply size={13} /> Reply by email</a>
+                    {m.phone && (
+                      <a
+                        href={`tel:${m.phone.replace(/[^+\d]/g, "")}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}
+                      >Call {m.phone}</a>
+                    )}
                     <button
                       onClick={() => setRead(m.id, !m.isRead)}
                       style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}

@@ -245,6 +245,24 @@ export default function Preloader({ phase, setPhase, assetsReady = true }: Prelo
             transition: "opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease",
           }}
         />
+
+        {/* ── Tagline ──────────────────────────────────────────────────── */}
+        <p
+          style={{
+            marginTop: 18,
+            color: "#E8DCC0",
+            fontSize: "clamp(12px, 2.4vw, 17px)",
+            fontWeight: 500,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            textAlign: "center",
+            opacity: showEmblem ? 0.85 : 0,
+            transform: showEmblem ? "translateY(0)" : "translateY(6px)",
+            transition: "opacity 0.8s 0.35s ease, transform 0.8s 0.35s ease",
+          }}
+        >
+          Sri Lanka’s home for events and talent
+        </p>
       </div>
 
       {/* ── Progress / CTA ──────────────────────────────────────────── */}

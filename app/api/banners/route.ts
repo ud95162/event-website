@@ -15,10 +15,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   await ensureSchema();
   const pool = getPool();
-  const { url, eventId, title, description } = await req.json();
+  const { url, eventId, title, description, sponsored } = await req.json();
   const [result] = await pool.query<any>(
-    "INSERT INTO banners (url, event_id, title, description) VALUES (?, ?, ?, ?)",
-    [url, eventId ?? null, title ?? null, description ?? null]
+    "INSERT INTO banners (url, event_id, title, description, sponsored) VALUES (?, ?, ?, ?, ?)",
+    [url, eventId ?? null, title ?? null, description ?? null, sponsored ? 1 : 0]
   );
   return NextResponse.json((await selectBanners(result.insertId))[0], { status: 201 });
 }

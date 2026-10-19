@@ -9,6 +9,8 @@ import { imgUrl } from "./images";
 export async function selectBanners(id?: number | string) {
   const [rows] = await getPool().query<any[]>(
     `SELECT b.id, ${imgMarker("b.url", "url")}, b.event_id AS eventId, b.title, b.description,
+            (b.sponsored = 1 OR COALESCE(e.sponsored, 0) = 1) AS sponsored,
+            b.sponsored AS sponsoredOwn,
             e.title       AS eventTitle,
             e.description AS eventDescription,
             e.date        AS eventDate,
@@ -21,5 +23,5 @@ export async function selectBanners(id?: number | string) {
      ORDER BY b.id`,
     id != null ? [id] : []
   );
-  return rows.map((r) => ({ ...r, url: imgUrl("banners", r.id, "url", r.url) }));
+  return rows.map((r) => ({ ...r, sponsored: !!r.sponsored, sponsoredOwn: !!r.sponsoredOwn, url: imgUrl("banners", r.id, "url", r.url) }));
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { EVENT_CATEGORIES } from "../../../lib/eventCategories";
 import { genreColor, withAlpha } from "../../../lib/genres";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
@@ -14,7 +15,7 @@ import MapPicker from "../../components/MapPicker";
 
 const EMPTY: Omit<Event, "id"> = {
   tag: "", title: "", date: "", location: "", venue: "",
-  price: "", image: "", badge: null, genres: [], lineup: [],
+  price: "", image: "", badge: null, sponsored: false, category: EVENT_CATEGORIES[0], genres: [], lineup: [],
   organizer: "", description: "", lat: 0, lon: 0, tickets: [], status: "Confirmed",
   startTime: "", endDate: "", endTime: "", ageRestriction: "", capacity: null,
   venueType: "", coOrganizers: [], videoTrailer: "", externalLink: "",
@@ -156,6 +157,11 @@ function EventFormInner() {
               <Field label="Tag *">
                 <input style={inputStyle} value={form.tag} onChange={e => set("tag", e.target.value)} placeholder="e.g. EDM NIGHT" required />
               </Field>
+              <Field label="Category (Events page section)">
+                <select style={{ ...inputStyle, cursor: "pointer" }} value={form.category ?? ""} onChange={e => set("category", e.target.value)}>
+                  {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </Field>
               <Field label="Badge">
                 <CreatableSelect
                   value={form.badge ?? ""}
@@ -164,6 +170,14 @@ function EventFormInner() {
                   onCreate={addBadge}
                   placeholder="None"
                 />
+              </Field>
+              <Field label="Sponsored">
+                <div style={{ ...inputStyle, display: "flex", alignItems: "center" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "rgba(255,255,255,0.8)" }}>
+                  <input type="checkbox" checked={!!form.sponsored} onChange={e => set("sponsored", e.target.checked)} style={{ width: 16, height: 16, accentColor: "#E8DCC0", cursor: "pointer" }} />
+                  Show a &ldquo;Sponsored&rdquo; tag
+                </label>
+                </div>
               </Field>
               <Field label="Status">
                 <select style={{ ...inputStyle, cursor: "pointer" }} value={form.status ?? ""} onChange={e => set("status", e.target.value)}>

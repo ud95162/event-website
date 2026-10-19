@@ -53,6 +53,7 @@ import { useUserLocation, haversineKm, formatDistance } from "../../context/Loca
 import { eventSlug, artistSlug } from "../../lib/slug";
 import { fromPrice } from "../../lib/price";
 import Navbar from "../../components/Navbar";
+import SponsoredTag from "../../components/SponsoredTag";
 import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
@@ -279,7 +280,7 @@ export default function ArtistDetailPage() {
       <ParticleField />
       <Navbar />
 
-      <div className="pt-16 relative z-10">
+      <div className="relative z-10" style={{ paddingTop: "var(--nav-h, 64px)" }}>
         <StickySearchFilters />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -359,6 +360,7 @@ export default function ArtistDetailPage() {
                   <h1 className="text-white font-black text-4xl lg:text-5xl uppercase tracking-tight leading-none mb-2">
                     {displayName}
                   </h1>
+                  {artist.sponsored && <div className="mb-2"><SponsoredTag size="md" /></div>}
                   {artist.city && (
                     <p className="flex items-center gap-1.5 text-white/40 text-xs mb-2">
                       <MapPin size={11} /> {artist.city}

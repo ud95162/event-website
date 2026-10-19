@@ -6,6 +6,10 @@ export type TicketType = {
 
 export type Event = {
   id:          number;
+  category?:   string;   // one of EVENT_CATEGORIES (the Events page sections); guessed when not chosen
+  sponsored?:  boolean;  // shows a "Sponsored" tag wherever the event appears
+  createdAt?:  string;   // when the entry was added (ISO)
+  updatedAt?:  string;   // when it was last modified (ISO)
   tag:         string;
   title:       string;
   date:        string;

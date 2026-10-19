@@ -4,6 +4,7 @@ import { ensureSchema } from "../../lib/schema";
 import { isAdminRequest } from "../../lib/auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^\+?\(?[0-9][0-9\s\-()]{5,24}$/;   // digits with optional +, spaces, dashes, brackets
 
 // Light spam guard: at most 5 messages per IP per 10 minutes (per server process).
 const hits = new Map<string, number[]>();
@@ -26,11 +27,13 @@ export async function POST(req: NextRequest) {
 
   const name = String(body.name ?? "").trim();
   const email = String(body.email ?? "").trim();
+  const phone = String(body.phone ?? "").trim();
   const subject = String(body.subject ?? "").trim();
   const message = String(body.message ?? "").trim();
 
   if (!name || !subject || !message) return NextResponse.json({ error: "Please fill in all the fields." }, { status: 400 });
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+  if (!PHONE_RE.test(phone)) return NextResponse.json({ error: "Please enter a valid contact number." }, { status: 400 });
   if (name.length > 120 || email.length > 255 || subject.length > 200 || message.length > 5000) {
     return NextResponse.json({ error: "Your message is too long." }, { status: 400 });
   }
@@ -39,8 +42,8 @@ export async function POST(req: NextRequest) {
   if (limited(ip)) return NextResponse.json({ error: "Too many messages — please try again in a few minutes." }, { status: 429 });
 
   await getPool().query(
-    "INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)",
-    [name, email, subject, message]
+    "INSERT INTO contact_messages (name, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)",
+    [name, email, phone, subject, message]
   );
   return NextResponse.json({ ok: true }, { status: 201 });
 }
@@ -50,7 +53,7 @@ export async function GET(req: NextRequest) {
   if (!isAdminRequest(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   await ensureSchema();
   const [rows] = await getPool().query<any[]>(
-    "SELECT id, name, email, subject, message, is_read AS isRead, created_at AS createdAt FROM contact_messages ORDER BY id DESC LIMIT 500"
+    "SELECT id, name, email, phone, subject, message, is_read AS isRead, created_at AS createdAt FROM contact_messages ORDER BY id DESC LIMIT 500"
   );
   return NextResponse.json(rows.map((r) => ({ ...r, isRead: !!r.isRead })), { headers: { "Cache-Control": "no-store" } });
 }

@@ -19,7 +19,7 @@ export async function PUT(
     [name, ...keepImgParams(logo), description ?? null, ...keepImgParams(banner), email ?? null, phone ?? null, username ?? null, password ?? null, id]
   );
   const [rows] = await pool.query<any[]>(
-    `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username FROM organizers WHERE id = ?`,
+    `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username, created_at AS createdAt, updated_at AS updatedAt FROM organizers WHERE id = ?`,
     [id]
   );
   if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -537,7 +537,7 @@ export default function CalendarPage() {
       <Navbar />
 
       {/* ── Full-width layout ────────────────────────────────────── */}
-      <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 64px)", marginTop: 64, position: "relative", zIndex: 1 }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - var(--nav-h, 64px))", marginTop: "var(--nav-h, 64px)", position: "relative", zIndex: 1 }}>
 
         {/* ── Filter bar ─────────────────────────────────────────── */}
         <div style={{

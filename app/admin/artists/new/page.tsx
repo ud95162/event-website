@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { TALENT_CATEGORIES } from "../../../lib/talent";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "../../../context/AuthContext";
@@ -105,6 +106,7 @@ function ArtistFormInner() {
         bookingPhone: editing.bookingPhone ?? "",
         level: editing.level ?? "",
         rating: editing.rating ?? 0,
+        sponsored: !!editing.sponsored,
         artistType: editing.artistType ?? "solo",
         members: editing.members ?? [],
       });
@@ -192,8 +194,17 @@ function ArtistFormInner() {
                 <input style={{ ...inputStyle, border: "1px solid rgba(239,200,80,0.2)" }} value={form.realName ?? ""} onChange={e => set("realName", e.target.value)} placeholder="Not shown publicly" />
               </div>
               <div>
-                <label style={labelStyle}>Role / Genre Label *</label>
-                <input style={inputStyle} value={form.role} onChange={e => set("role", e.target.value)} placeholder="EDM / HOUSE MUSIC" required />
+                <label style={labelStyle}>Role *</label>
+                <select style={{ ...inputStyle, cursor: "pointer" }} value={form.role} onChange={e => set("role", e.target.value)} required>
+                  <option value="" disabled>Choose a role…</option>
+                  {/* A role typed before this list existed stays selectable until it's changed. */}
+                  {form.role && !TALENT_CATEGORIES.some(c => c.roles.includes(form.role)) && <option value={form.role}>{form.role} (current)</option>}
+                  {TALENT_CATEGORIES.map(c => (
+                    <optgroup key={c.name} label={c.name}>
+                      {c.roles.map(r => <option key={r} value={r}>{r}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
               <div>
                 <label style={labelStyle}>City</label>
@@ -386,6 +397,13 @@ function ArtistFormInner() {
                 <label style={labelStyle}>Booking Phone</label>
                 <input type="tel" style={inputStyle} value={form.bookingPhone ?? ""} onChange={e => set("bookingPhone", e.target.value)} placeholder="+94 77 123 4567" />
               </div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Sponsored</label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "rgba(255,255,255,0.8)" }}>
+                  <input type="checkbox" checked={!!form.sponsored} onChange={e => set("sponsored", e.target.checked)} style={{ width: 16, height: 16, accentColor: "#E8DCC0", cursor: "pointer" }} />
+                  Show a &ldquo;Sponsored&rdquo; tag
+                </label>
             </div>
             <div>
               <label style={labelStyle}>Rating</label>

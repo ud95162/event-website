@@ -7,7 +7,7 @@ import { imgMarker } from "../../../lib/select";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const SELECT = `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username FROM organizers WHERE id = ?`;
+const SELECT = `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username, created_at AS createdAt, updated_at AS updatedAt FROM organizers WHERE id = ?`;
 const mapOrg = (r: any) => ({
   ...r,
   logo: imgUrl("organizers", r.id, "logo", r.logo),

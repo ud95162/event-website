@@ -10,7 +10,7 @@ import { useUserLocation, type UserLocation } from "../context/LocationContext";
 const navLinks = [
   { label: "Home",     href: "/"          },
   { label: "Events",   href: "/events"    },
-  { label: "Artists",  href: "/artists"   },
+  { label: "Talent",   href: "/artists"   },
   { label: "About Us", href: "/about"     },
 ];
 
@@ -110,7 +110,7 @@ function LocationPill() {
           border: isSet ? "1px solid rgba(232,220,192,0.6)" : "1px solid rgba(255,255,255,0.18)",
           background: isSet ? "rgba(232,220,192,0.08)" : "rgba(255,255,255,0.04)",
           boxShadow: isSet ? "0 0 14px rgba(232,220,192,0.25)" : "none",
-          minWidth: 220,
+          minWidth: "calc(220px * var(--nav-s, 1))",
         }}
       >
         {detecting ? (
@@ -212,7 +212,24 @@ function LocationPill() {
   );
 }
 
+// Header icon buttons (calendar, account): larger and champagne-coloured so they stand out.
+const ICON_BTN = "w-[calc(44px*var(--nav-s))] h-[calc(44px*var(--nav-s))] shrink-0 rounded-full flex items-center justify-center transition-all duration-300";
+
 /* ── Calendar Picker ────────────────────────────────────────────────── */
+function AccountLink() {
+  return (
+    <Link
+      href="/admin/login"
+      title="Partner login"
+      aria-label="Partner login"
+      className={`${ICON_BTN} bg-[#E8DCC0]/10 hover:bg-[#E8DCC0]/20`}
+      style={{ border: "1.5px solid rgba(232,220,192,0.55)", color: "#E8DCC0" }}
+    >
+      <User style={{ width: "calc(20px * var(--nav-s))", height: "calc(20px * var(--nav-s))" }} strokeWidth={2} />
+    </Link>
+  );
+}
+
 function CalendarPicker() {
   const pathname = usePathname();
   const isActive = pathname === "/calendar";
@@ -220,15 +237,11 @@ function CalendarPicker() {
     <Link
       href="/calendar"
       title="Events Calendar"
-      className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300"
-      style={{
-        background: isActive ? "rgba(192,192,192,0.15)" : "rgba(255,255,255,0.04)",
-        border: isActive ? "1px solid #C0C0C0" : "1px solid rgba(255,255,255,0.15)",
-        boxShadow: isActive ? "0 0 12px rgba(192,192,192,0.25)" : "none",
-        color: isActive ? "#C0C0C0" : "rgba(255,255,255,0.6)",
-      }}
+      aria-label="Events Calendar"
+      className={`${ICON_BTN} ${isActive ? "bg-[#E8DCC0]/25" : "bg-[#E8DCC0]/10 hover:bg-[#E8DCC0]/20"}`}
+      style={{ border: `1.5px solid ${isActive ? "#E8DCC0" : "rgba(232,220,192,0.55)"}`, color: "#E8DCC0", boxShadow: isActive ? "0 0 14px rgba(232,220,192,0.35)" : "none" }}
     >
-      <Calendar size={20} />
+      <Calendar style={{ width: "calc(20px * var(--nav-s))", height: "calc(20px * var(--nav-s))" }} strokeWidth={2} />
     </Link>
   );
 }
@@ -249,6 +262,10 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-[300] bg-[#0F1116]/90 backdrop-blur-md border-b border-white/10">
       <style>{`
+        /* Header scale: bigger on large screens. --nav-h is also used by the pages' top offsets. */
+        :root { --nav-s: 1; --nav-h: calc(64px * var(--nav-s)); }
+        @media (min-width: 1600px) { :root { --nav-s: 1.1; } }
+        @media (min-width: 1920px) { :root { --nav-s: 1.25; } }
         .nav-active-border {
           border-radius: 0.75rem;
           display: inline-flex;
@@ -261,12 +278,15 @@ export default function Navbar() {
           width: 100%;
         }
       `}</style>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: "calc(1280px * var(--nav-s))" }}>
+        <div className="flex items-center justify-between" style={{ height: "var(--nav-h)" }}>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center shrink-0">
-            <img src="/logo.png" alt="DiscoverEvents.lk" className="w-auto object-contain" style={{ height: 40 }} />
+          <Link href="/" className="flex flex-col items-start justify-center shrink-0">
+            <img src="/logo.png" alt="DiscoverEvents.lk" className="w-auto object-contain" style={{ height: "calc(40px * var(--nav-s))" }} />
+            <span style={{ marginTop: 3, fontSize: "calc(9.5px * var(--nav-s))", lineHeight: 1, fontWeight: 600, letterSpacing: "0.12em", whiteSpace: "nowrap", textTransform: "uppercase", color: "#E8DCC0", opacity: 0.8 }}>
+              Sri Lanka’s home for events and talent
+            </span>
           </Link>
 
           {/* All nav items — equal gap between every item */}
@@ -274,14 +294,15 @@ export default function Navbar() {
             {navLinks.map((l) => (
               isActive(l.href) ? (
                 <div key={l.label} className="nav-active-border">
-                  <Link href={l.href} className="nav-active-inner text-lg tracking-widest uppercase font-bold px-4 py-1.5">
+                  <Link href={l.href} className="nav-active-inner tracking-widest uppercase font-bold px-4 py-1.5" style={{ fontSize: "calc(18px * var(--nav-s))" }}>
                     <span style={{ color: "#C0C0C0" }}>{l.label}</span>
                   </Link>
                 </div>
               ) : (
                 <Link key={l.label} href={l.href}
-                  className="text-lg tracking-widest uppercase font-bold transition-all duration-300 px-4 py-1.5 rounded-xl"
+                  className="tracking-widest uppercase font-bold transition-all duration-300 px-4 py-1.5 rounded-xl whitespace-nowrap"
                   style={{
+                    fontSize: "calc(18px * var(--nav-s))",
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
                     color: "rgba(255,255,255,0.6)",
@@ -292,14 +313,7 @@ export default function Navbar() {
             ))}
             <LocationPill />
             <CalendarPicker />
-            <Link
-              href="/admin/login"
-              title="Partner login"
-              aria-label="Partner login"
-              className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"
-            >
-              <User size={20} className="text-white/60" />
-            </Link>
+            <AccountLink />
           </div>
 
           {/* Mobile toggle */}
@@ -323,7 +337,10 @@ export default function Navbar() {
             <div className="pt-1">
               <LocationPill />
             </div>
-            <CalendarPicker />
+            <div className="flex items-center gap-3">
+              <CalendarPicker />
+              <AccountLink />
+            </div>
           </div>
         </div>
       )}

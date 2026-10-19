@@ -4,8 +4,13 @@ import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
 import { genreColor, genreChipStyle } from "../lib/genres";
 import { thumb } from "../lib/images";
 import { createPortal } from "react-dom";
-import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Calendar, Ticket, Heart, Share2, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { MapPin, Calendar, Ticket, Heart, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
+import EventShare from "../components/EventShare";
+import SponsoredTag from "../components/SponsoredTag";
+import EventCard from "../components/EventCard";
+import { dateRangeLabel } from "../lib/dateRange";
+import { EVENT_CATEGORIES } from "../lib/eventCategories";
 import { Event, statusColor } from "../data/events";
 import { useAdminData } from "../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
@@ -31,333 +36,6 @@ const getCache = <T,>(key: string): T | undefined => eventsCache.get(key) as T |
 const setCache = (key: string, val: unknown) => { eventsCache.set(key, val); };
 
 /* ── Horizontal scroll row ─────────────────────────────────────── */
-function EventCard({ event, liked, shared, onLike, onShare }: {
-  event: Event;
-  liked: boolean; shared: boolean;
-  onLike: (e: React.MouseEvent) => void;
-  onShare: (e: React.MouseEvent) => void;
-}) {
-  const router = useRouter();
-  const { userLocation } = useUserLocation();
-  const { organizers, genreColors } = useAdminData();
-  const [hovered, setHovered] = useState(false);
-  const [orgHovered, setOrgHovered] = useState(false);
-  const organizer = organizers.find(o => o.name === event.organizer);
-  const distance = userLocation
-    ? haversineKm(userLocation.lat, userLocation.lon, event.lat, event.lon)
-    : null;
-
-  // ── Enlarged hover preview (rendered in a portal so it escapes the row's overflow) ──
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
-  const showTimer = useRef<number | null>(null);
-  const hideTimer = useRef<number | null>(null);
-  const PREVIEW_W = 330;
-  const PREVIEW_H = 490;
-
-  const openPreview = () => {
-    const el = cardRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    // Centre the enlarged card right on top of the one being hovered.
-    let left = r.left + r.width / 2 - PREVIEW_W / 2;
-    left = Math.min(Math.max(8, left), window.innerWidth - PREVIEW_W - 8);
-    let top = r.top + r.height / 2 - PREVIEW_H / 2;
-    top = Math.min(Math.max(8, top), window.innerHeight - PREVIEW_H - 8);
-    setPreview({ top, left });
-  };
-
-  const cancelHide = () => {
-    if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
-  };
-  // Delay closing so the cursor can cross the gap into the preview without it vanishing.
-  const scheduleHide = () => {
-    cancelHide();
-    hideTimer.current = window.setTimeout(() => { setPreview(null); setHovered(false); }, 180);
-  };
-
-  const enter = () => {
-    setHovered(true);
-    cancelHide();
-    if (showTimer.current) clearTimeout(showTimer.current);
-    showTimer.current = window.setTimeout(openPreview, 320);
-  };
-  const leave = () => {
-    if (showTimer.current) { clearTimeout(showTimer.current); showTimer.current = null; }
-    scheduleHide();
-  };
-
-  // Keep the preview open while the cursor is over it; close when it leaves.
-  const previewEnter = () => { cancelHide(); setHovered(true); };
-  const previewLeave = () => scheduleHide();
-
-  useEffect(() => () => {
-    if (showTimer.current) clearTimeout(showTimer.current);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-  }, []);
-
-  // Hide the preview if anything scrolls or the window resizes (its anchor would drift).
-  useEffect(() => {
-    if (!preview) return;
-    const hide = () => setPreview(null);
-    window.addEventListener("scroll", hide, true);
-    window.addEventListener("resize", hide);
-    return () => { window.removeEventListener("scroll", hide, true); window.removeEventListener("resize", hide); };
-  }, [preview]);
-
-  return (
-    <>
-    <div
-      ref={cardRef}
-      onClick={() => router.push(`/events/${eventSlug(event)}`)}
-      onMouseEnter={enter}
-      onMouseLeave={leave}
-      style={{
-        flexShrink: 0,
-        width: 270,
-        height: 400,
-        borderRadius: 16,
-        overflow: "hidden",
-        position: "relative",
-        cursor: "pointer",
-        border: `1px solid ${hovered ? "rgba(232,220,192,0.4)" : "rgba(255,255,255,0.08)"}`,
-        boxShadow: hovered ? "0 0 28px rgba(232,220,192,0.15)" : "none",
-        transition: "border-color 0.3s, box-shadow 0.3s, transform 0.3s",
-        transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        background: "#0a0a0a",
-      }}
-    >
-      {/* Image */}
-      <img
-        src={thumb(event.image, 520)} alt={event.title}
-        loading="lazy" decoding="async"
-        style={{
-          width: "100%", height: "68%", objectFit: "cover", objectPosition: "top",
-          transform: hovered ? "scale(1.06)" : "scale(1)",
-          transition: "transform 0.5s ease",
-        }}
-      />
-
-      {/* Gradient */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.1) 100%)",
-      }} />
-
-      {/* Badge */}
-      {event.badge && (
-        <div style={{ position: "absolute", top: 10, left: 10 }}>
-          <span style={{
-            background: "#fff", color: "#000",
-            fontSize: 10, fontWeight: 900, letterSpacing: "0.18em",
-            textTransform: "uppercase", padding: "4px 10px", borderRadius: 999,
-          }}>{event.badge}</span>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div style={{ position: "absolute", top: 10, right: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-        <button onClick={onLike} style={{
-          width: 32, height: 32, borderRadius: "50%",
-          background: liked ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.55)",
-          border: `1px solid ${liked ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.15)"}`,
-          backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-        }}>
-          <Heart size={13} strokeWidth={2.5} fill={liked ? "#fff" : "none"} style={{ color: "#fff" }} />
-        </button>
-        <button onClick={onShare} style={{
-          width: 32, height: 32, borderRadius: "50%",
-          background: shared ? "rgba(232,220,192,0.85)" : "rgba(0,0,0,0.55)",
-          border: `1px solid ${shared ? "rgba(232,220,192,0.6)" : "rgba(255,255,255,0.15)"}`,
-          backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-        }}>
-          <Share2 size={13} strokeWidth={2.5} style={{ color: "#fff" }} />
-        </button>
-      </div>
-
-      {/* Info */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px" }}>
-        <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 5 }}>
-          {event.tag}
-        </p>
-        <h3 style={{ fontSize: 15, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, marginBottom: 8, letterSpacing: "0.03em" }}>
-          {event.title}
-        </h3>
-        {event.genres.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
-            {event.genres.slice(0, 3).map(g => (
-              <span key={g} style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, ...genreChipStyle(genreColor(genreColors, g)) }}>
-                {g}
-              </span>
-            ))}
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Calendar size={12} style={{ color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{event.date}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <MapPin size={12} style={{ color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>{event.location}</span>
-            {distance !== null && (
-              <span style={{ fontSize: 12, color: "#E8DCC0", fontWeight: 600 }}>· {formatDistance(distance)}</span>
-            )}
-          </div>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
-            {ticketPrices(event.tickets, event.price)}
-          </p>
-
-          {/* Organized by */}
-          {organizer && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ fontSize: 10, color: "#fff", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Organized by</span>
-              <div
-                style={{ position: "relative", display: "flex", alignItems: "center" }}
-                onMouseEnter={() => setOrgHovered(true)}
-                onMouseLeave={() => setOrgHovered(false)}
-                onClick={(e) => { e.stopPropagation(); router.push(`/organizers/${organizerSlug(organizer)}`); }}
-              >
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
-                  border: `1px solid ${orgHovered ? "#E8DCC0" : "rgba(255,255,255,0.2)"}`, background: "rgba(255,255,255,0.06)",
-                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                  transition: "border-color 0.2s",
-                }}>
-                  {organizer.logo ? (
-                    <img src={thumb(organizer.logo, 128)} alt={organizer.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <span style={{ fontSize: 11, fontWeight: 800, color: "#E8DCC0" }}>{organizer.name.charAt(0)}</span>
-                  )}
-                </div>
-                {/* Hover tooltip with name */}
-                {orgHovered && (
-                  <div style={{
-                    position: "absolute", bottom: "calc(100% + 6px)", left: 0, zIndex: 20,
-                    whiteSpace: "nowrap", padding: "4px 9px", borderRadius: 6,
-                    background: "rgba(0,0,0,0.92)", border: "1px solid rgba(232,220,192,0.4)",
-                    fontSize: 11, fontWeight: 700, color: "#fff", letterSpacing: "0.03em",
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.5)", pointerEvents: "none",
-                  }}>
-                    {organizer.name}
-                  </div>
-                )}
-              </div>
-
-              {/* Status — inline, right after the organizer */}
-              {event.status && (
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto",
-                  background: `${statusColor(event.status)}22`, color: statusColor(event.status),
-                  border: `1px solid ${statusColor(event.status)}66`,
-                  fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
-                  textTransform: "uppercase", padding: "4px 9px", borderRadius: 999,
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor(event.status) }} />
-                  {event.status}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Status (when no organizer) */}
-          {event.status && !organizer && (
-            <div style={{ marginTop: 7 }}>
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 4,
-                background: `${statusColor(event.status)}22`, color: statusColor(event.status),
-                border: `1px solid ${statusColor(event.status)}66`,
-                fontSize: 10, fontWeight: 800, letterSpacing: "0.12em",
-                textTransform: "uppercase", padding: "4px 9px", borderRadius: 999,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor(event.status) }} />
-                {event.status}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-
-    {/* ── Enlarged preview popup, rendered in a portal ───────────── */}
-    {preview && typeof document !== "undefined" && createPortal(
-      <div
-        onMouseEnter={previewEnter}
-        onMouseLeave={previewLeave}
-        onClick={() => router.push(`/events/${eventSlug(event)}`)}
-        style={{
-          position: "fixed", top: preview.top, left: preview.left,
-          width: PREVIEW_W, zIndex: 9999, pointerEvents: "auto", cursor: "pointer",
-          borderRadius: 18, overflow: "hidden",
-          background: "#0b0b10", border: "1px solid rgba(232,220,192,0.35)",
-          boxShadow: "0 30px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(232,220,192,0.05)",
-          animation: "hp-in 0.2s ease",
-        }}
-      >
-        {/* Poster */}
-        <div style={{ position: "relative", height: 210, overflow: "hidden" }}>
-          <img src={event.image} alt={event.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0b0b10 0%, rgba(11,11,16,0.25) 55%, transparent 100%)" }} />
-          {event.badge && (
-            <span style={{ position: "absolute", top: 12, left: 12, background: "#fff", color: "#000", fontSize: 9, fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 999 }}>{event.badge}</span>
-          )}
-          {event.status && (
-            <span style={{
-              position: "absolute", top: 12, right: 12, display: "inline-flex", alignItems: "center", gap: 5,
-              background: `${statusColor(event.status)}22`, color: statusColor(event.status),
-              border: `1px solid ${statusColor(event.status)}66`, fontSize: 8, fontWeight: 800, letterSpacing: "0.12em",
-              textTransform: "uppercase", padding: "4px 8px", borderRadius: 999, backdropFilter: "blur(4px)",
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusColor(event.status) }} />
-              {event.status}
-            </span>
-          )}
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: "4px 18px 18px", marginTop: -6 }}>
-          <p style={{ fontSize: 9, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 6 }}>{event.tag}</p>
-          <h3 style={{ fontSize: 18, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.15, letterSpacing: "0.01em", marginBottom: 10 }}>{event.title}</h3>
-
-          {event.genres.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
-              {event.genres.slice(0, 4).map(g => (
-                <span key={g} style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 999, ...genreChipStyle(genreColor(genreColors, g)) }}>{g}</span>
-              ))}
-            </div>
-          )}
-
-          {event.description && (
-            <p style={{ fontSize: 11, lineHeight: 1.55, color: "rgba(255,255,255,0.5)", marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{event.description}</p>
-          )}
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <Calendar size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{event.date}{event.startTime ? ` · ${event.startTime}` : ""}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <MapPin size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{event.venue ? `${event.venue}, ` : ""}{event.location}{distance !== null ? ` · ${formatDistance(distance)}` : ""}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <Ticket size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{ticketPrices(event.tickets, event.price)}</span>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{organizer ? `By ${organizer.name}` : ""}</span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 800, color: "#E8DCC0", letterSpacing: "0.1em", textTransform: "uppercase" }}>View Details <ArrowRight size={12} /></span>
-          </div>
-        </div>
-      </div>,
-      document.body
-    )}
-    </>
-  );
-}
-
 function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, onShare, direction = "left" }: {
   title: string; subtitle?: string;
   events: Event[];
@@ -425,7 +103,7 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
 
   if (isStatic) {
     return (
-      <div style={{ marginBottom: 40 }}>
+      <div data-reveal style={{ marginBottom: 40 }}>
         <div style={{ marginBottom: 16 }}>
           {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
           <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
@@ -445,7 +123,7 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
   }
 
   return (
-    <div style={{ marginBottom: 40 }}>
+    <div data-reveal style={{ marginBottom: 40 }}>
       <div style={{ marginBottom: 16 }}>
         {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
         <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
@@ -503,75 +181,6 @@ function SkeletonRow() {
 }
 
 /* ── "All Events" — paginated grid (loads 6 at a time) ────────────── */
-function AllEventsSection({ liked, shared, onLike, onShare }: {
-  liked: Set<number>;
-  shared: Set<number>;
-  onLike: (id: number, e: React.MouseEvent) => void;
-  onShare: (id: number, title: string, e: React.MouseEvent) => void;
-}) {
-  const PAGE = 6;
-  // Hydrate instantly from cache so returning to the page keeps the already-loaded grid.
-  const [items, setItems]     = useState<Event[]>(() => getCache<Event[]>("__all_items") ?? []);
-  const [total, setTotal]     = useState(() => getCache<number>("__all_total") ?? 0);
-  const [loading, setLoading] = useState(false);
-  const started = useRef(false);
-
-  const load = (offset: number) => {
-    setLoading(true);
-    fetch(`/api/events/all?offset=${offset}&limit=${PAGE}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (!d) return;
-        setItems(prev => {
-          const next = offset === 0 ? d.events : [...prev, ...d.events];
-          setCache("__all_items", next);
-          return next;
-        });
-        setTotal(d.total);
-        setCache("__all_total", d.total);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-
-  // First page only on a cold cache; a warm cache already shows the grid.
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    if (!(getCache<Event[]>("__all_items")?.length)) load(0);
-  }, []);
-
-  const hasMore = items.length < total;
-  if (!items.length && !loading) return null;
-
-  return (
-    <div style={{ padding: "8px 56px 0" }}>
-      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#E8DCC0", marginBottom: 6 }}>Browse Everything</p>
-      <h2 style={{ fontSize: "clamp(1.2rem,2.4vw,1.8rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "-0.01em", marginBottom: 20 }}>All Events</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
-        {items.map(ev => (
-          <EventCard key={ev.id} event={ev} liked={liked.has(ev.id)} shared={shared.has(ev.id)}
-            onLike={e => onLike(ev.id, e)} onShare={e => onShare(ev.id, ev.title, e)} />
-        ))}
-      </div>
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 28 }}>
-        {hasMore ? (
-          <button
-            onClick={() => load(items.length)}
-            disabled={loading}
-            style={{ padding: "12px 30px", borderRadius: 999, cursor: loading ? "default" : "pointer", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}
-          >
-            {loading ? "Loading…" : "Load More"}
-          </button>
-        ) : (
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase" }}>That&apos;s all {total} events</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ── One category row — fetches its own data on mount (all rows in parallel) ── */
 function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLike, onShare, emptyMessage, fallback }: {
   title: string;
   subtitle: string;
@@ -647,6 +256,7 @@ const NEAR_RADIUS_KM = 50;
 
 function EventsContent() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { userLocation, setUserLocation } = useUserLocation();
 
@@ -658,6 +268,7 @@ function EventsContent() {
   const queryParam    = searchParams.get("q")        ?? "";
   const categoryParam = searchParams.get("category") ?? "";
   const isFiltered = !!genreParam || !!dateParam || !!queryParam;
+  const dateInfo = dateRangeLabel(dateParam);
 
   // Search results for the filtered view. (The default view's category rows each fetch
   // themselves lazily via <CategoryRow>, so the page never downloads the whole table.)
@@ -669,13 +280,7 @@ function EventsContent() {
     setLiked(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   };
 
-  const handleShare = (id: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (navigator.share) navigator.share({ title, url: `${window.location.origin}/events/${id}` });
-    else navigator.clipboard?.writeText(`${window.location.origin}/events/${id}`);
-    setShared(prev => { const s = new Set(prev); s.add(id); return s; });
-    setTimeout(() => setShared(prev => { const s = new Set(prev); s.delete(id); return s; }), 1500);
-  };
+  const handleShare = (_id: number, _title: string, _e: React.MouseEvent) => {};
 
   // Filtered view: fetch server-side search results for the active filters.
   useEffect(() => {
@@ -710,12 +315,20 @@ function EventsContent() {
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
               {resultsLoading ? "Searching…" : `${results.length} events`}
             </span>
-            <button onClick={() => router.push("/events")}
+            <button onClick={() => router.push(pathname === "/search" ? "/" : "/events")}
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", background: "transparent" }}>
               <X size={10} /> Clear
             </button>
           </div>
         </div>
+        {dateInfo && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 20, padding: "7px 14px", borderRadius: 999, background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.35)" }}>
+            <Calendar size={14} style={{ color: "#60a5fa", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>
+              {dateInfo.name}: <strong style={{ color: "#fff" }}>{dateInfo.range}</strong>
+            </span>
+          </div>
+        )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
           {results.map(ev => (
             <EventCard key={ev.id} event={ev} liked={liked.has(ev.id)} shared={shared.has(ev.id)}
@@ -727,30 +340,22 @@ function EventsContent() {
   }
 
   /* ── Default view: each category row loads itself lazily ──────────── */
+  // The Events page sections: upcoming events (this week / this month), then the five categories.
+  // Every row is upcoming events only, soonest first.
   const rowDefs: { title: string; subtitle: string; type: string; value?: string }[] = [
-    // With a city selected, the events closest to it come first.
-    ...(userLocation ? [{ title: `Near ${userLocation.city}`, subtitle: `Within ${NEAR_RADIUS_KM} km · nearest first`, type: "near-you" }] : []),
-    { title: "Hot & Trending",   subtitle: "Don't Miss Out",         type: "hot" },
-    { title: "Upcoming Events",  subtitle: "Coming Soon",            type: "upcoming" },
-    { title: "Electronic / EDM", subtitle: "Event Type",             type: "genre", value: "electronic" },
-    { title: "Sinhala Music",    subtitle: "Event Type",             type: "genre", value: "sinhala" },
-    { title: "DJ Nights",        subtitle: "Night Life",             type: "dj" },
-    { title: "Colombo Events",   subtitle: "By City",                type: "city", value: "Colombo" },
-    { title: "Coming Soon",      subtitle: "Save the Date",          type: "coming-soon" },
+    { title: "This Week",  subtitle: "Upcoming Events", type: "week" },
+    { title: "This Month", subtitle: "Upcoming Events", type: "month" },
+    ...EVENT_CATEGORIES.map(c => ({ title: c, subtitle: "Browse by category", type: "category", value: c })),
   ];
-
-  // Nothing within the radius → the nearest upcoming events anywhere (up to 500 km), nearest first.
-  const nearFallbackUrl = userLocation
-    ? `/api/events/category?${new URLSearchParams({ type: "near-you", lat: String(userLocation.lat), lon: String(userLocation.lon), radius: "500" }).toString()}`
-    : "";
 
   const buildUrl = (def: { type: string; value?: string }) => {
     const p = new URLSearchParams({ type: def.type });
     if (def.value) p.set("value", def.value);
-    if (def.type === "near-you" && userLocation) {
+    if (userLocation) {
       p.set("lat", String(userLocation.lat));
       p.set("lon", String(userLocation.lon));
-      p.set("radius", String(NEAR_RADIUS_KM));
+      if (def.type === "near-you") p.set("radius", String(NEAR_RADIUS_KM));
+      else p.set("within", String(NEAR_RADIUS_KM));   // a chosen city limits every row to events near it
     }
     return `/api/events/category?${p.toString()}`;
   };
@@ -760,7 +365,7 @@ function EventsContent() {
       {userLocation && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 20, padding: "10px 16px", borderRadius: 12, background: "rgba(232,220,192,0.08)", border: "1px solid rgba(232,220,192,0.25)" }}>
           <MapPin size={15} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>Showing events near <strong style={{ color: "#fff" }}>{userLocation.city}</strong></span>
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)" }}>Showing only events within {NEAR_RADIUS_KM} km of <strong style={{ color: "#fff" }}>{userLocation.city}</strong></span>
           <button
             onClick={() => setUserLocation(null)}
             style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5, padding: "4px 12px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
@@ -770,12 +375,9 @@ function EventsContent() {
         </div>
       )}
       {rowDefs.map((def, i) => (
+        <div key={def.title}>
         <CategoryRow
-          key={def.title}
-          emptyMessage={def.type === "near-you" ? `No upcoming events near ${userLocation?.city} yet — browse everything below. (Events that have already happened aren't shown here.)` : undefined}
-          fallback={def.type === "near-you" && userLocation
-            ? { endpoint: nearFallbackUrl, title: "Nearest upcoming events", subtitle: `None within ${NEAR_RADIUS_KM} km of ${userLocation.city} — closest first` }
-            : undefined}
+          emptyMessage={def.type === "near-you" ? `No upcoming events within ${NEAR_RADIUS_KM} km of ${userLocation?.city} yet. Clear the location to see events everywhere.` : undefined}
           title={def.title}
           subtitle={def.subtitle}
           endpoint={buildUrl(def)}
@@ -785,8 +387,8 @@ function EventsContent() {
           onLike={toggleLike}
           onShare={handleShare}
         />
+        </div>
       ))}
-      <AllEventsSection liked={liked} shared={shared} onLike={toggleLike} onShare={handleShare} />
     </div>
   );
 }
@@ -814,7 +416,7 @@ export default function EventsPage() {
       <ParticleField />
       <div style={{ opacity: (preloaderPhase === "checking" || preloaderPhase === "idle") ? 0 : 1, transition: preloaderPhase === "gone" ? undefined : "opacity 1.2s ease" }}>
         <Navbar />
-        <div style={{ paddingTop: 64, position: "relative", zIndex: 10 }}>
+        <div style={{ paddingTop: "var(--nav-h, 64px)", position: "relative", zIndex: 10 }}>
           <StickySearchFilters />
           <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
             <Suspense fallback={

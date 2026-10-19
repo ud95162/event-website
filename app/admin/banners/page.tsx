@@ -38,7 +38,7 @@ function BannerCard({ banner, index, events, onUpdate, onDelete }: {
 
   const save = async (patch: Partial<Banner>) => {
     setStatus("saving");
-    const ok = await onUpdate({ ...banner, title: title || null, description: description || null, ...patch });
+    const ok = await onUpdate({ ...banner, title: title || null, description: description || null, sponsored: !!banner.sponsoredOwn, ...patch });
     setStatus(ok ? "saved" : "error");
     if (ok) setTimeout(() => setStatus("idle"), 1500);
   };
@@ -124,6 +124,11 @@ function BannerCard({ banner, index, events, onUpdate, onDelete }: {
           </select>
         </div>
 
+        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "rgba(255,255,255,0.8)" }}>
+          <input type="checkbox" checked={!!banner.sponsoredOwn} onChange={e => save({ sponsored: e.target.checked })} style={{ width: 16, height: 16, accentColor: "#E8DCC0", cursor: "pointer" }} />
+          Show a &ldquo;Sponsored&rdquo; tag{banner.sponsored && !banner.sponsoredOwn ? " (on already — the linked event is sponsored)" : ""}
+        </label>
+
         {/* Auto-save status */}
         <div style={{ minHeight: 14 }}>
           {status === "saving" && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Saving…</span>}
@@ -143,6 +148,7 @@ export default function BannersAdminPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newEventId, setNewEventId] = useState<string>("");
+  const [newSponsored, setNewSponsored] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -151,7 +157,7 @@ export default function BannersAdminPage() {
     if (user && user.role !== "admin") router.replace("/admin");
   }, [user, router]);
 
-  const resetForm = () => { setNewImage(""); setNewTitle(""); setNewDesc(""); setNewEventId(""); };
+  const resetForm = () => { setNewImage(""); setNewTitle(""); setNewDesc(""); setNewEventId(""); setNewSponsored(false); };
 
   const handleAdd = async () => {
     if (!newImage.trim() || saving) return;
@@ -162,6 +168,7 @@ export default function BannersAdminPage() {
       title: newTitle.trim() || null,
       description: newDesc.trim() || null,
       eventId: newEventId ? Number(newEventId) : null,
+      sponsored: newSponsored,
     });
     setSaving(false);
     if (ok) {
@@ -215,6 +222,10 @@ export default function BannersAdminPage() {
               {events.map(ev => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
             </select>
           </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 16 }}>
+            <input type="checkbox" checked={newSponsored} onChange={e => setNewSponsored(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#E8DCC0", cursor: "pointer" }} />
+            Show a &ldquo;Sponsored&rdquo; tag
+          </label>
           {error && (
             <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: 13 }}>
               {error}

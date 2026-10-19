@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Artist } from "../../context/AdminDataContext";
-import { Plus, Pencil, Trash2, X, Check, Star, List, LayoutGrid, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Check, Star, List, LayoutGrid, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { fmtStamp } from "../../lib/stamps";
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -17,7 +18,8 @@ const selectStyle: React.CSSProperties = {
 export default function ArtistsAdminPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const { artists, deleteArtist } = useAdminData();
+  const { artists: allArtists, deleteArtist } = useAdminData();
+  const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [view, setView] = useState<"list" | "grid">("list");
   const [perPage, setPerPage] = useState(10);
@@ -27,8 +29,14 @@ export default function ArtistsAdminPage() {
     if (user && user.role !== "admin") router.replace("/admin");
   }, [user, router]);
 
+  const q = search.trim().toLowerCase();
+  const artists = q
+    ? allArtists.filter(a =>
+        [a.name, a.stageName, a.realName, a.role, a.city, ...(a.genres ?? [])]
+          .some(v => (v ?? "").toLowerCase().includes(q)))
+    : allArtists;
   const totalPages = Math.max(1, Math.ceil(artists.length / perPage));
-  useEffect(() => { setPage(1); }, [perPage]);
+  useEffect(() => { setPage(1); }, [perPage, search]);
   const currentPage = Math.min(page, totalPages);
   const paged = artists.slice((currentPage - 1) * perPage, currentPage * perPage);
 
@@ -43,7 +51,16 @@ export default function ArtistsAdminPage() {
           <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Artists</h1>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{ position: "relative", width: 280, maxWidth: "100%" }}>
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", pointerEvents: "none" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search artists by name, role, city or genre…"
+            style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+          />
+        </div>
           {/* Per-page selector */}
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Show</span>
@@ -83,7 +100,7 @@ export default function ArtistsAdminPage() {
       {view === "grid" && (
         artists.length === 0 ? (
           <div style={{ padding: "40px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)", background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12 }}>
-            No artists yet. <button onClick={() => router.push("/admin/artists/new")} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button>
+            {allArtists.length > 0 ? "No artists match your search." : <>No artists yet. <button onClick={() => router.push("/admin/artists/new")} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>}
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
@@ -135,7 +152,7 @@ export default function ArtistsAdminPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              {["Image", "Stage Name", "Role", "City", "Rating", "Actions"].map(h => (
+              {["Image", "Stage Name", "Role", "City", "Rating", "Added", "Modified", "Actions"].map(h => (
                 <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em", textTransform: "uppercase" }}>{h}</th>
               ))}
             </tr>
@@ -161,6 +178,8 @@ export default function ArtistsAdminPage() {
                     </span>
                   ) : <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
                 </td>
+                <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", fontSize: 12 }}>{fmtStamp(a.createdAt)}</td>
+                <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", fontSize: 12 }}>{fmtStamp(a.updatedAt)}</td>
                 <td style={{ padding: "12px 16px" }}>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -189,8 +208,8 @@ export default function ArtistsAdminPage() {
             ))}
             {artists.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ padding: "32px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>
-                  No artists yet. <button onClick={() => router.push("/admin/artists/new")} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button>
+                <td colSpan={8} style={{ padding: "32px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>
+                  {allArtists.length > 0 ? "No artists match your search." : <>No artists yet. <button onClick={() => router.push("/admin/artists/new")} style={{ color: "#E8DCC0", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>Add the first one →</button></>}
                 </td>
               </tr>
             )}

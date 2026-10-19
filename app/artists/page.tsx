@@ -12,89 +12,15 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import StickySearchFilters from "../components/StickySearchFilters";
 import ParticleField from "../components/ParticleField";
+import SponsoredTag from "../components/SponsoredTag";
+import ArtistCard, { upcomingEventCount } from "../components/ArtistCard";
+import { TALENT_CATEGORIES, talentCategory } from "../lib/talent";
 import Preloader from "../components/Preloader";
 import { hasPreloaderShown, markPreloaderShown } from "../preloaderState";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// Number of UPCOMING events an artist is performing in (finished events don't count).
-// Matches on the stage name or the real name, like the artist's own page does.
-function upcomingEventCount(events: { lineup: string[]; date: string; startTime?: string; endDate?: string; endTime?: string }[], names: string[]): number {
-  const now = Date.now();
-  return events.filter(ev => ev.lineup.some(n => names.includes(n)) && !isEventPast(ev, now)).length;
-}
-
-
-/* ── Artist Card ────────────────────────────────────────────────── */
-function ArtistCard({ artist, followed, onFollow }: {
-  artist: Artist;
-  followed: boolean;
-  onFollow: (e: React.MouseEvent) => void;
-}) {
-  const router = useRouter();
-  const { events } = useAdminData();
-  const [hovered, setHovered] = useState(false);
-  const eventCount = upcomingEventCount(events, [artist.stageName || artist.name, artist.name]);
-
-  return (
-    <div
-      onClick={() => router.push(`/artists/${artistSlug(artist)}`)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        flexShrink: 0, width: 230, height: 320,
-        borderRadius: 16, overflow: "hidden", position: "relative",
-        cursor: "pointer",
-        border: `1px solid ${hovered ? "rgba(227,184,115,0.6)" : "rgba(227,184,115,0.14)"}`,
-        boxShadow: hovered ? "0 14px 40px rgba(0,0,0,0.5), 0 0 34px rgba(227,184,115,0.26)" : "0 6px 20px rgba(0,0,0,0.3)",
-        transition: "border-color 0.3s, box-shadow 0.3s, transform 0.3s",
-        transform: hovered ? "translateY(-5px)" : "translateY(0)",
-        background: "#0b0a08",
-      }}
-    >
-      <img src={thumb(artist.image, 600)} alt={artist.name} style={{
-        width: "100%", height: "65%", objectFit: "cover", objectPosition: "top",
-        transform: hovered ? "scale(1.06)" : "scale(1)",
-        filter: hovered ? "grayscale(0%)" : "grayscale(30%)",
-        transition: "transform 0.5s ease, filter 0.5s ease",
-      }} />
-
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.05) 100%)" }} />
-
-      <button onClick={onFollow} style={{
-        position: "absolute", top: 10, right: 10,
-        width: 28, height: 28, borderRadius: "50%",
-        background: followed ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.55)",
-        border: `1px solid ${followed ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.15)"}`,
-        backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-      }}>
-        <Heart size={11} strokeWidth={2.5} fill={followed ? "#fff" : "none"} style={{ color: "#fff" }} />
-      </button>
-
-      {eventCount > 0 && (
-        <div title={`${eventCount} upcoming event${eventCount !== 1 ? "s" : ""}`} style={{
-          position: "absolute", top: 10, left: 10,
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "4px 10px", borderRadius: 999,
-          background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.12)",
-          backdropFilter: "blur(6px)",
-        }}>
-          <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>{eventCount}</span>
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "#E8DCC0" }}>Upcoming</span>
-        </div>
-      )}
-
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px", textAlign: "center" }}>
-        <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 5 }}>{artist.role}</p>
-        <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, letterSpacing: "0.04em", marginBottom: 6 }}>{artist.name}</h3>
-        <div style={{ height: 2, borderRadius: 999, margin: "0 auto", width: hovered ? "62%" : "32%", background: "linear-gradient(90deg, rgba(227,184,115,0), #f5ecd0 35%, #C9A24B 65%, rgba(227,184,115,0))", transition: "width 0.4s ease" }} />
-      </div>
-    </div>
-  );
-}
-
-/* ── Artist Row ─────────────────────────────────────────────────── */
 function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, direction = "left" }: {
   title: string; subtitle?: string;
   artists: Artist[];
@@ -173,7 +99,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
   if (!rowArtists.length) return null;
 
   return (
-    <div style={{ marginBottom: 40 }}>
+    <div data-reveal style={{ marginBottom: 40 }}>
       <div style={{ marginBottom: 16 }}>
         {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#ffffff", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
         <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
@@ -234,7 +160,7 @@ function ArtistsContent() {
       <div style={{ padding: "24px 0 48px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <h1 style={{ fontSize: "clamp(1.5rem,3vw,2.5rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>
-            {queryParam ? `"${queryParam}"` : genreParam ? genreParam : filterParam === "followed" ? "Followed Artists" : "Artists"}
+            {queryParam ? `"${queryParam}"` : genreParam ? genreParam : filterParam === "followed" ? "Followed Talent" : "Talent"}
           </h1>
           <button onClick={() => router.push("/artists")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", background: "transparent" }}>
@@ -248,24 +174,13 @@ function ArtistsContent() {
     );
   }
 
-  const topPicks    = [...artists].sort((a, b) => eventCountFor(b) - eventCountFor(a));
-  const edm         = artists.filter(a => a.role.includes("EDM") || a.role.includes("HOUSE"));
-  const sriLankan   = artists.filter(a => a.role.includes("SRI LANKAN"));
-  const rbSoulPop   = artists.filter(a => a.role.includes("R&B") || a.role.includes("SOUL") || a.role.includes("POP"));
-  const rockClassic = artists.filter(a => a.role.includes("CLASSICAL") || a.role.includes("ROCK") || a.role.includes("INDIE"));
-  const liveActs    = artists.filter(a => a.role.includes("BAND") || a.role.includes("LIVE"));
-  const followedList = artists.filter(a => followed.has(a.id));
-
-  const rows = [
-    { title: "Top Picks",              subtitle: "Most Active",          data: topPicks    },
-    { title: "Electronic & EDM",       subtitle: "Genre",                data: edm         },
-    { title: "Sri Lankan Artists",     subtitle: "Local Talent",         data: sriLankan   },
-    { title: "R&B, Pop & Soul",        subtitle: "Vibes",                data: rbSoulPop   },
-    { title: "Rock, Indie & Classical",subtitle: "Genre",                data: rockClassic },
-    { title: "Bands & Live Acts",      subtitle: "Live Experience",      data: liveActs    },
-    ...(followedList.length ? [{ title: "Your Follows", subtitle: "Artists You Follow", data: followedList }] : []),
-    { title: "All Artists",            subtitle: "Full Lineup",          data: artists     },
-  ];
+  // The five Talent sections, each A to Z. Empty sections are hidden.
+  const byName = (x: Artist, y: Artist) => (x.stageName || x.name).localeCompare(y.stageName || y.name);
+  const rows = TALENT_CATEGORIES.map(c => ({
+    title: c.name,
+    subtitle: "Talent",
+    data: artists.filter(a => talentCategory(a.role) === c.name).sort(byName),
+  }));
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
@@ -295,7 +210,7 @@ export default function ArtistsPage() {
       <ParticleField />
       <div style={{ opacity: (preloaderPhase === "checking" || preloaderPhase === "idle") ? 0 : 1, transition: preloaderPhase === "gone" ? undefined : "opacity 1.2s ease" }}>
         <Navbar />
-        <div style={{ paddingTop: 64, position: "relative", zIndex: 10 }}>
+        <div style={{ paddingTop: "var(--nav-h, 64px)", position: "relative", zIndex: 10 }}>
           <StickySearchFilters />
           <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
             <Suspense fallback={

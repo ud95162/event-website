@@ -16,7 +16,7 @@ export async function GET() {
   const pool = getPool();
   // Note: `password` is deliberately never selected — credentials stay server-side.
   const [rows] = await pool.query<any[]>(
-    `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username FROM organizers ORDER BY id`
+    `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username, created_at AS createdAt, updated_at AS updatedAt FROM organizers ORDER BY id`
   );
   return NextResponse.json(rows.map(mapOrg), {
     headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" },
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     [name, logo ?? null, description ?? null, banner ?? null, email ?? null, phone ?? null, username ?? null, password ?? null, isInternalImg(logo) ? 1 : 0, isInternalImg(banner) ? 1 : 0]
   );
   const [rows] = await pool.query<any[]>(
-    `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username FROM organizers WHERE name = ?`,
+    `SELECT id, name, ${imgMarker("logo")}, description, ${imgMarker("banner")}, email, phone, username, created_at AS createdAt, updated_at AS updatedAt FROM organizers WHERE name = ?`,
     [name]
   );
   return NextResponse.json(mapOrg(rows[0]), { status: 201 });

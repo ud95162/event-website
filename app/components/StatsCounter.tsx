@@ -126,7 +126,7 @@ export default function StatsCounter() {
         <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #0F1116, transparent)" }} />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div data-reveal className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-row items-center justify-center flex-wrap">
           {stats.map((stat, i) => (
             <StatItem

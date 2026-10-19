@@ -29,7 +29,7 @@ export async function PUT(
     `UPDATE events SET
        tag=?, title=?, date=?, location=?, price=?, ${keepImg("image")}, badge=?, lat=?, lon=?,
        description=?, venue=?, organizer=?, lineup=?, genres=?, tickets=?, status=?,
-       start_time=?, end_date=?, end_time=?, age_restriction=?, capacity=?, venue_type=?, co_organizers=?, video_trailer=?, external_link=?, links=?, featured=?, popup=?
+       start_time=?, end_date=?, end_time=?, age_restriction=?, capacity=?, venue_type=?, co_organizers=?, video_trailer=?, external_link=?, links=?, featured=?, popup=?, sponsored=?, category=?
      WHERE id=?`,
     [
       e.tag, e.title, e.date, e.location, e.price, ...keepImgParams(e.image), e.badge ?? null,
@@ -37,7 +37,7 @@ export async function PUT(
       JSON.stringify(e.lineup ?? []), JSON.stringify(e.genres ?? []), JSON.stringify(e.tickets ?? []), e.status ?? null,
       e.startTime ?? null, e.endDate ?? null, e.endTime ?? null, e.ageRestriction ?? null,
       e.capacity ?? null, e.venueType ?? null, JSON.stringify(e.coOrganizers ?? []),
-      e.videoTrailer ?? null, e.externalLink ?? null, JSON.stringify(e.links ?? {}), e.featured ? 1 : 0, e.popup ? 1 : 0, id,
+      e.videoTrailer ?? null, e.externalLink ?? null, JSON.stringify(e.links ?? {}), e.featured ? 1 : 0, e.popup ? 1 : 0, e.sponsored ? 1 : 0, e.category || null, id,
     ]
   );
   const [rows] = await pool.query<any[]>(`SELECT ${await cols("events")} FROM events WHERE id = ?`, [id]);

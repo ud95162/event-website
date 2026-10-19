@@ -11,10 +11,10 @@ export async function PUT(
   await ensureSchema();
   const { id } = await params;
   const pool = getPool();
-  const { url, eventId, title, description } = await req.json();
+  const { url, eventId, title, description, sponsored } = await req.json();
   await pool.query(
-    `UPDATE banners SET ${keepImg("url")}, event_id = ?, title = ?, description = ? WHERE id = ?`,
-    [...keepImgParams(url), eventId ?? null, title ?? null, description ?? null, id]
+    `UPDATE banners SET ${keepImg("url")}, event_id = ?, title = ?, description = ?, sponsored = ? WHERE id = ?`,
+    [...keepImgParams(url), eventId ?? null, title ?? null, description ?? null, sponsored ? 1 : 0, id]
   );
   const [banner] = await selectBanners(id);
   if (!banner) return NextResponse.json({ error: "Not found" }, { status: 404 });

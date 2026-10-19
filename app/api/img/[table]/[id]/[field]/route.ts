@@ -35,6 +35,18 @@ function cacheSet(key: string, val: { buf: Buffer; type: string }) {
   }
 }
 
+// ?fmt=jpg asks for a JPEG instead of WebP — used for link-preview (og:image) thumbnails, since
+// WhatsApp / Facebook / X are happier with JPEG and want a small file.
+const wantsJpeg = (sp: URLSearchParams) => sp.get("fmt") === "jpg";
+// ?og=1 crops to the 1200x630 link-preview shape (cover-fit, keeping the most interesting part).
+const wantsOg = (sp: URLSearchParams) => sp.get("og") === "1";
+const resizeFor = (img: sharp.Sharp, width: number, og: boolean) =>
+  og ? img.resize({ width: 1200, height: 630, fit: "cover", position: "attention" })
+     : img.resize({ width, withoutEnlargement: true });
+const encode = (img: sharp.Sharp, jpeg: boolean) =>
+  jpeg ? img.flatten({ background: "#0F1116" }).jpeg({ quality: 74, mozjpeg: true })
+       : img.webp({ quality: 82 });
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ table: string; id: string; field: string }> }
@@ -52,7 +64,9 @@ export async function GET(
   const wParam = parseInt(sp.get("w") ?? "", 10);
   const width = Math.min(Math.max(Number.isFinite(wParam) ? wParam : DEFAULT_MAX_W, MIN_W), MAX_W);
 
-  const etag = `"${table}-${id}-${field}-${v}-${width}"`;
+  const jpeg = wantsJpeg(sp);
+  const og = wantsOg(sp);
+  const etag = `"${table}-${id}-${field}-${v}-${width}${jpeg ? "-jpg" : ""}${og ? "-og" : ""}"`;
   const headers: Record<string, string> = {
     "Cache-Control": "public, max-age=31536000, immutable",
     ETag: etag,
@@ -84,12 +98,9 @@ export async function GET(
   // GIFs/SVGs are served as-is (resizing would flatten animation / rasterise vectors).
   if (!/^image\/(gif|svg)/.test(mime)) {
     try {
-      buf = await sharp(raw, { failOn: "none" })
-        .rotate()                                              // honour EXIF orientation
-        .resize({ width, withoutEnlargement: true })
-        .webp({ quality: 82 })
-        .toBuffer();
-      type = "image/webp";
+      // rotate() honours EXIF orientation
+      buf = await encode(resizeFor(sharp(raw, { failOn: "none" }).rotate(), width, og), jpeg).toBuffer();
+      type = jpeg ? "image/jpeg" : "image/webp";
     } catch {
       buf = raw; type = mime;                                  // unreadable by sharp — serve original
     }
@@ -112,7 +123,9 @@ async function servePublic(req: NextRequest, dir: string, file: string) {
   let stat;
   try { stat = await fs.stat(abs); } catch { return new NextResponse("Not found", { status: 404 }); }
 
-  const etag = `"pub-${dir}-${file}-${stat.size}-${Math.round(stat.mtimeMs)}-${width}"`;
+  const jpeg = wantsJpeg(sp);
+  const og = wantsOg(sp);
+  const etag = `"pub-${dir}-${file}-${stat.size}-${Math.round(stat.mtimeMs)}-${width}${jpeg ? "-jpg" : ""}${og ? "-og" : ""}"`;
   const headers: Record<string, string> = { "Cache-Control": "public, max-age=2592000", ETag: etag };
   if (req.headers.get("if-none-match") === etag) return new NextResponse(null, { status: 304, headers });
 
@@ -123,8 +136,8 @@ async function servePublic(req: NextRequest, dir: string, file: string) {
   let buf: Buffer = raw;
   let type = /\.png$/i.test(file) ? "image/png" : /\.webp$/i.test(file) ? "image/webp" : "image/jpeg";
   try {
-    buf = await sharp(raw, { failOn: "none" }).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
-    type = "image/webp";
+    buf = await encode(resizeFor(sharp(raw, { failOn: "none" }).rotate(), width, og), jpeg).toBuffer();
+    type = jpeg ? "image/jpeg" : "image/webp";
   } catch { /* serve the original */ }
   cacheSet(etag, { buf, type });
   return new NextResponse(new Uint8Array(buf), { headers: { ...headers, "Content-Type": type } });

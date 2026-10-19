@@ -4,6 +4,7 @@ import { Suspense, useState, useRef, useEffect } from "react";
 import { eventSlug } from "../lib/slug";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown, Search, Calendar, Check, X } from "lucide-react";
+import { dateRangeLabel } from "../lib/dateRange";
 import { useAdminData } from "../context/AdminDataContext";
 
 /* ── Data ─────────────────────────────────────────────────────────────── */
@@ -336,9 +337,15 @@ function FilterRow() {
 }
 
 const CAT_OPTIONS = [
-  { label: "Artists",    color: "#e879f9", key: "artists"    },
+  { label: "Talent",     color: "#e879f9", key: "artists"    },
   { label: "Event Types", color: "#E8DCC0", key: "genres"     },
   { label: "Organizers", color: "#38bdf8", key: "organizers" },
+];
+
+// Category choices on the artists pages (Genres and Artists are separate options).
+const ARTIST_CAT_OPTIONS = [
+  { label: "Talent", color: "#e879f9", key: "artists" },
+  { label: "Genres",  color: "#ffffff", key: "genres"  },
 ];
 
 const EXAMPLES: Record<string, string> = {
@@ -366,7 +373,10 @@ export default function StickySearchFilters() {
   const pathname = usePathname();
   // On the artists pages the bar searches artists in place: genre filter only, no date.
   const artistsMode = pathname.startsWith("/artists");
-  const basePath = artistsMode ? "/artists" : "/events";
+  // Results show where the visitor is: on the home page they filter the home page itself; on the
+  // Events page they stay there; from any other page they open at /search (no menu item highlighted).
+  const searchPath = pathname === "/" ? "/" : pathname.startsWith("/events") ? "/events" : "/search";
+  const basePath = artistsMode ? "/artists" : searchPath;
   // Artist pages use the premium gold accent; other pages keep the green.
   const genreAccent = artistsMode ? "#ffffff" : "#E8DCC0";
   const { organizers, genres: dataGenres, genreColors } = useAdminData();
@@ -394,14 +404,19 @@ export default function StickySearchFilters() {
     setResultsOpen(false);
     if (!artistsMode) {
       setSelectedCat(CAT_OPTIONS.find(o => o.key === sp.get("category")) ?? null);
-      setDateVal(sp.get("date") ?? "");
+      const d = sp.get("date") ?? "";
+      setDateVal(d);
+      // Keep the "Pick a Date" box in step with the URL. Otherwise it still holds the last
+      // picked day after the filter is cleared / the user navigates back, and picking that same
+      // day again fires no change event, so nothing happens.
+      setCustomFrom(d.startsWith("custom:") ? d.split(":")[1] ?? "" : "");
     }
   };
 
   const dateLabel = (() => {
     const p = DATE_PRESETS.find(x => x.slug === dateVal);
     if (p) return p.label;
-    if (dateVal.startsWith("custom:")) return "Custom";
+    if (dateVal.startsWith("custom:")) return dateRangeLabel(dateVal)?.range ?? "Custom";
     return "Any Date";
   })();
 
@@ -416,14 +431,25 @@ export default function StickySearchFilters() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Drop the given filters from the current address. When nothing is left the page goes back to its
+  // original (unfiltered) state; otherwise the remaining filters stay.
+  const dropParams = (...keys: string[]) => {
+    const sp = new URLSearchParams(window.location.search);
+    if (!keys.some(k => sp.has(k))) return;
+    keys.forEach(k => sp.delete(k));
+    const qs = sp.toString();
+    router.push(qs ? `${basePath}?${qs}` : basePath === "/search" ? "/" : basePath);
+  };
+
   const applyDate = (value: string) => {
     setDateVal(value);
+    if (!value.startsWith("custom:")) setCustomFrom("");
     setDateOpen(false);
     const params = new URLSearchParams();
     if (selectedCat) params.set("category", selectedCat.key);
     if (searchQuery.trim()) params.set("q", searchQuery.trim());
     if (value) params.set("date", value);
-    router.push(`/events?${params.toString()}`);
+    router.push(`${searchPath}?${params.toString()}`);
   };
 
   // Event-name suggestions (only with "All categories" on the events/home pages).
@@ -446,9 +472,16 @@ export default function StickySearchFilters() {
 
     // Artists pages: show the whole saved genre list, narrowed as the user types.
     if (artistsMode) {
-      return artistGenres
+      const genres = artistGenres
         .filter(g => g.toLowerCase().includes(q))
         .map(g => ({ label: g, color: genreColors[g.toLowerCase()] ?? genreAccent, type: "Genre", value: g }));
+      const artists = artistNames
+        .filter(a => a.toLowerCase().includes(q))
+        .map(a => ({ label: a, color: "#e879f9", type: "Talent" }));
+      if (selectedCat?.key === "artists") return artists;
+      if (selectedCat?.key === "genres") return genres;
+      // No category chosen: genres to browse when empty, otherwise matching artists then genres.
+      return q ? [...artists.slice(0, 8), ...genres] : genres;
     }
 
     if (!q) return [];
@@ -468,7 +501,7 @@ export default function StickySearchFilters() {
     if (selectedCat?.key === "artists" || !selectedCat) {
       const artists = artistNames
         .filter(a => a.toLowerCase().includes(q))
-        .map(a => ({ label: a, color: "#e879f9", type: "Artist" }));
+        .map(a => ({ label: a, color: "#e879f9", type: "Talent" }));
       if (selectedCat?.key === "artists") return artists;
       const events = eventHits.map(e => ({
         label: e.title, color: "#ffffff", type: "Event", value: eventSlug(e),
@@ -501,18 +534,18 @@ export default function StickySearchFilters() {
   const handleSearch = (override?: string) => {
     const q = override ?? searchQuery.trim();
     if (artistsMode) {
-      if (!q) return;
+      if (!q) { dropParams("q", "genre"); return; }       // empty search -> back to the original page
       router.push(`/artists?q=${encodeURIComponent(q)}`);
       setResultsOpen(false);
       setSearchQuery(q);
       return;
     }
-    if (!q && !selectedCat && !dateVal) return;
+    if (!q && !selectedCat && !dateVal) { dropParams("q", "genre", "category", "date"); return; }
     const params = new URLSearchParams();
     if (selectedCat) params.set("category", selectedCat.key);
     if (q) params.set("q", q);
     if (dateVal) params.set("date", dateVal);
-    router.push(`/events?${params.toString()}`);
+    router.push(`${searchPath}?${params.toString()}`);
     setResultsOpen(false);
     setSearchQuery(override ?? searchQuery);
   };
@@ -526,31 +559,25 @@ export default function StickySearchFilters() {
         <div className="bg-black/60 backdrop-blur-md rounded-full flex items-center px-2 py-1.5 border border-white/12 relative">
 
           {/* Category button + dropdown */}
-          {artistsMode ? (
-            <div className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap" style={{ color: genreAccent }}>
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: genreAccent }} />
-              Genres
-            </div>
-          ) : (
           <div ref={catRef} className="relative flex-shrink-0">
             <button
               onClick={() => setCatOpen(o => !o)}
-              className="flex items-center gap-2 text-[13px] font-semibold tracking-widest uppercase px-4 py-2 border-r border-white/10 whitespace-nowrap transition-colors"
+              className="flex items-center gap-2 text-[13px] font-semibold tracking-wide px-4 py-2 border-r border-white/10 whitespace-nowrap transition-colors"
               style={{ color: selectedCat ? selectedCat.color : "rgba(255,255,255,0.55)" }}
             >
               {selectedCat ? (
                 <>
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: selectedCat.color }} />
-                  {selectedCat.label}
+                  <span className="uppercase tracking-widest">{selectedCat.label}</span>
                   <button
-                    onClick={e => { e.stopPropagation(); setSelectedCat(null); setSearchQuery(""); setResultsOpen(false); }}
+                    onClick={e => { e.stopPropagation(); setSelectedCat(null); setSearchQuery(""); setResultsOpen(false); dropParams("category", "q", "genre"); }}
                     className="ml-1 text-white/30 hover:text-white/70 transition-colors"
                   >
                     <X size={10} />
                   </button>
                 </>
               ) : (
-                <>ALL CATEGORIES <ChevronDown size={12} style={{ transform: catOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} /></>
+                <>Search event, talent, location, type <ChevronDown size={12} style={{ transform: catOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} /></>
               )}
             </button>
 
@@ -568,7 +595,7 @@ export default function StickySearchFilters() {
                 <div className="px-4 pt-3 pb-1">
                   <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase">Browse By</p>
                 </div>
-                {CAT_OPTIONS.map(opt => {
+                {(artistsMode ? ARTIST_CAT_OPTIONS : CAT_OPTIONS).map(opt => {
                   const active = selectedCat?.key === opt.key;
                   return (
                     <button
@@ -589,21 +616,26 @@ export default function StickySearchFilters() {
               </div>
             )}
           </div>
-          )}
 
           {/* Search input + results */}
           <div ref={searchRef} className="flex-1 flex items-center px-5 relative">
             <input
               type="text"
               value={searchQuery}
-              onChange={e => { setSearchQuery(e.target.value); setResultsOpen(true); }}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                setResultsOpen(true);
+                // Emptying the box (backspace / select-all delete) returns the page to its unfiltered state
+                // straight away, same as the X button: no need to press Enter.
+                if (!e.target.value.trim()) dropParams("q", "genre");
+              }}
               onFocus={() => setResultsOpen(true)}
               onKeyDown={e => e.key === "Enter" && handleSearch()}
-              placeholder={artistsMode ? "e.g. Electronic, Rock, Sinhala or an artist name…" : EXAMPLES[selectedCat?.key ?? "default"]}
+              placeholder={artistsMode && !selectedCat ? "e.g. Electronic, Rock, Sinhala or an artist name…" : EXAMPLES[selectedCat?.key ?? "default"]}
               className="bg-transparent text-white/60 text-sm w-full outline-none placeholder:text-white/30 placeholder:italic"
             />
             {searchQuery && (
-              <button onClick={() => { setSearchQuery(""); setResultsOpen(false); }} className="text-white/25 hover:text-white/60 transition-colors flex-shrink-0">
+              <button onClick={() => { setSearchQuery(""); setResultsOpen(false); dropParams("q", "genre"); }} className="text-white/25 hover:text-white/60 transition-colors flex-shrink-0">
                 <X size={12} />
               </button>
             )}
@@ -624,7 +656,7 @@ export default function StickySearchFilters() {
                 <div className="px-4 pt-3 pb-1">
                   <p className="text-white/25 text-[10px] font-bold tracking-[0.35em] uppercase">
                     {artistsMode && !searchQuery.trim()
-                      ? "Browse by genre"
+                      ? (selectedCat?.key === "artists" ? "Browse artists" : "Browse by genre")
                       : `${matchedResults.length} result${matchedResults.length !== 1 ? "s" : ""} found`}
                   </p>
                 </div>
@@ -662,7 +694,7 @@ export default function StickySearchFilters() {
               <span className="hidden sm:inline">{dateLabel}</span>
               {dateVal && (
                 <button
-                  onClick={e => { e.stopPropagation(); setDateVal(""); applyDate(""); }}
+                  onClick={e => { e.stopPropagation(); setDateVal(""); setCustomFrom(""); applyDate(""); }}
                   className="text-white/30 hover:text-white/70 transition-colors"
                 >
                   <X size={10} />

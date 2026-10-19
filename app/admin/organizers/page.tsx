@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Organizer } from "../../context/AdminDataContext";
-import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, X, Check } from "lucide-react";
 import ImageUpload from "../components/ImageUpload";
 import PasswordInput from "../components/PasswordInput";
+import { fmtStamp } from "../../lib/stamps";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "10px 14px", borderRadius: 8,
@@ -27,8 +28,9 @@ const EMPTY: FormState = { name: "", logo: "", description: "", banner: "", emai
 export default function OrganizersAdminPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const { organizers, addOrganizer, updateOrganizer, deleteOrganizer } = useAdminData();
+  const { organizers: allOrganizers, addOrganizer, updateOrganizer, deleteOrganizer } = useAdminData();
 
+  const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -41,6 +43,13 @@ export default function OrganizersAdminPage() {
   }, [user, router]);
 
   if (user?.role !== "admin") return null;
+
+  const q = search.trim().toLowerCase();
+  const organizers = q
+    ? allOrganizers.filter(o =>
+        [o.name, o.email, o.phone, o.username, o.description]
+          .some(v => (v ?? "").toLowerCase().includes(q)))
+    : allOrganizers;
 
   const set = (key: keyof FormState, val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -110,12 +119,23 @@ export default function OrganizersAdminPage() {
           <p style={{ fontSize: 10, color: "#E8DCC0", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 6 }}>Manage</p>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>Organizers</h1>
         </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{ position: "relative", width: 280, maxWidth: "100%" }}>
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", pointerEvents: "none" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search organizers by name, email or phone…"
+            style={{ width: "100%", padding: "9px 12px 9px 34px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+          />
+        </div>
         <button
           onClick={openAdd}
           style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 8, background: "#2B2E36", border: "1px solid rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" }}
         >
           <Plus size={14} /> Add Organizer
         </button>
+        </div>
       </div>
 
       {showForm && (
@@ -240,6 +260,9 @@ export default function OrganizersAdminPage() {
                   {org.description}
                 </p>
               )}
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>
+                Added {fmtStamp(org.createdAt)} · Modified {fmtStamp(org.updatedAt)}
+              </p>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                 <button
                   onClick={() => openEdit(org)}
@@ -265,7 +288,7 @@ export default function OrganizersAdminPage() {
 
       {organizers.length === 0 && (
         <div style={{ padding: "40px 20px", textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12 }}>
-          No organizers yet.
+          {allOrganizers.length > 0 ? "No organizers match your search." : "No organizers yet."}
         </div>
       )}
     </div>

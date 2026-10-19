@@ -145,8 +145,8 @@ const SECTIONS: Section[] = [
 
 export default function PrivacyPolicyPage() {
   const scroll: React.CSSProperties = {
-    marginTop: 64,
-    height: "calc(100dvh - 64px)",
+    marginTop: "var(--nav-h, 64px)",
+    height: "calc(100dvh - var(--nav-h, 64px))",
     overflowY: "auto",
     position: "relative",
     zIndex: 1,

@@ -3,7 +3,9 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { thumb } from "../lib/images";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Heart, Share2, MapPin } from "lucide-react";
+import { ArrowRight, Heart, MapPin } from "lucide-react";
+import EventShare from "./EventShare";
+import SponsoredTag from "./SponsoredTag";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
@@ -51,7 +53,6 @@ export default function FeaturedEvents() {
   }, [allEvents]);
 
   const [liked,      setLiked]      = useState<Set<number>>(new Set());
-  const [shared,     setShared]     = useState<Set<number>>(new Set());
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   const toggleLike = (id: number, e: React.MouseEvent) => {
@@ -59,16 +60,6 @@ export default function FeaturedEvents() {
     setLiked(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   };
 
-  const handleShare = (id: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (navigator.share) {
-      navigator.share({ title, url: window.location.href });
-    } else {
-      navigator.clipboard?.writeText(window.location.href);
-    }
-    setShared(prev => { const s = new Set(prev); s.add(id); return s; });
-    setTimeout(() => setShared(prev => { const s = new Set(prev); s.delete(id); return s; }), 1500);
-  };
 
   // Each arrow click scrolls the row by about two cards.
   const scrollByCards = (dir: 1 | -1) => {
@@ -80,7 +71,7 @@ export default function FeaturedEvents() {
   return (
     <section ref={sectionRef} id="events" className="snap-section overflow-hidden flex flex-col justify-center" style={{ padding: "3vh 0" }}>
 
-      <div className="flex flex-col items-center justify-center w-full">
+      <div data-reveal className="flex flex-col items-center justify-center w-full">
 
         {/* ── Header ───────────────────────────────────────────────── */}
         <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
@@ -149,6 +140,9 @@ export default function FeaturedEvents() {
                         transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                       }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F1116] via-transparent to-transparent" />
+                    {card.sponsored && (
+                      <div className="absolute left-3 z-10" style={{ top: card.badge ? 44 : 12 }}><SponsoredTag /></div>
+                    )}
                     {card.badge && (
                       <div className="absolute top-3 left-3 z-10">
                         <span className="bg-white text-black text-[10px] font-black px-2.5 py-1 rounded-full tracking-[0.18em] uppercase">
@@ -169,17 +163,7 @@ export default function FeaturedEvents() {
                       >
                         <Heart size={11} strokeWidth={2.5} style={{ color: liked.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }} fill={liked.has(card.id) ? "#fff" : "none"} />
                       </button>
-                      <button
-                        onClick={(e) => handleShare(card.id, card.title, e)}
-                        className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
-                        style={{
-                          background: shared.has(card.id) ? "rgba(232,220,192,0.85)" : "rgba(0,0,0,0.45)",
-                          border: shared.has(card.id) ? "1px solid rgba(232,220,192,0.6)" : "1px solid rgba(255,255,255,0.15)",
-                          backdropFilter: "blur(6px)",
-                        }}
-                      >
-                        <Share2 size={11} strokeWidth={2.5} style={{ color: shared.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }} />
-                      </button>
+                      <EventShare event={card} size={28} iconSize={11} />
                     </div>
                   </div>
 
@@ -187,15 +171,16 @@ export default function FeaturedEvents() {
                   <div className="px-4 pb-3 pt-2 text-center flex flex-col justify-between overflow-hidden" style={{ height: INFO_H }}>
                     <div>
                       <h3 className="text-white font-black uppercase tracking-wide leading-tight mb-2"
-                        style={{ fontSize: 16 }}>{card.title}</h3>
-                      <p className="leading-relaxed" style={{ color: "rgba(255,255,255,0.45)", fontSize: 13 }}>
-                        Date: {card.date} | Location: {card.location}
-                      </p>
-                      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13 }}>Price: {fromPrice(card.tickets, card.price)}</p>
+                        style={{ fontSize: 18 }}>{card.title}</h3>
+                      <div className="leading-snug" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14.5 }}>
+                        <p className="truncate">Date: {card.date}</p>
+                        <p className="truncate">Location: {card.location}</p>
+                        <p className="truncate">Price: {fromPrice(card.tickets, card.price)}</p>
+                      </div>
                       {userLocation && (
                         <div className="flex items-center justify-center gap-1 mt-1.5">
-                          <MapPin size={9} className="text-[#E8DCC0]" />
-                          <span className="text-[12px] font-semibold" style={{ color: "#E8DCC0" }}>
+                          <MapPin size={11} className="text-[#E8DCC0]" />
+                          <span className="text-[13px] font-semibold" style={{ color: "#E8DCC0" }}>
                             {formatDistance(haversineKm(userLocation.lat, userLocation.lon, card.lat, card.lon))}
                           </span>
                         </div>

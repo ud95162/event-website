@@ -12,6 +12,7 @@ import { artistSlug, organizerSlug, eventSlug } from "../../lib/slug";
 import { track } from "../../lib/track";
 import { statusColor, Event } from "../../data/events";
 import Navbar from "../../components/Navbar";
+import SponsoredTag from "../../components/SponsoredTag";
 import Footer from "../../components/Footer";
 import StickySearchFilters from "../../components/StickySearchFilters";
 import ParticleField from "../../components/ParticleField";
@@ -239,7 +240,7 @@ export default function EventDetailPage() {
     <main className="bg-[#0F1116] relative" style={{ height: "100dvh", overflowY: "auto" }}>
       <ParticleField />
       <Navbar />
-      <div className="pt-16 relative z-10">
+      <div className="relative z-10" style={{ paddingTop: "var(--nav-h, 64px)" }}>
         <StickySearchFilters />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -287,6 +288,10 @@ export default function EventDetailPage() {
 
               {/* Flyer → (after 5s) video slider — keyed so it resets per event */}
               <EventMedia key={event.id} image={event.image} title={event.title} trailer={trailer} />
+
+              {event.sponsored && (
+                <div className="absolute left-5 z-10" style={{ top: event.badge ? 56 : 20 }}><SponsoredTag size="md" /></div>
+              )}
 
               {/* Badge */}
               {event.badge && (

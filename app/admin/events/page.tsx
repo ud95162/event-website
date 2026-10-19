@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Event } from "../../context/AdminDataContext";
 import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown, List, LayoutGrid, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { fmtStamp } from "../../lib/stamps";
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -281,7 +282,7 @@ export default function EventsAdminPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                {["Image", "Title", "Date", "Location", "Organizer", "Badge", "Actions"].map(h => (
+                {["Image", "Title", "Date", "Location", "Organizer", "Badge", "Added", "Modified", "Actions"].map(h => (
                   h === "Date" ? (
                     <th key={h} style={{ padding: "12px 16px", textAlign: "left" }}>
                       <button
@@ -325,6 +326,8 @@ export default function EventsAdminPage() {
                       </span>
                     ) : <span style={{ color: "rgba(255,255,255,0.15)" }}>—</span>}
                   </td>
+                  <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", fontSize: 12 }}>{fmtStamp(ev.createdAt)}</td>
+                  <td style={{ padding: "12px 16px", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", fontSize: 12 }}>{fmtStamp(ev.updatedAt)}</td>
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
@@ -356,7 +359,7 @@ export default function EventsAdminPage() {
               ))}
               {total === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: "32px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>
+                  <td colSpan={9} style={{ padding: "32px 16px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>
                     {loading ? (
               <>Loading events…</>
             ) : hasFilters ? (

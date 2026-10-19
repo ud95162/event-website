@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useMemo } from "react";
 import { thumb } from "../lib/images";
+import SponsoredTag from "./SponsoredTag";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Heart } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
@@ -77,7 +78,7 @@ export default function FeaturedArtists() {
         <div className="absolute bottom-0 left-0 right-0 h-32" style={{ background: "linear-gradient(to top, #0F1116, transparent)" }} />
       </div>
 
-      <div className="flex flex-col items-center justify-center w-full">
+      <div data-reveal className="flex flex-col items-center justify-center w-full">
 
         {/* Header */}
         <div className="text-center relative z-[200] select-none" style={{ marginBottom: "clamp(8px, 2vh, 32px)" }}>
@@ -85,7 +86,7 @@ export default function FeaturedArtists() {
             PERFORM BEYOND LIMITS
           </p>
           <h2 className="text-white font-black uppercase tracking-tight" style={{ fontSize: "clamp(1.2rem, 3vw + 1vh, 2rem)", marginBottom: "clamp(4px, 1vh, 16px)" }}>
-            Featured Artists
+            Featured Talent
           </h2>
         </div>
 
@@ -153,6 +154,10 @@ export default function FeaturedArtists() {
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F1116] via-transparent to-transparent" />
+
+                    {card.sponsored && (
+                      <div className="absolute top-3 left-3 z-10"><SponsoredTag /></div>
+                    )}
 
                     {/* Follow button */}
                     <button
