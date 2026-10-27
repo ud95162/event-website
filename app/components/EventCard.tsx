@@ -30,6 +30,18 @@ function alignTitles(container: Element) {
     const rows = new Map<number, number>();   // row top → tallest title
     cards.forEach((c, i) => { const t = titles[i]; if (t) rows.set(c.offsetTop, Math.max(rows.get(c.offsetTop) ?? 0, t.offsetHeight)); });
     cards.forEach((c, i) => { const t = titles[i]; if (t) t.style.minHeight = `${rows.get(c.offsetTop) ?? 0}px`; });
+
+    // Genre chips: if no card in the row has any, drop their slot (and its gap) from the whole row.
+    const slots = cards.map(c => c.querySelector<HTMLElement>("[data-genres]"));
+    const rowHasGenres = new Map<number, boolean>();
+    cards.forEach((c, i) => { if (slots[i]?.dataset.has === "1") rowHasGenres.set(c.offsetTop, true); });
+    cards.forEach((c, i) => {
+      const sl = slots[i];
+      if (!sl) return;
+      const has = rowHasGenres.get(c.offsetTop) ?? false;
+      sl.style.minHeight = has ? "22px" : "0px";
+      sl.style.marginBottom = has ? "8px" : "0px";
+    });
   });
 }
 
@@ -62,7 +74,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
     window.addEventListener("resize", run);
     document.fonts?.ready.then(run);
     return () => window.removeEventListener("resize", run);
-  }, [event.title]);
+  }, [event.title, event.genres.length]);
 
   const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
   const showTimer = useRef<number | null>(null);
@@ -191,7 +203,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
         <h3 data-title="" style={{ fontSize: 15, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, minHeight: "2.5em", marginBottom: 8, letterSpacing: "0.03em", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {event.title}
         </h3>
-        <div style={{ minHeight: 22, marginBottom: 8 }}>
+        <div data-genres="" data-has={event.genres.length > 0 ? "1" : "0"} style={{ minHeight: 22, marginBottom: 8 }}>
         {event.genres.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
             {event.genres.slice(0, 3).map(g => (
@@ -214,9 +226,11 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
               <span style={{ fontSize: 12, color: "#E8DCC0", fontWeight: 600 }}>· {formatDistance(distance)}</span>
             )}
           </div>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
-            {cardPrice(event.tickets, event.price)}
-          </p>
+          {cardPrice(event.tickets, event.price) && (
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
+              {cardPrice(event.tickets, event.price)}
+            </p>
+          )}
 
           {/* Organized by */}
           {organizer && (
