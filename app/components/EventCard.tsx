@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { MapPin, Calendar, Ticket, Heart, ArrowRight } from "lucide-react";
@@ -13,6 +13,25 @@ import { useAdminData } from "../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { eventSlug, organizerSlug } from "../lib/slug";
 import { cardPrice } from "../lib/price";
+
+// Cards in the same row share one title height: as tall as the longest title in that row (1 or 2
+// lines), so a row where every title fits on one line has no gap, while a row with any two-line
+// title keeps the space so genres, dates and prices still line up. "Same row" = same top edge, so
+// it also works for rows that wrap. Runs once per frame per container, however many cards ask.
+const pending = new WeakSet<Element>();
+function alignTitles(container: Element) {
+  if (pending.has(container)) return;
+  pending.add(container);
+  requestAnimationFrame(() => {
+    pending.delete(container);
+    const cards = Array.from(container.children).filter((c): c is HTMLElement => c instanceof HTMLElement && c.hasAttribute("data-event-card"));
+    const titles = cards.map(c => c.querySelector<HTMLElement>("[data-title]"));
+    titles.forEach(t => { if (t) t.style.minHeight = "0"; });
+    const rows = new Map<number, number>();   // row top → tallest title
+    cards.forEach((c, i) => { const t = titles[i]; if (t) rows.set(c.offsetTop, Math.max(rows.get(c.offsetTop) ?? 0, t.offsetHeight)); });
+    cards.forEach((c, i) => { const t = titles[i]; if (t) t.style.minHeight = `${rows.get(c.offsetTop) ?? 0}px`; });
+  });
+}
 
 // The event card used on the Events page and in the home page's search results.
 export default function EventCard({ event, liked, shared, onLike, onShare }: {
@@ -33,6 +52,18 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
 
   // ── Enlarged hover preview (rendered in a portal so it escapes the row's overflow) ──
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Keep this card's title height in step with the other cards in its row.
+  useLayoutEffect(() => {
+    const parent = cardRef.current?.parentElement;
+    if (!parent) return;
+    const run = () => alignTitles(parent);
+    run();
+    window.addEventListener("resize", run);
+    document.fonts?.ready.then(run);
+    return () => window.removeEventListener("resize", run);
+  }, [event.title]);
+
   const [preview, setPreview] = useState<{ top: number; left: number } | null>(null);
   const showTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
@@ -93,6 +124,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
     <>
     <div
       ref={cardRef}
+      data-event-card=""
       onClick={() => router.push(`/events/${eventSlug(event)}`)}
       onMouseEnter={enter}
       onMouseLeave={leave}
@@ -156,7 +188,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
         <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {event.tag}
         </p>
-        <h3 style={{ fontSize: 15, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, minHeight: "2.5em", marginBottom: 8, letterSpacing: "0.03em", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <h3 data-title="" style={{ fontSize: 15, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, minHeight: "2.5em", marginBottom: 8, letterSpacing: "0.03em", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {event.title}
         </h3>
         <div style={{ minHeight: 22, marginBottom: 8 }}>
