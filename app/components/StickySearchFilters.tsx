@@ -352,7 +352,7 @@ const EXAMPLES: Record<string, string> = {
   artists:    "e.g. DJ Nova, Randhir Witana…",
   genres:     "e.g. Electronic, Rock & Indie…",
   organizers: "e.g. Rhythm Nation LK, Bass Nation…",
-  default:    "e.g. Music Festival, Concert…",
+  default:    "e.g. Oktoberfest, NYE, Conferences, Quiz Night, Theatre…",
 };
 
 /* ── Main component ───────────────────────────────────────────────────── */
@@ -577,7 +577,7 @@ export default function StickySearchFilters() {
                   </button>
                 </>
               ) : (
-                <>Search event, talent, location, type <ChevronDown size={12} style={{ transform: catOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} /></>
+                <>{artistsMode ? "Search Talent or Talent type" : "Search Event or Event type"} <ChevronDown size={12} style={{ transform: catOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} /></>
               )}
             </button>
 
@@ -631,7 +631,7 @@ export default function StickySearchFilters() {
               }}
               onFocus={() => setResultsOpen(true)}
               onKeyDown={e => e.key === "Enter" && handleSearch()}
-              placeholder={artistsMode && !selectedCat ? "e.g. Electronic, Rock, Sinhala or an artist name…" : EXAMPLES[selectedCat?.key ?? "default"]}
+              placeholder={artistsMode && !selectedCat ? "e.g. Bands, DJs, Speakers, Comedians…" : EXAMPLES[selectedCat?.key ?? "default"]}
               className="bg-transparent text-white/60 text-sm w-full outline-none placeholder:text-white/30 placeholder:italic"
             />
             {searchQuery && (

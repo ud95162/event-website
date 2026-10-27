@@ -212,8 +212,8 @@ function LocationPill() {
   );
 }
 
-// Header icon buttons (calendar, account): larger and champagne-coloured so they stand out.
-const ICON_BTN = "w-[calc(44px*var(--nav-s))] h-[calc(44px*var(--nav-s))] shrink-0 rounded-full flex items-center justify-center transition-all duration-300";
+// Header icon buttons (calendar, account): larger, bold white so they stand out.
+const ICON_BTN = "w-[calc(44px*var(--nav-s)*var(--nav-ic))] h-[calc(44px*var(--nav-s)*var(--nav-ic))] shrink-0 rounded-full flex items-center justify-center transition-all duration-300";
 
 /* ── Calendar Picker ────────────────────────────────────────────────── */
 function AccountLink() {
@@ -222,10 +222,10 @@ function AccountLink() {
       href="/admin/login"
       title="Partner login"
       aria-label="Partner login"
-      className={`${ICON_BTN} bg-[#E8DCC0]/10 hover:bg-[#E8DCC0]/20`}
-      style={{ border: "1.5px solid rgba(232,220,192,0.55)", color: "#E8DCC0" }}
+      className={`${ICON_BTN} bg-white/10 hover:bg-white/20`}
+      style={{ border: "2px solid rgba(255,255,255,0.9)", color: "#fff" }}
     >
-      <User style={{ width: "calc(20px * var(--nav-s))", height: "calc(20px * var(--nav-s))" }} strokeWidth={2} />
+      <User style={{ width: "calc(20px * var(--nav-s) * var(--nav-ic))", height: "calc(20px * var(--nav-s) * var(--nav-ic))" }} strokeWidth={2.6} />
     </Link>
   );
 }
@@ -238,10 +238,10 @@ function CalendarPicker() {
       href="/calendar"
       title="Events Calendar"
       aria-label="Events Calendar"
-      className={`${ICON_BTN} ${isActive ? "bg-[#E8DCC0]/25" : "bg-[#E8DCC0]/10 hover:bg-[#E8DCC0]/20"}`}
-      style={{ border: `1.5px solid ${isActive ? "#E8DCC0" : "rgba(232,220,192,0.55)"}`, color: "#E8DCC0", boxShadow: isActive ? "0 0 14px rgba(232,220,192,0.35)" : "none" }}
+      className={`${ICON_BTN} ${isActive ? "bg-white/25" : "bg-white/10 hover:bg-white/20"}`}
+      style={{ border: `2px solid ${isActive ? "#fff" : "rgba(255,255,255,0.9)"}`, color: "#fff", boxShadow: isActive ? "0 0 14px rgba(255,255,255,0.35)" : "none" }}
     >
-      <Calendar style={{ width: "calc(20px * var(--nav-s))", height: "calc(20px * var(--nav-s))" }} strokeWidth={2} />
+      <Calendar style={{ width: "calc(20px * var(--nav-s) * var(--nav-ic))", height: "calc(20px * var(--nav-s) * var(--nav-ic))" }} strokeWidth={2.6} />
     </Link>
   );
 }
@@ -263,9 +263,9 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-[300] bg-[#0F1116]/90 backdrop-blur-md border-b border-white/10">
       <style>{`
         /* Header scale: bigger on large screens. --nav-h is also used by the pages' top offsets. */
-        :root { --nav-s: 1; --nav-h: calc(64px * var(--nav-s)); }
-        @media (min-width: 1600px) { :root { --nav-s: 1.1; } }
-        @media (min-width: 1920px) { :root { --nav-s: 1.25; } }
+        :root { --nav-s: 1; --nav-ic: 1; --nav-h: calc(64px * var(--nav-s)); }
+        @media (min-width: 1600px) { :root { --nav-s: 1.2; --nav-ic: 1.15; } }
+        @media (min-width: 1920px) { :root { --nav-s: 1.35; --nav-ic: 1.15; } }
         .nav-active-border {
           border-radius: 0.75rem;
           display: inline-flex;
@@ -282,9 +282,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between" style={{ height: "var(--nav-h)" }}>
 
           {/* Logo */}
-          <Link href="/" className="flex flex-col items-start justify-center shrink-0">
+          <Link href="/" className="flex flex-col items-center justify-center shrink-0">
             <img src="/logo.png" alt="DiscoverEvents.lk" className="w-auto object-contain" style={{ height: "calc(40px * var(--nav-s))" }} />
-            <span style={{ marginTop: 3, fontSize: "calc(9.5px * var(--nav-s))", lineHeight: 1, fontWeight: 700, letterSpacing: "0.12em", whiteSpace: "nowrap", textTransform: "uppercase", color: "#fff", opacity: 0.95, textShadow: "0 0 10px rgba(255,255,255,0.3)" }}>
+            <span style={{ marginTop: 3, fontSize: "calc(9.5px * var(--nav-s))", lineHeight: 1, fontWeight: 600, letterSpacing: "0.14em", whiteSpace: "nowrap", textTransform: "uppercase", textAlign: "center", color: "rgba(255,255,255,0.82)", WebkitFontSmoothing: "antialiased", textShadow: "0 0 12px rgba(255,255,255,0.12)" }}>
               Sri Lanka’s home for events and talent
             </span>
           </Link>

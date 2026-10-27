@@ -35,7 +35,7 @@ export default function ArtistCard({ artist, followed, onFollow }: {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        flexShrink: 0, width: 230, height: 320,
+        flexShrink: 0, width: 230, height: 340,
         borderRadius: 16, overflow: "hidden", position: "relative",
         cursor: "pointer",
         border: `1px solid ${hovered ? "rgba(227,184,115,0.6)" : "rgba(227,184,115,0.14)"}`,
@@ -46,13 +46,11 @@ export default function ArtistCard({ artist, followed, onFollow }: {
       }}
     >
       <img src={thumb(artist.image, 600)} alt={artist.name} style={{
-        width: "100%", height: "65%", objectFit: "cover", objectPosition: "top",
+        width: "100%", height: 230, objectFit: "cover", objectPosition: "top",
         transform: hovered ? "scale(1.06)" : "scale(1)",
         filter: hovered ? "grayscale(0%)" : "grayscale(30%)",
         transition: "transform 0.5s ease, filter 0.5s ease",
       }} />
-
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.05) 100%)" }} />
 
       {artist.sponsored && (
         <div style={{ position: "absolute", top: 10, left: 10 }}><SponsoredTag /></div>
@@ -81,7 +79,7 @@ export default function ArtistCard({ artist, followed, onFollow }: {
         </div>
       )}
 
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px", textAlign: "center" }}>
+      <div style={{ position: "absolute", top: 230, bottom: 0, left: 0, right: 0, padding: "14px 12px 12px", textAlign: "center" }}>
         <p style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 5 }}>{artist.role}</p>
         <h3 style={{ fontSize: 12, fontWeight: 900, color: "#fff", textTransform: "uppercase", lineHeight: 1.25, letterSpacing: "0.04em", marginBottom: 6 }}>{artist.name}</h3>
         <div style={{ height: 2, borderRadius: 999, margin: "0 auto", width: hovered ? "62%" : "32%", background: "linear-gradient(90deg, rgba(227,184,115,0), #f5ecd0 35%, #C9A24B 65%, rgba(227,184,115,0))", transition: "width 0.4s ease" }} />

@@ -28,3 +28,10 @@ export function fromPrice(tickets?: TicketType[], fallback?: string): string {
   }, { n: Infinity, price: t[0].price });
   return `From ${displayPrice(min.price)}`;
 }
+
+// Compact price for cards: up to two prices in full, otherwise "From LKR x onwards" (full list lives on the event page).
+export function cardPrice(tickets?: TicketType[], fallback?: string): string {
+  const t = validTickets(tickets);
+  if (t.length <= 2) return ticketPrices(tickets, fallback);
+  return `${fromPrice(tickets, fallback)} onwards`;
+}

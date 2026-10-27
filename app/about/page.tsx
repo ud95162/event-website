@@ -22,8 +22,6 @@ import {
   Users,
   Globe,
   Share2,
-  ChevronRight,
-  ChevronLeft,
 } from "lucide-react";
 
 /* ── Count-up hook ─────────────────────────────────────────────── */
@@ -458,43 +456,11 @@ function FaqList({ inView }: { inView: boolean }) {
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "center",
           marginTop: "clamp(12px, 1.8vh, 16px)",
           padding: "0 6px",
         }}
       >
-        {/* Prev button */}
-        <button
-          type="button"
-          onClick={() => setSlideIndex((curr) => (curr === 0 ? faqCategories.length - 1 : curr - 1))}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "7px 14px",
-            borderRadius: 8,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "rgba(255,255,255,0.75)",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(232,220,192,0.4)";
-            e.currentTarget.style.color = "#E8DCC0";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            e.currentTarget.style.color = "rgba(255,255,255,0.75)";
-          }}
-        >
-          <ChevronLeft size={14} /> Prev
-        </button>
-
         {/* Dot indicators */}
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {faqCategories.map((cat, i) => (
@@ -518,37 +484,6 @@ function FaqList({ inView }: { inView: boolean }) {
           ))}
         </div>
 
-        {/* Next button */}
-        <button
-          type="button"
-          onClick={() => setSlideIndex((curr) => (curr === faqCategories.length - 1 ? 0 : curr + 1))}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "7px 14px",
-            borderRadius: 8,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "rgba(255,255,255,0.75)",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(232,220,192,0.4)";
-            e.currentTarget.style.color = "#E8DCC0";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            e.currentTarget.style.color = "rgba(255,255,255,0.75)";
-          }}
-        >
-          Next <ChevronRight size={14} />
-        </button>
       </div>
     </div>
   );

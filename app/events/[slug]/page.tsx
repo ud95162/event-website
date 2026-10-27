@@ -797,7 +797,8 @@ function TicketCards({ tickets, columns = false }: { tickets: NonNullable<Event[
 
 /* ── Flyer → video slider (auto-switches to the trailer after 5s) ──── */
 function EventMedia({ image, title, trailer }: { image: string; title: string; trailer: string }) {
-  const yt    = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/);
+  const yt    = trailer.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  const ytShort = /youtube\.com\/shorts\//i.test(trailer);   // vertical (reel-shaped) video
   const vimeo = trailer.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   const instaM = trailer.match(/instagram\.com\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
   // Instagram embeds via its own iframe player (no autoplay/sound control); reels are vertical.
@@ -912,12 +913,12 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
 
       {/* Video (16:9, autoplays with sound when it becomes active) */}
       {showVideo && !insta && yt && (
-        <YtPlayer videoId={yt[1]} muted={muted} onToggleMute={() => setMuted(m => !m)} />
+        <YtPlayer videoId={yt[1]} vertical={ytShort} muted={muted} onToggleMute={() => setMuted(m => !m)} />
       )}
       {showVideo && !insta && !yt && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-            {embed ? (
+        embed ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
               <iframe
                 ref={ytRef}
                 src={embed}
@@ -927,18 +928,21 @@ function EventMedia({ image, title, trailer }: { image: string; title: string; t
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 allowFullScreen
               />
-            ) : (
-              <video
-                ref={videoRef}
-                src={trailer}
-                autoPlay
-                playsInline
-                controls
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          // Uploaded / direct video file: fills the panel and is never cropped, so a vertical (reel)
+          // video shows in full at its own 9:16 shape, with the blurred flyer behind it.
+          <video
+            ref={videoRef}
+            src={trailer}
+            autoPlay
+            playsInline
+            controls
+            className="absolute inset-0 w-full h-full object-contain"
+            style={{ background: "transparent" }}
+          />
+        )
       )}
 
       {/* Sound toggle — prominent "tap for sound" while muted (not for Instagram, which
@@ -1004,7 +1008,7 @@ const fmtTime = (t: number) => {
   return `${m}:${String(sec).padStart(2, "0")}`;
 };
 
-function YtPlayer({ videoId, muted, onToggleMute }: { videoId: string; muted: boolean; onToggleMute: () => void }) {
+function YtPlayer({ videoId, vertical = false, muted, onToggleMute }: { videoId: string; vertical?: boolean; muted: boolean; onToggleMute: () => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const startMuted = useRef(muted);
@@ -1027,7 +1031,7 @@ function YtPlayer({ videoId, muted, onToggleMute }: { videoId: string; muted: bo
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const VIDEO_AR = 16 / 9;
+  const VIDEO_AR = vertical ? 9 / 16 : 16 / 9;
   const boxAR = box.h > 0 ? box.w / box.h : VIDEO_AR;
   const crop = boxAR < VIDEO_AR ? 1 - boxAR / VIDEO_AR : 1 - VIDEO_AR / boxAR;   // share of the picture lost when covering
   const cover = !isFs && box.w > 0 && crop <= MAX_CROP;
@@ -1104,7 +1108,12 @@ function YtPlayer({ videoId, muted, onToggleMute }: { videoId: string; muted: bo
   const btn: React.CSSProperties = { width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", color: "#fff", flexShrink: 0 };
 
   return (
-    <div ref={wrapRef} className="group absolute inset-0 bg-black overflow-hidden">
+    <div
+      ref={wrapRef}
+      className="group absolute bg-black overflow-hidden"
+      // Vertical (Shorts) videos play in a centred 9:16 reel-shaped frame instead of stretching across the panel.
+      style={vertical && !isFs ? { top: 0, bottom: 0, left: "50%", aspectRatio: "9 / 16", transform: "translateX(-50%)" } : { inset: 0 }}
+    >
       <iframe
         ref={frameRef}
         src={src}

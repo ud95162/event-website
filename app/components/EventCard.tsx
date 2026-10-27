@@ -12,7 +12,7 @@ import { Event, statusColor } from "../data/events";
 import { useAdminData } from "../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { eventSlug, organizerSlug } from "../lib/slug";
-import { ticketPrices } from "../lib/price";
+import { cardPrice } from "../lib/price";
 
 // The event card used on the Events page and in the home page's search results.
 export default function EventCard({ event, liked, shared, onLike, onShare }: {
@@ -99,7 +99,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
       style={{
         flexShrink: 0,
         width: 270,
-        height: 400,
+        height: 500,
         borderRadius: 16,
         overflow: "hidden",
         position: "relative",
@@ -116,17 +116,11 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
         src={thumb(event.image, 520)} alt={event.title}
         loading="lazy" decoding="async"
         style={{
-          width: "100%", height: "68%", objectFit: "cover", objectPosition: "top",
+          width: "100%", height: 270, objectFit: "cover", objectPosition: "top",
           transform: hovered ? "scale(1.06)" : "scale(1)",
           transition: "transform 0.5s ease",
         }}
       />
-
-      {/* Gradient */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.1) 100%)",
-      }} />
 
       {event.sponsored && (
         <div style={{ position: "absolute", top: event.badge ? 42 : 10, left: 10 }}><SponsoredTag /></div>
@@ -156,9 +150,9 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
         <EventShare event={event} />
       </div>
 
-      {/* Info — every row has a fixed slot (2-line title, genre row) and starts at the same height, so
+      {/* Info — sits in the black area below the flyer; every row has a fixed slot (2-line title, genre row) and starts at the same height, so
           type, title, genres, date, location and price line up across cards whatever their content. */}
-      <div style={{ position: "absolute", top: 164, bottom: 0, left: 0, right: 0, padding: "0 14px 14px", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "absolute", top: 270, bottom: 0, left: 0, right: 0, padding: "14px 14px 14px", display: "flex", flexDirection: "column" }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {event.tag}
         </p>
@@ -189,7 +183,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
             )}
           </div>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
-            {ticketPrices(event.tickets, event.price)}
+            {cardPrice(event.tickets, event.price)}
           </p>
 
           {/* Organized by */}
@@ -326,7 +320,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <Ticket size={12} style={{ color: "#E8DCC0", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{ticketPrices(event.tickets, event.price)}</span>
+              <span style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>{cardPrice(event.tickets, event.price)}</span>
             </div>
           </div>
 

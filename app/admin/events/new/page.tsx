@@ -397,7 +397,7 @@ function EventFormInner() {
               </Field>
               <div style={{ gridColumn: "span 2" }}>
                 <label style={labelStyle}>Video Trailer URL (portrait preferred)</label>
-                <input style={inputStyle} type="url" value={form.videoTrailer ?? ""} onChange={e => set("videoTrailer", e.target.value)} placeholder="YouTube, Vimeo, or direct .mp4 URL" />
+                <input style={inputStyle} type="url" value={form.videoTrailer ?? ""} onChange={e => set("videoTrailer", e.target.value)} placeholder="YouTube (or Shorts), Vimeo, or direct .mp4 URL" />
               </div>
             </div>
 

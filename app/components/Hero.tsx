@@ -266,8 +266,8 @@ export default function Hero() {
                   >
                     {p.tag}
                   </span>
-                  {p.sponsored && <div style={{ marginTop: 8 }}><SponsoredTag /></div>}
                 </div>
+                {p.sponsored && <div className="absolute top-4 right-4" style={{ zIndex: 2 }}><SponsoredTag size="md" /></div>}
 
                 {/* Text — only when big, each element animates in with stagger */}
                 <div
