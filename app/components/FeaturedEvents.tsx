@@ -10,7 +10,7 @@ import { useUserLocation, haversineKm, formatDistance } from "../context/Locatio
 import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
 import { fromPrice } from "../lib/price";
-import { isEventPast, eventStartMs } from "../lib/eventTime";
+import { toDateTime, eventStartMs } from "../lib/eventTime";
 
 // Non-card content above/below the row (header + explore button).
 const FIXED_OVERHEAD = 220;
@@ -47,12 +47,13 @@ export default function FeaturedEvents() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Every admin-selected featured event that hasn't finished, soonest first. With none, fall back
+  // Every admin-selected featured event from today onwards, soonest first. With none, fall back
   // to the first few upcoming events so the section isn't empty.
   const events = useMemo(() => {
-    const now = Date.now();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    // Today's events stay in, even if they've already ended; only earlier days are hidden.
     const upcoming = (list: typeof allEvents) => list
-      .filter((e) => !isEventPast(e, now))
+      .filter((e) => { const end = toDateTime(e.endDate || e.date); return !end || end.getTime() >= today.getTime(); })
       .sort((x, y) => eventStartMs(x) - eventStartMs(y));
     const featured = upcoming(allEvents.filter((e) => e.featured));
     return featured.length ? featured : upcoming(allEvents).slice(0, 8);
