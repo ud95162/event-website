@@ -10,6 +10,7 @@ import { useUserLocation, haversineKm, formatDistance } from "../context/Locatio
 import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
 import { fromPrice } from "../lib/price";
+import { isEventPast, eventStartMs } from "../lib/eventTime";
 
 // Non-card content above/below the row (header + explore button).
 const FIXED_OVERHEAD = 220;
@@ -46,10 +47,15 @@ export default function FeaturedEvents() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Admin-selected featured events; fall back to the first events if none picked.
+  // Every admin-selected featured event that hasn't finished, soonest first. With none, fall back
+  // to the first few upcoming events so the section isn't empty.
   const events = useMemo(() => {
-    const featured = allEvents.filter((e) => e.featured);
-    return (featured.length ? featured : allEvents).slice(0, 8);
+    const now = Date.now();
+    const upcoming = (list: typeof allEvents) => list
+      .filter((e) => !isEventPast(e, now))
+      .sort((x, y) => eventStartMs(x) - eventStartMs(y));
+    const featured = upcoming(allEvents.filter((e) => e.featured));
+    return featured.length ? featured : upcoming(allEvents).slice(0, 8);
   }, [allEvents]);
 
   const [liked,      setLiked]      = useState<Set<number>>(new Set());
