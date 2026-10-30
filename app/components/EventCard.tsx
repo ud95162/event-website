@@ -46,6 +46,11 @@ function alignTitles(container: Element) {
 }
 
 // The event card used on the Events page and in the home page's search results.
+// Flyers are 4:5 (admin panel), so the image area matches that ratio and nothing is cropped.
+const CARD_W = 270;
+const IMG_H = Math.round(CARD_W * 1.25);
+const CARD_H = IMG_H + 230;
+
 export default function EventCard({ event, liked, shared, onLike, onShare }: {
   event: Event;
   liked: boolean; shared: boolean;
@@ -142,8 +147,8 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
       onMouseLeave={leave}
       style={{
         flexShrink: 0,
-        width: 270,
-        height: 500,
+        width: CARD_W,
+        height: CARD_H,
         borderRadius: 16,
         overflow: "hidden",
         position: "relative",
@@ -160,7 +165,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
         src={thumb(event.image, 520)} alt={event.title}
         loading="lazy" decoding="async"
         style={{
-          width: "100%", height: 270, objectFit: "cover", objectPosition: "top",
+          width: "100%", height: IMG_H, objectFit: "cover", objectPosition: "top",
           transform: hovered ? "scale(1.06)" : "scale(1)",
           transition: "transform 0.5s ease",
         }}
@@ -196,7 +201,7 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
 
       {/* Info — sits in the black area below the flyer; every row has a fixed slot (2-line title, genre row) and starts at the same height, so
           type, title, genres, date, location and price line up across cards whatever their content. */}
-      <div style={{ position: "absolute", top: 270, bottom: 0, left: 0, right: 0, padding: "14px 14px 14px", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "absolute", top: IMG_H, bottom: 0, left: 0, right: 0, padding: "14px 14px 14px", display: "flex", flexDirection: "column" }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: "#E8DCC0", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {event.tag}
         </p>
