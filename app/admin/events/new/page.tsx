@@ -236,6 +236,8 @@ function EventFormInner() {
                   value={form.lineup}
                   onChange={v => set("lineup", v)}
                   allArtists={artists.map(a => a.stageName || a.name)}
+                  allowCustom
+                  placeholder="Search artists, or type a name to add a performer without a profile…"
                 />
               </div>
               <div style={{ gridColumn: "span 3" }}>

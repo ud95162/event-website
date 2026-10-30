@@ -233,6 +233,8 @@ export default function EventDetailPage() {
   const lineupArtists = event.lineup
     .map(name => artists.find(a => (a.stageName || a.name) === name || a.name === name))
     .filter(Boolean) as typeof artists;
+  // Performers added by name only — shown on the event, but with no profile page to link to.
+  const nameOnlyPerformers = event.lineup.filter(name => !artists.some(a => (a.stageName || a.name) === name || a.name === name));
 
   const organizer = organizers.find(o => o.name === event.organizer);
 
@@ -464,7 +466,7 @@ export default function EventDetailPage() {
                 )}
 
                 {/* Performing artists — after the tickets; each links to its artist page */}
-                {lineupArtists.length > 0 && (
+                {(lineupArtists.length > 0 || nameOnlyPerformers.length > 0) && (
                   <div>
                     <p className="text-white/30 text-[8px] tracking-[0.35em] uppercase mb-2">PERFORMING ARTISTS</p>
                     <div className="flex flex-wrap gap-2">
@@ -484,6 +486,16 @@ export default function EventDetailPage() {
                           )}
                           <span className="text-white text-[12px] font-semibold tracking-wide whitespace-nowrap">{artist.stageName || artist.name}</span>
                         </button>
+                      ))}
+                      {nameOnlyPerformers.map(name => (
+                        <span
+                          key={name}
+                          className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3"
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.14)" }}
+                        >
+                          <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>{name.charAt(0).toUpperCase()}</span>
+                          <span className="text-white text-[12px] font-semibold tracking-wide whitespace-nowrap">{name}</span>
+                        </span>
                       ))}
                     </div>
                   </div>

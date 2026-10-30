@@ -7,6 +7,7 @@ import { useAdminData, Event } from "../../context/AdminDataContext";
 import { Plus, Pencil, Trash2, X, Check, Search, ArrowUp, ArrowDown, ArrowUpDown, List, LayoutGrid, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { fmtStamp } from "../../lib/stamps";
 
+const LIST_STATE_KEY = "admin-events-list";
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const selectStyle: React.CSSProperties = {
@@ -49,6 +50,28 @@ export default function EventsAdminPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const reqId = useRef(0);
 
+  // Remember the list position (page, filters, page size) so returning from an edit lands on the same page.
+  const [restored, setRestored] = useState(false);
+  const prevKey = useRef<string | null>(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(LIST_STATE_KEY) ?? "null");
+      if (saved) {
+        prevKey.current = JSON.stringify([saved.search.trim(), saved.locationFilter, saved.dateFilter, saved.monthFilter, saved.period, saved.dateSort, saved.perPage]);
+        setSearch(saved.search); setDebouncedSearch(saved.search.trim());
+        setLocationFilter(saved.locationFilter); setDateFilter(saved.dateFilter); setMonthFilter(saved.monthFilter);
+        setPeriod(saved.period); setDateSort(saved.dateSort); setPerPage(saved.perPage); setPage(saved.page);
+      }
+    } catch {}
+    setRestored(true);
+  }, []);
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ search, locationFilter, dateFilter, monthFilter, period, dateSort, perPage, page }));
+    } catch {}
+  }, [restored, search, locationFilter, dateFilter, monthFilter, period, dateSort, perPage, page]);
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => clearTimeout(t);
@@ -73,7 +96,7 @@ export default function EventsAdminPage() {
     }
   }, [page, perPage, debouncedSearch, locationFilter, dateFilter, monthFilter, period, dateSort]);
 
-  useEffect(() => { fetchPage(); }, [fetchPage, refreshKey]);
+  useEffect(() => { if (restored) fetchPage(); }, [restored, fetchPage, refreshKey]);
 
   const paged = data.events;
   const locations = data.locations;
@@ -85,7 +108,13 @@ export default function EventsAdminPage() {
   // Pagination — the server clamps the page, so trust the page it returns.
   const totalPages = data.totalPages;
   const currentPage = data.page;
-  useEffect(() => { setPage(1); }, [debouncedSearch, locationFilter, dateFilter, monthFilter, period, dateSort, perPage]);
+  useEffect(() => {
+    if (!restored) return;
+    const key = JSON.stringify([debouncedSearch, locationFilter, dateFilter, monthFilter, period, dateSort, perPage]);
+    if (prevKey.current === key) return;
+    prevKey.current = key;
+    setPage(1);
+  }, [restored, debouncedSearch, locationFilter, dateFilter, monthFilter, period, dateSort, perPage]);
 
   // Delete on the server first, then refresh the current page (stepping back if it emptied).
   const handleDelete = async (id: number) => {

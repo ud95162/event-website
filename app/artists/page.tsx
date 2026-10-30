@@ -35,11 +35,12 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
   const rafRef    = useRef<number>(0);
   const CARD_STEP = 244 * 3;
 
-  const items = [...rowArtists, ...rowArtists];
+  const isStatic = rowArtists.length <= 3;
+  const items = isStatic ? rowArtists : [...rowArtists, ...rowArtists];
 
   useEffect(() => {
     const el = trackRef.current;
-    if (!el) return;
+    if (!el || isStatic) return;
     const speed = 0.4;
     posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
 
@@ -55,7 +56,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
     };
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [direction, rowArtists.length]);
+  }, [direction, rowArtists.length, isStatic]);
 
   const slideTo = (delta: number) => {
     const el = trackRef.current;
@@ -97,6 +98,22 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
   );
 
   if (!rowArtists.length) return null;
+
+  if (isStatic) {
+    return (
+      <div data-reveal style={{ marginBottom: 40 }}>
+        <div style={{ marginBottom: 16 }}>
+          {subtitle && <p style={{ fontSize: 10, fontWeight: 700, color: "#ffffff", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>{subtitle}</p>}
+          <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, paddingBottom: 6 }}>
+          {rowArtists.map(a => (
+            <ArtistCard key={a.id} artist={a} followed={followed.has(a.id)} onFollow={e => { e.stopPropagation(); onFollow(a.id); }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div data-reveal style={{ marginBottom: 40 }}>

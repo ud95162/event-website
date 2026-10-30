@@ -8,9 +8,10 @@ type Props = {
   onChange: (v: string[]) => void;
   allArtists: string[];     // all available options
   placeholder?: string;
+  allowCustom?: boolean;    // let the admin add a name that has no profile
 };
 
-export default function LineupSelector({ value, onChange, allArtists, placeholder }: Props) {
+export default function LineupSelector({ value, onChange, allArtists, placeholder, allowCustom }: Props) {
   const [query, setQuery]     = useState("");
   const [open, setOpen]       = useState(false);
   const containerRef          = useRef<HTMLDivElement>(null);
@@ -34,6 +35,10 @@ export default function LineupSelector({ value, onChange, allArtists, placeholde
     setQuery("");
     inputRef.current?.focus();
   };
+
+  const typed = query.trim();
+  const canAddCustom = !!allowCustom && typed.length > 0 &&
+    ![...allArtists, ...value].some(n => n.toLowerCase() === typed.toLowerCase());
 
   const remove = (name: string) => onChange(value.filter(n => n !== name));
 
@@ -97,11 +102,26 @@ export default function LineupSelector({ value, onChange, allArtists, placeholde
           boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
           zIndex: 999, overflow: "hidden",
         }}>
-          {filtered.length === 0 ? (
+          {canAddCustom && (
+            <button
+              type="button"
+              onClick={() => add(typed)}
+              style={{
+                width: "100%", padding: "10px 14px", background: "none", border: "none",
+                borderBottom: filtered.length ? "1px solid rgba(255,255,255,0.08)" : "none",
+                cursor: "pointer", textAlign: "left", fontSize: 12, color: "#E8DCC0", fontFamily: "inherit",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}
+            >
+              + Add &ldquo;{typed}&rdquo; <span style={{ color: "rgba(255,255,255,0.35)" }}>(no profile, name only)</span>
+            </button>
+          )}
+          {filtered.length === 0 && !canAddCustom ? (
             <div style={{ padding: "14px 16px", fontSize: 12, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>
               {query ? `No artists matching "${query}"` : "All artists already selected"}
             </div>
-          ) : (
+          ) : filtered.length === 0 ? null : (
             <div style={{ maxHeight: 220, overflowY: "auto" }}>
               {filtered.map(name => (
                 <button

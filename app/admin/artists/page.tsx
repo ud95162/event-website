@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData, Artist } from "../../context/AdminDataContext";
 import { Search, Plus, Pencil, Trash2, X, Check, Star, List, LayoutGrid, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { fmtStamp } from "../../lib/stamps";
 
+const LIST_STATE_KEY = "admin-artists-list";
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const selectStyle: React.CSSProperties = {
@@ -36,7 +37,30 @@ export default function ArtistsAdminPage() {
           .some(v => (v ?? "").toLowerCase().includes(q)))
     : allArtists;
   const totalPages = Math.max(1, Math.ceil(artists.length / perPage));
-  useEffect(() => { setPage(1); }, [perPage, search]);
+  // Remember the list position so returning from an edit lands on the same page.
+  const [restored, setRestored] = useState(false);
+  const prevKey = useRef<string | null>(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(LIST_STATE_KEY) ?? "null");
+      if (saved) {
+        prevKey.current = JSON.stringify([saved.perPage, saved.search]);
+        setSearch(saved.search); setPerPage(saved.perPage); setPage(saved.page); setView(saved.view);
+      }
+    } catch {}
+    setRestored(true);
+  }, []);
+  useEffect(() => {
+    if (!restored) return;
+    try { sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ search, perPage, page, view })); } catch {}
+  }, [restored, search, perPage, page, view]);
+  useEffect(() => {
+    if (!restored) return;
+    const key = JSON.stringify([perPage, search]);
+    if (prevKey.current === key) return;
+    prevKey.current = key;
+    setPage(1);
+  }, [restored, perPage, search]);
   const currentPage = Math.min(page, totalPages);
   const paged = artists.slice((currentPage - 1) * perPage, currentPage * perPage);
 
