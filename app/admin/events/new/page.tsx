@@ -426,6 +426,19 @@ function EventFormInner() {
                   </div>
                 ))}
               </div>
+              <div style={{ marginTop: 14 }}>
+                <label style={{ ...labelStyle, fontSize: 9, marginBottom: 4 }}>Ticket Phone Number</label>
+                <input
+                  style={inputStyle}
+                  type="tel"
+                  value={(form.links ?? {}).phone ?? ""}
+                  onChange={e => set("links", { ...(form.links ?? {}), phone: e.target.value })}
+                  placeholder="+94 7X XXX XXXX"
+                />
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
+                  For events with no Tickets Link: visitors see a &ldquo;Call to book&rdquo; button that dials this number. Ignored when a Tickets Link is set.
+                </p>
+              </div>
             </div>
           </section>
 

@@ -3,7 +3,7 @@
 import { Suspense, useState, useLayoutEffect, useEffect, useRef } from "react";
 import { thumb } from "../lib/images";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Heart, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Artist } from "../data/artists";
 import { useAdminData } from "../context/AdminDataContext";
 import { artistSlug } from "../lib/slug";
@@ -21,11 +21,9 @@ import { hasPreloaderShown, markPreloaderShown } from "../preloaderState";
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, direction = "left" }: {
+function ArtistRow({ title, subtitle, artists: rowArtists, direction = "left" }: {
   title: string; subtitle?: string;
   artists: Artist[];
-  followed: Set<number>;
-  onFollow: (id: number) => void;
   direction?: "left" | "right";
 }) {
   const trackRef  = useRef<HTMLDivElement>(null);
@@ -108,7 +106,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, paddingBottom: 6 }}>
           {rowArtists.map(a => (
-            <ArtistCard key={a.id} artist={a} followed={followed.has(a.id)} onFollow={e => { e.stopPropagation(); onFollow(a.id); }} />
+            <ArtistCard key={a.id} artist={a} />
           ))}
         </div>
       </div>
@@ -134,7 +132,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, followed, onFollow, d
 
         <div ref={trackRef} style={{ display: "flex", gap: 14, width: "max-content", willChange: "transform", paddingBottom: 6 }}>
           {items.map((a, i) => (
-            <ArtistCard key={`${a.id}-${i}`} artist={a} followed={followed.has(a.id)} onFollow={e => { e.stopPropagation(); onFollow(a.id); }} />
+            <ArtistCard key={`${a.id}-${i}`} artist={a} />
           ))}
         </div>
       </div>
@@ -150,18 +148,14 @@ function ArtistsContent() {
   const searchParams = useSearchParams();
   const { artists, events } = useAdminData();
   const eventCountFor = (a: Artist) => upcomingEventCount(events, [a.stageName || a.name, a.name]);
-  const [followed, setFollowed] = useState<Set<number>>(new Set());
   const queryParam  = searchParams.get("q")      ?? "";
   const filterParam = searchParams.get("filter") ?? "";
   const genreParam  = searchParams.get("genre")  ?? "";
-  const toggleFollow = (id: number) =>
-    setFollowed(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   const isFiltered = !!queryParam || !!filterParam || !!genreParam;
 
   if (isFiltered) {
     let filtered = [...artists];
-    if (filterParam === "followed")    filtered = filtered.filter(a => followed.has(a.id));
     if (filterParam === "recommended") filtered = filtered.sort((a, b) => eventCountFor(b) - eventCountFor(a));
     if (genreParam) {
       const g = genreParam.toLowerCase();
@@ -177,7 +171,7 @@ function ArtistsContent() {
       <div style={{ padding: "24px 0 48px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <h1 style={{ fontSize: "clamp(1.5rem,3vw,2.5rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase" }}>
-            {queryParam ? `"${queryParam}"` : genreParam ? genreParam : filterParam === "followed" ? "Followed Talent" : "Talent"}
+            {queryParam ? `"${queryParam}"` : genreParam ? genreParam : "Talent"}
           </h1>
           <button onClick={() => router.push("/artists")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", background: "transparent" }}>
@@ -185,7 +179,7 @@ function ArtistsContent() {
           </button>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
-          {filtered.map(a => <ArtistCard key={a.id} artist={a} followed={followed.has(a.id)} onFollow={e => { e.stopPropagation(); toggleFollow(a.id); }} />)}
+          {filtered.map(a => <ArtistCard key={a.id} artist={a} />)}
         </div>
       </div>
     );
@@ -195,14 +189,13 @@ function ArtistsContent() {
   const byName = (x: Artist, y: Artist) => (x.stageName || x.name).localeCompare(y.stageName || y.name);
   const rows = TALENT_CATEGORIES.map(c => ({
     title: c.name,
-    subtitle: "Talent",
     data: artists.filter(a => talentCategory(a.role) === c.name).sort(byName),
   }));
 
   return (
     <div style={{ padding: "24px 0 64px" }}>
       {rows.map((row, i) => (
-        <ArtistRow key={row.title} title={row.title} subtitle={row.subtitle} artists={row.data} followed={followed} onFollow={toggleFollow} direction={i % 2 === 0 ? "left" : "right"} />
+        <ArtistRow key={row.title} title={row.title} artists={row.data} direction={i % 2 === 0 ? "left" : "right"} />
       ))}
     </div>
   );

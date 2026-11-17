@@ -3,8 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { MapPin, Calendar, Ticket, Heart, ArrowRight } from "lucide-react";
-import EventShare from "./EventShare";
+import { MapPin, Calendar, Ticket, ArrowRight } from "lucide-react";
 import SponsoredTag from "./SponsoredTag";
 import { genreColor, genreChipStyle } from "../lib/genres";
 import { thumb } from "../lib/images";
@@ -51,11 +50,8 @@ const CARD_W = 270;
 const IMG_H = Math.round(CARD_W * 1.25);
 const CARD_H = IMG_H + 230;
 
-export default function EventCard({ event, liked, shared, onLike, onShare }: {
+export default function EventCard({ event }: {
   event: Event;
-  liked: boolean; shared: boolean;
-  onLike: (e: React.MouseEvent) => void;
-  onShare: (e: React.MouseEvent) => void;
 }) {
   const router = useRouter();
   const { userLocation } = useUserLocation();
@@ -185,19 +181,6 @@ export default function EventCard({ event, liked, shared, onLike, onShare }: {
           }}>{event.badge}</span>
         </div>
       )}
-
-      {/* Actions */}
-      <div style={{ position: "absolute", top: 10, right: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-        <button onClick={onLike} style={{
-          width: 32, height: 32, borderRadius: "50%",
-          background: liked ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.55)",
-          border: `1px solid ${liked ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.15)"}`,
-          backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-        }}>
-          <Heart size={13} strokeWidth={2.5} fill={liked ? "#fff" : "none"} style={{ color: "#fff" }} />
-        </button>
-        <EventShare event={event} />
-      </div>
 
       {/* Info — sits in the black area below the flyer; every row has a fixed slot (2-line title, genre row) and starts at the same height, so
           type, title, genres, date, location and price line up across cards whatever their content. */}

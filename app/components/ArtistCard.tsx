@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart } from "lucide-react";
 import SponsoredTag from "./SponsoredTag";
 import { thumb } from "../lib/images";
 import { Artist } from "../data/artists";
@@ -19,10 +18,8 @@ export function upcomingEventCount(events: { lineup: string[]; date: string; sta
 
 
 /* ── Artist Card ────────────────────────────────────────────────── */
-export default function ArtistCard({ artist, followed, onFollow }: {
+export default function ArtistCard({ artist }: {
   artist: Artist;
-  followed: boolean;
-  onFollow: (e: React.MouseEvent) => void;
 }) {
   const router = useRouter();
   const { events } = useAdminData();
@@ -48,23 +45,12 @@ export default function ArtistCard({ artist, followed, onFollow }: {
       <img src={thumb(artist.image, 600)} alt={artist.name} style={{
         width: "100%", height: 230, objectFit: "cover", objectPosition: "top",
         transform: hovered ? "scale(1.06)" : "scale(1)",
-        filter: hovered ? "grayscale(0%)" : "grayscale(30%)",
-        transition: "transform 0.5s ease, filter 0.5s ease",
+        transition: "transform 0.5s ease",
       }} />
 
       {artist.sponsored && (
         <div style={{ position: "absolute", top: 10, left: 10 }}><SponsoredTag /></div>
       )}
-
-      <button onClick={onFollow} style={{
-        position: "absolute", top: 10, right: 10,
-        width: 28, height: 28, borderRadius: "50%",
-        background: followed ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.55)",
-        border: `1px solid ${followed ? "rgba(239,68,68,0.6)" : "rgba(255,255,255,0.15)"}`,
-        backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-      }}>
-        <Heart size={11} strokeWidth={2.5} fill={followed ? "#fff" : "none"} style={{ color: "#fff" }} />
-      </button>
 
       {eventCount > 0 && (
         <div title={`${eventCount} upcoming event${eventCount !== 1 ? "s" : ""}`} style={{

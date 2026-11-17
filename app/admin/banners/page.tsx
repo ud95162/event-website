@@ -106,11 +106,11 @@ function BannerCard({ banner, index, events, onUpdate, onDelete }: {
       <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
         <div>
           <label style={labelStyle}>Title</label>
-          <input style={inputStyle} value={title} onChange={e => setTitle(e.target.value)} onBlur={saveText} placeholder="Banner headline" />
+          <textarea style={{ ...inputStyle, height: 56, resize: "vertical" }} value={title} onChange={e => setTitle(e.target.value)} onBlur={saveText} placeholder="Banner headline (press Enter to start a new line)" />
         </div>
         <div>
           <label style={labelStyle}>Description</label>
-          <textarea style={{ ...inputStyle, height: 64, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} onBlur={saveText} placeholder="Short description shown on the banner" />
+          <textarea style={{ ...inputStyle, height: 64, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} onBlur={saveText} placeholder="Short description shown on the banner (press Enter to start a new line)" />
         </div>
         <div>
           <label style={labelStyle}>Explore Event <span style={{ color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>(date &amp; venue come from it)</span></label>
@@ -209,11 +209,11 @@ export default function BannersAdminPage() {
           />
           <div style={{ marginTop: 16 }}>
             <label style={labelStyle}>Title</label>
-            <input style={inputStyle} value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Banner headline" />
+            <textarea style={{ ...inputStyle, height: 56, resize: "vertical" }} value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Banner headline (press Enter to start a new line)" />
           </div>
           <div style={{ marginTop: 16 }}>
             <label style={labelStyle}>Description</label>
-            <textarea style={{ ...inputStyle, height: 70, resize: "vertical" }} value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Short description shown on the banner" />
+            <textarea style={{ ...inputStyle, height: 70, resize: "vertical" }} value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Short description shown on the banner (press Enter to start a new line)" />
           </div>
           <div style={{ marginTop: 16 }}>
             <label style={labelStyle}>Explore Event <span style={{ color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>(the button opens this event · date &amp; venue come from it)</span></label>

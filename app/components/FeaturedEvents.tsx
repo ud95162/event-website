@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
+import { useAutoRoll } from "../lib/useAutoRoll";
 import { thumb } from "../lib/images";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Heart, MapPin } from "lucide-react";
-import EventShare from "./EventShare";
+import { ArrowRight, MapPin } from "lucide-react";
 import SponsoredTag from "./SponsoredTag";
 import { useUserLocation, haversineKm, formatDistance } from "../context/LocationContext";
 import { useAdminData } from "../context/AdminDataContext";
@@ -59,13 +59,13 @@ export default function FeaturedEvents() {
     return featured.length ? featured : upcoming(allEvents).slice(0, 8);
   }, [allEvents]);
 
-  const [liked,      setLiked]      = useState<Set<number>>(new Set());
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
-  const toggleLike = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLiked(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
-  };
+  // Cards drift left to right on load (pauses on hover / touch / arrow clicks).
+  const reps = useAutoRoll(scrollRef, events.length * (CARD_W + 20), events.length);
+  const rolling = reps > 0;
+  const group = rolling ? Array.from({ length: reps }, () => events).flat() : events;
+  const cards = rolling ? [...group, ...group, ...group] : events;
 
 
   // Each arrow click scrolls the row by about two cards.
@@ -109,7 +109,7 @@ export default function FeaturedEvents() {
           <div
             ref={scrollRef}
             className="fe-row flex overflow-x-auto"
-            style={{ maskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
+            style={{ maskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: rolling ? "none" : "x mandatory" }}
           >
             {/* Skeleton placeholders while data is loading (no cached data yet) */}
             {mounted && loading && events.length === 0 && [...Array(5)].map((_, i) => (
@@ -119,11 +119,11 @@ export default function FeaturedEvents() {
             ))}
             <style>{`@keyframes fe-skel { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
 
-            {mounted && events.map(card => {
+            {mounted && cards.map((card, idx) => {
               const hovered = hoveredCard === card.id;
               return (
                 <div
-                  key={card.id}
+                  key={`${card.id}-${idx}`}
                   onClick={() => router.push(`/events/${eventSlug(card)}`)}
                   onMouseEnter={() => setHoveredCard(card.id)}
                   onMouseLeave={() => setHoveredCard(null)}
@@ -157,21 +157,6 @@ export default function FeaturedEvents() {
                         </span>
                       </div>
                     )}
-                    {/* Heart + Share */}
-                    <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
-                      <button
-                        onClick={(e) => toggleLike(card.id, e)}
-                        className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
-                        style={{
-                          background: liked.has(card.id) ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.45)",
-                          border: liked.has(card.id) ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.15)",
-                          backdropFilter: "blur(6px)",
-                        }}
-                      >
-                        <Heart size={11} strokeWidth={2.5} style={{ color: liked.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }} fill={liked.has(card.id) ? "#fff" : "none"} />
-                      </button>
-                      <EventShare event={card} size={28} iconSize={11} />
-                    </div>
                   </div>
 
                   {/* Info */}

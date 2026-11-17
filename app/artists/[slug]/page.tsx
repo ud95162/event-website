@@ -6,7 +6,7 @@ import { withAlpha } from "../../lib/genres";
 import { thumb } from "../../lib/images";
 import { useState, useEffect } from "react";
 import {
-  Heart, ChevronLeft, MapPin, Calendar, MicVocal, ArrowRight,
+  ChevronLeft, MapPin, Calendar, MicVocal, ArrowRight,
   Star, Mail, Phone,
 } from "lucide-react";
 
@@ -132,7 +132,6 @@ export default function ArtistDetailPage() {
   const artist  = artists.find(a => artistSlug(a) === slug) ?? null;
   const { userLocation } = useUserLocation();
 
-  const [followed, setFollowed] = useState(false);
   // "now" is read after mount so server and client render the same markup.
   const [nowMs, setNowMs] = useState(0);
   useEffect(() => { setNowMs(Date.now()); }, []);
@@ -320,20 +319,6 @@ export default function ArtistDetailPage() {
               >
                 {artist.role}
               </span>
-              <button
-                onClick={() => setFollowed(f => !f)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all duration-200"
-                style={{
-                  background: followed ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.55)",
-                  border: followed ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.2)",
-                  color: "#fff",
-                  backdropFilter: "blur(10px)",
-                  boxShadow: followed ? "0 0 20px rgba(239,68,68,0.3)" : "none",
-                }}
-              >
-                <Heart size={12} strokeWidth={2.5} fill={followed ? "#fff" : "none"} />
-                {followed ? "Following" : "Follow Artist"}
-              </button>
             </div>
 
             {/* Bottom info — profile photo avatar beside the name */}
@@ -651,22 +636,6 @@ export default function ArtistDetailPage() {
                     </p>
                   </div>
 
-                  <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-                  <div>
-                    <p className="text-white/30 text-[8px] tracking-[0.25em] uppercase mb-1">Follow for Updates</p>
-                    <button
-                      onClick={() => setFollowed(f => !f)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-200"
-                      style={{
-                        background: followed ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.1)",
-                        border: followed ? "1px solid rgba(239,68,68,0.35)" : "1px solid rgba(255,255,255,0.3)",
-                        color: followed ? "#f87171" : "#ffffff",
-                      }}
-                    >
-                      <Heart size={11} strokeWidth={2.5} fill={followed ? "currentColor" : "none"} />
-                      {followed ? "Following" : "Follow Artist"}
-                    </button>
-                  </div>
                 </div>
               </div>
 

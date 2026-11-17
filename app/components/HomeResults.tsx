@@ -34,8 +34,6 @@ export default function HomeResults({ params }: { params: string }) {
 
   const [events, setEvents] = useState<Event[] | null>(null);
   const [artists, setArtists] = useState<Artist[] | null>(artistsCache);
-  const [liked, setLiked] = useState<Set<number>>(new Set());
-  const [followed, setFollowed] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!wantEvents) { setEvents([]); return; }
@@ -103,9 +101,7 @@ export default function HomeResults({ params }: { params: string }) {
           <h2 style={{ ...h2, marginBottom: 16 }}>Events <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>({eventList.length})</span></h2>
           <div style={grid}>
             {eventList.map(ev => (
-              <EventCard key={ev.id} event={ev} liked={liked.has(ev.id)} shared={false}
-                onLike={e => { e.stopPropagation(); setLiked(prev => { const s = new Set(prev); s.has(ev.id) ? s.delete(ev.id) : s.add(ev.id); return s; }); }}
-                onShare={() => {}} />
+              <EventCard key={ev.id} event={ev} />
             ))}
           </div>
         </section>
@@ -116,8 +112,7 @@ export default function HomeResults({ params }: { params: string }) {
           <h2 style={{ ...h2, marginBottom: 16 }}>Talent <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>({matchedArtists.length})</span></h2>
           <div style={grid}>
             {matchedArtists.map(a => (
-              <ArtistCard key={a.id} artist={a} followed={followed.has(a.id)}
-                onFollow={e => { e.stopPropagation(); setFollowed(prev => { const s = new Set(prev); s.has(a.id) ? s.delete(a.id) : s.add(a.id); return s; }); }} />
+              <ArtistCard key={a.id} artist={a} />
             ))}
           </div>
         </section>

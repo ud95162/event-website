@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { thumb } from "../lib/images";
-import { Star, Quote } from "lucide-react";
+import { Star } from "lucide-react";
 import { useAdminData, Review } from "../context/AdminDataContext";
 
 /* ── Single review card ───────────────────────────────────────────────── */
@@ -34,7 +34,6 @@ function ReviewCard({ review }: { review: Review }) {
             </div>
           </div>
         </div>
-        <Quote size={26} style={{ color: "rgba(255,255,255,0.12)", flexShrink: 0 }} fill="currentColor" />
       </div>
       <p
         className="text-white/60 text-sm leading-relaxed"

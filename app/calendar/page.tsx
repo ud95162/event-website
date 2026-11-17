@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { thumb } from "../lib/images";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2, Search, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Ticket, ArrowRight, Music2, Search, Sparkles, Tags } from "lucide-react";
 import Navbar from "../components/Navbar";
 import ParticleField from "../components/ParticleField";
 import { Event } from "../data/events";
@@ -18,14 +18,57 @@ const MONTHS = [
   "July","August","September","October","November","December",
 ];
 
+/* Shown over a day with no events — on hover, or on tap for touch screens. */
+function NoEventsNote({ show }: { show: boolean }) {
+  return (
+    <div
+      aria-hidden={!show}
+      style={{
+        position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 8, textAlign: "center", pointerEvents: "none", zIndex: 3,
+        background: "rgba(10,10,12,0.78)", backdropFilter: "blur(2px)",
+        opacity: show ? 1 : 0, transition: "opacity 0.25s ease",
+      }}
+    >
+      <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.35, color: "rgba(255,255,255,0.85)" }}>
+        No events listed on this day
+      </span>
+    </div>
+  );
+}
+
+/* A past day with no events: a dimmed cell that still shows the note on hover / tap. */
+function PastEmptyDay({ date }: { date: Date }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      onClick={() => { setShow(true); setTimeout(() => setShow(false), 2500); }}
+      style={{
+        aspectRatio: "1/1", borderRadius: "0.75rem", border: "1px solid rgba(192,192,192,0.14)", background: "rgb(22,22,26)",
+        display: "flex", alignItems: "flex-start", padding: "8px", position: "relative", overflow: "hidden",
+      }}
+    >
+      <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.22)" }}>{date.getDate()}</span>
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage: "repeating-linear-gradient(135deg, rgba(100,100,110,0.06) 0px, rgba(100,100,110,0.06) 1px, transparent 1px, transparent 8px)",
+      }} />
+      <NoEventsNote show={show} />
+    </div>
+  );
+}
+
 /* ── Day card: a single event gets one clean cover; a day with several events is drawn
       as a mosaic of clickable blocks (picture + title each), with "+N more" past four ───── */
 function DayCard({
-  date, dayEvents, isToday: todayCell, onSelect,
+  date, dayEvents, isToday: todayCell, flash = false, onSelect,
 }: {
   date: Date;
   dayEvents: Event[];
   isToday: boolean;
+  flash?: boolean;   // the TODAY button was just clicked: make this cell stand out
   onSelect: (ev: Event) => void;
 }) {
   const n = dayEvents.length;
@@ -53,10 +96,12 @@ function DayCard({
     return { top, left };
   };
 
-  const onCellEnter = () => { if (!multi && hasEvents) { const p = place(240, 280); if (p) { setPreview(p); setPreviewEv(cover); } } };
-  const onCellLeave = () => { setPreview(null); setPreviewEv(null); };
+  const [emptyNote, setEmptyNote] = useState(false);   // "No events listed on this day"
+  const onCellEnter = () => { if (!hasEvents) setEmptyNote(true); if (!multi && hasEvents) { const p = place(240, 280); if (p) { setPreview(p); setPreviewEv(cover); } } };
+  const onCellLeave = () => { setPreview(null); setPreviewEv(null); setEmptyNote(false); };
   const onCellClick = () => {
     if (hasEvents && !multi) onSelect(cover);          // multi-event days are clicked block by block
+    if (!hasEvents) { setEmptyNote(true); setTimeout(() => setEmptyNote(false), 2500); }   // tap on touch screens
   };
   const openList = () => { const p = place(268, 340); if (p) { setListPos(p); setListOpen(true); } };
 
@@ -93,7 +138,10 @@ function DayCard({
   }, [listOpen]);
 
   return (
-    <div style={{ aspectRatio: "1/1", position: "relative", borderRadius: "0.75rem", overflow: "hidden" }}>
+    <div
+      data-today-cell={todayCell ? "" : undefined}
+      style={{ aspectRatio: "1/1", position: "relative", borderRadius: "0.75rem", overflow: flash ? "visible" : "hidden", zIndex: flash ? 5 : undefined }}
+    >
       <div
         ref={cellRef}
         onClick={onCellClick}
@@ -106,8 +154,11 @@ function DayCard({
           boxShadow: todayCell ? "0 0 16px rgba(192,192,192,0.2)" : "none",
           cursor: hasEvents ? "pointer" : "default",
           zIndex: 1,
+          ...(flash ? { animation: "today-glow 1.8s cubic-bezier(0.16,1,0.3,1) 1" } : null),
         }}
       >
+        {!hasEvents && <NoEventsNote show={emptyNote} />}
+
         {/* Several events on this day: a mosaic of clickable blocks, each with its own picture + title */}
         {multi && (
           <div style={{ position: "absolute", inset: 0, display: "grid", gap: 2, background: "#0a0a0a", ...mosaic }}>
@@ -276,6 +327,14 @@ function parseEventDate(dateStr: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/* The Event Type filter offers only these types (matched to an event's genres, ignoring case). */
+const EVENT_TYPE_OPTIONS = [
+  "English", "Sinhala", "Tamil", "Hindi", "Acoustic", "Electronic", "Soul", "Live Band",
+  "Fitness", "Stand-up Comedy", "Open Mic", "Food & Dining", "Fashion & Beauty",
+  "Art & Exhibitions", "Wildlife & Nature", "Workshops", "Networking", "Classes & Skills",
+  "Karaoke", "Trivia", "Game Night",
+];
+
 /* ── Filter Dropdown ────────────────────────────────────────────── */
 function FilterDropdown({ label, icon, options, selected, onToggle, multi = true }: {
   label: string;
@@ -426,8 +485,8 @@ export default function CalendarPage() {
   const today  = new Date();
 
   // Real filter options from the data (genres/organizers/artists), not sample values.
-  const { genres, organizers, artists } = useAdminData();
-  const genreOptions     = genres;
+  const { organizers, artists } = useAdminData();
+  const genreOptions     = EVENT_TYPE_OPTIONS;
   const organizerOptions = useMemo(() => Array.from(new Set(organizers.map(o => o.name).filter(Boolean))).sort(), [organizers]);
   const artistOptions    = useMemo(() => Array.from(new Set(artists.map(a => a.stageName || a.name).filter(Boolean))).sort(), [artists]);
 
@@ -508,6 +567,19 @@ export default function CalendarPage() {
   const getEvents = (date: Date) =>
     eventsByDate[`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`] ?? [];
 
+  // TODAY button: jump to the current month, scroll today's date into view and make it stand out for a moment.
+  const [flashToday, setFlashToday] = useState(false);
+  const goToday = () => {
+    setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    setFlashToday(true);
+  };
+  useEffect(() => {
+    if (!flashToday) return;
+    document.querySelector("[data-today-cell]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const t = setTimeout(() => setFlashToday(false), 1900);
+    return () => clearTimeout(t);
+  }, [flashToday]);
+
   const isToday = (date: Date) =>
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
@@ -568,7 +640,7 @@ export default function CalendarPage() {
           <div style={{ flex: 1 }}>
             <FilterDropdown
               label="Event Type"
-              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>}
+              icon={<Tags size={14} />}
               options={genreOptions}
               selected={activeGenres}
               onToggle={val => toggle(activeGenres, setActiveGenres, val)}
@@ -642,7 +714,7 @@ export default function CalendarPage() {
                 <ChevronLeft size={16} className="text-white group-hover:text-black transition-colors" />
               </button>
               <button
-                onClick={() => setViewDate(new Date(today.getFullYear(), today.getMonth(), 1))}
+                onClick={goToday}
                 className="px-5 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase transition-all hover:brightness-110"
                 style={{ border: "1px solid rgba(232,220,192,0.5)", color: "#E8DCC0", background: "rgba(232,220,192,0.08)" }}
               >
@@ -714,6 +786,8 @@ export default function CalendarPage() {
             ))}
           </div>
 
+          <style>{`@keyframes today-glow { 0% { box-shadow: 0 0 16px rgba(192,192,192,0.2); } 30% { box-shadow: 0 0 0 1px rgba(232,220,192,0.85), 0 0 36px rgba(232,220,192,0.45); } 100% { box-shadow: 0 0 16px rgba(192,192,192,0.2); } }`}</style>
+
           {/* ── Calendar grid ───────────────────────────────────── */}
           <div className="grid grid-cols-7 gap-2">
             {days.map((date, i) => {
@@ -722,33 +796,14 @@ export default function CalendarPage() {
               const past = isPast(date);
               // Past days with no events render as a subtle dimmed cell;
               // past days WITH events still show clickable event tiles.
-              if (past && dayEvents.length === 0) return (
-                <div key={`past-${i}`} style={{
-                  aspectRatio: "1/1",
-                  borderRadius: "0.75rem",
-                  border: "1px solid rgba(192,192,192,0.14)",
-                  background: "rgb(22,22,26)",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  padding: "8px",
-                  position: "relative",
-                  overflow: "hidden",
-                }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.22)" }}>
-                    {date.getDate()}
-                  </span>
-                  <div style={{
-                    position: "absolute", inset: 0, pointerEvents: "none",
-                    backgroundImage: "repeating-linear-gradient(135deg, rgba(100,100,110,0.06) 0px, rgba(100,100,110,0.06) 1px, transparent 1px, transparent 8px)",
-                  }} />
-                </div>
-              );
+              if (past && dayEvents.length === 0) return <PastEmptyDay key={`past-${i}`} date={date} />;
               return (
                 <div key={dayKey(date)} style={{ opacity: past ? 0.72 : 1 }}>
                   <DayCard
                     date={date}
                     dayEvents={dayEvents}
                     isToday={isToday(date)}
+                    flash={flashToday && isToday(date)}
                     onSelect={setSelectedEvent}
                   />
                 </div>

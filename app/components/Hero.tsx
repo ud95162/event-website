@@ -1,14 +1,32 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronDown, Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
 import { eventSlug } from "../lib/slug";
 import SponsoredTag from "./SponsoredTag";
 
 // Split an event title into up to two balanced lines for the hero headline.
+// Letter-by-letter animation, but letters are grouped per word so a line only ever wraps BETWEEN words.
+const renderWords = (text: string, letterStyle: (k: number) => CSSProperties) => {
+  let k = 0;
+  return text.split(" ").map((word, w, arr) => (
+    <Fragment key={w}>
+      <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+        {word.split("").map((ch) => (
+          <span key={k} style={{ display: "inline-block", ...letterStyle(k++) }}>{ch}</span>
+        ))}
+      </span>
+      {w < arr.length - 1 && (k++, " ")}
+    </Fragment>
+  ));
+};
+
 const splitTitle = (t: string): string[] => {
+  // An admin-entered line break wins over the automatic half-and-half split.
+  const manual = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (manual.length > 1) return manual;
   const words = t.trim().split(/\s+/);
   if (words.length <= 1) return [t];
   const mid = Math.ceil(words.length / 2);
@@ -306,20 +324,11 @@ export default function Hero() {
                   <h1 className="text-white font-black text-4xl lg:text-[3.1rem] leading-none uppercase mb-4 max-w-lg tracking-tight">
                     {p.title.map((line, j) => (
                       <span key={`${i}-${j}-${bigIdx}`} className="block overflow-hidden">
-                        {line.split("").map((char, k) => (
-                          <span
-                            key={k}
-                            style={{
-                              display:   "inline-block",
-                              whiteSpace: char === " " ? "pre" : "normal",
-                              animation:  isBig
-                                ? `letter-up 0.5s cubic-bezier(0.22,1,0.36,1) ${ANIM_MS / 1000 * 0.5 + 0.1 + j * 0.18 + k * 0.04}s both`
-                                : "none",
-                            }}
-                          >
-                            {char === " " ? " " : char}
-                          </span>
-                        ))}
+                        {renderWords(line, (k) => ({
+                          animation: isBig
+                            ? `letter-up 0.5s cubic-bezier(0.22,1,0.36,1) ${ANIM_MS / 1000 * 0.5 + 0.1 + j * 0.18 + k * 0.04}s both`
+                            : "none",
+                        }))}
                       </span>
                     ))}
                   </h1>
@@ -329,20 +338,15 @@ export default function Hero() {
                     key={`desc-${i}-${bigIdx}`}
                     className="text-base font-semibold mb-7 max-w-sm leading-relaxed"
                   >
-                    {p.desc.split("").map((char, k) => (
-                      <span
-                        key={k}
-                        style={{
-                          display: "inline-block",
-                          whiteSpace: char === " " ? "pre" : "normal",
+                    {p.desc.split(/\r?\n/).map((line, li) => (
+                      <span key={li} className="block">
+                        {renderWords(line, (k) => ({
                           color: "rgba(255,255,255,0.55)",
                           opacity: 0.3,
                           animation: isBig
-                            ? `letter-bold 0.6s cubic-bezier(0.22,1,0.36,1) ${ANIM_MS / 1000 * 0.5 + 0.2 + p.title.length * 0.18 + k * 0.02}s forwards`
+                            ? `letter-bold 0.6s cubic-bezier(0.22,1,0.36,1) ${ANIM_MS / 1000 * 0.5 + 0.2 + p.title.length * 0.18 + (k + li * 40) * 0.02}s forwards`
                             : "none",
-                        }}
-                      >
-                        {char === " " ? " " : char}
+                        }))}
                       </span>
                     ))}
                   </p>
@@ -370,7 +374,7 @@ export default function Hero() {
           })}
 
           {/* ── Dots ──────────────────────────────────────────────────── */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-1.5" style={{ zIndex: 20 }}>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5" style={{ zIndex: 20 }}>
             {panels.map((_, i) => (
               <button
                 key={i}
@@ -407,12 +411,6 @@ export default function Hero() {
               </button>
             </>
           )}
-
-          {/* ── Scroll hint ───────────────────────────────────────────── */}
-          <div className="absolute bottom-4 flex items-center gap-1.5 pointer-events-none" style={{ right: "16px", zIndex: 20 }}>
-            <p className="text-white/30 text-[11px] tracking-[0.3em] uppercase">Scroll Down To Continue</p>
-            <ChevronDown size={13} className="text-white/30" />
-          </div>
 
         </div>
       </div>
