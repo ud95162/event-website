@@ -5,8 +5,7 @@ import { genreColor, genreChipStyle } from "../lib/genres";
 import { thumb } from "../lib/images";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { MapPin, Calendar, Ticket, Heart, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
-import EventShare from "../components/EventShare";
+import { MapPin, Calendar, Ticket, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import SponsoredTag from "../components/SponsoredTag";
 import EventCard from "../components/EventCard";
 import { dateRangeLabel } from "../lib/dateRange";
@@ -36,12 +35,9 @@ const getCache = <T,>(key: string): T | undefined => eventsCache.get(key) as T |
 const setCache = (key: string, val: unknown) => { eventsCache.set(key, val); };
 
 /* ── Horizontal scroll row ─────────────────────────────────────── */
-function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, onShare, direction = "left" }: {
+function EventRow({ title, subtitle, events: rowEvents, direction = "left" }: {
   title: string; subtitle?: string;
   events: Event[];
-  liked: Set<number>; shared: Set<number>;
-  onLike: (id: number, e: React.MouseEvent) => void;
-  onShare: (id: number, title: string, e: React.MouseEvent) => void;
   direction?: "left" | "right";
 }) {
   const trackRef  = useRef<HTMLDivElement>(null);
@@ -110,12 +106,7 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, paddingBottom: 6 }}>
           {rowEvents.map(ev => (
-            <EventCard
-              key={ev.id} event={ev}
-              liked={liked.has(ev.id)} shared={shared.has(ev.id)}
-              onLike={e => onLike(ev.id, e)}
-              onShare={e => onShare(ev.id, ev.title, e)}
-            />
+            <EventCard key={ev.id} event={ev} />
           ))}
         </div>
       </div>
@@ -144,12 +135,7 @@ function EventRow({ title, subtitle, events: rowEvents, liked, shared, onLike, o
 
         <div ref={trackRef} style={{ display: "flex", gap: 14, width: "max-content", willChange: "transform", paddingBottom: 6 }}>
           {items.map((ev, i) => (
-            <EventCard
-              key={`${ev.id}-${i}`} event={ev}
-              liked={liked.has(ev.id)} shared={shared.has(ev.id)}
-              onLike={e => onLike(ev.id, e)}
-              onShare={e => onShare(ev.id, ev.title, e)}
-            />
+            <EventCard key={`${ev.id}-${i}`} event={ev} />
           ))}
         </div>
       </div>
@@ -181,15 +167,11 @@ function SkeletonRow() {
 }
 
 /* ── "All Events" — paginated grid (loads 6 at a time) ────────────── */
-function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLike, onShare, emptyMessage, fallback }: {
+function CategoryRow({ title, subtitle, endpoint, direction, emptyMessage, fallback }: {
   title: string;
   subtitle: string;
   endpoint: string;
   direction: "left" | "right";
-  liked: Set<number>;
-  shared: Set<number>;
-  onLike: (id: number, e: React.MouseEvent) => void;
-  onShare: (id: number, title: string, e: React.MouseEvent) => void;
   emptyMessage?: string;   // shown instead of hiding the row when it has no events
   // If this row is empty, load this instead (e.g. the nearest upcoming events anywhere).
   fallback?: { endpoint: string; title: string; subtitle: string };
@@ -232,7 +214,7 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
     if (fallback && fallbackData && fallbackData.length > 0) {
       return (
         <EventRow title={fallback.title} subtitle={fallback.subtitle} events={fallbackData}
-          liked={liked} shared={shared} onLike={onLike} onShare={onShare} direction={direction} />
+          direction={direction} />
       );
     }
     return emptyMessage ? (
@@ -248,7 +230,7 @@ function CategoryRow({ title, subtitle, endpoint, direction, liked, shared, onLi
     <SkeletonRow />
   ) : (
     <EventRow title={title} subtitle={subtitle} events={data}
-      liked={liked} shared={shared} onLike={onLike} onShare={onShare} direction={direction} />
+      direction={direction} />
   );
 }
 
@@ -260,8 +242,6 @@ function EventsContent() {
   const searchParams = useSearchParams();
   const { userLocation, setUserLocation } = useUserLocation();
 
-  const [liked,  setLiked]  = useState<Set<number>>(new Set());
-  const [shared, setShared] = useState<Set<number>>(new Set());
 
   const genreParam    = searchParams.get("genre")    ?? "";
   const dateParam     = searchParams.get("date")     ?? "";
@@ -274,13 +254,6 @@ function EventsContent() {
   // themselves lazily via <CategoryRow>, so the page never downloads the whole table.)
   const [results, setResults] = useState<Event[]>([]);
   const [resultsLoading, setResultsLoading] = useState(false);
-
-  const toggleLike = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLiked(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
-  };
-
-  const handleShare = (_id: number, _title: string, _e: React.MouseEvent) => {};
 
   // Filtered view: fetch server-side search results for the active filters.
   useEffect(() => {
@@ -331,8 +304,7 @@ function EventsContent() {
         )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
           {results.map(ev => (
-            <EventCard key={ev.id} event={ev} liked={liked.has(ev.id)} shared={shared.has(ev.id)}
-              onLike={e => toggleLike(ev.id, e)} onShare={e => handleShare(ev.id, ev.title, e)} />
+            <EventCard key={ev.id} event={ev} />
           ))}
         </div>
       </div>
@@ -382,10 +354,6 @@ function EventsContent() {
           subtitle={def.subtitle}
           endpoint={buildUrl(def)}
           direction={i % 2 === 0 ? "left" : "right"}
-          liked={liked}
-          shared={shared}
-          onLike={toggleLike}
-          onShare={handleShare}
         />
         </div>
       ))}

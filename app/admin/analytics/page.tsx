@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Eye, MousePointerClick, TrendingUp, CalendarDays, Percent, Building2, Info, Music2, X } from "lucide-react";
+import { Eye, MousePointerClick, TrendingUp, CalendarDays, Percent, Building2, Info, Music2, X, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useAdminData } from "../../context/AdminDataContext";
 
@@ -39,12 +39,17 @@ export default function AdminAnalytics() {
   const { user } = useAuth();
   const { events, organizers, artists, loading } = useAdminData();
   const [data, setData] = useState<Analytics | null>(null);
-  const [orgFilter, setOrgFilter] = useState<string>("all");
-  const [eventFilter, setEventFilter] = useState<string>("all");     // an event id, or "all"
-  const [artistFilter, setArtistFilter] = useState<string>("all");   // an artist's display name, or "all"
+  // One search box + one type filter (Events / Organizers / Talent). They work independently:
+  // search alone looks across all three; the type alone shows that kind of report; together the search is limited to that type.
+  const [typeFilter, setTypeFilter] = useState<"all" | "events" | "organizers" | "talent">("all");
+  const [search, setSearch] = useState("");
+  const [item, setItem] = useState("all");   // a specific event id / organizer / talent picked from the second dropdown
+  const changeType = (t: typeof typeFilter) => { setTypeFilter(t); setItem("all"); };
+  const q = search.trim().toLowerCase();
+  const has = (v?: string | null) => !!v && v.toLowerCase().includes(q);
 
   const isOrganizer = user?.role === "organizer";
-  const scopedOrgName = isOrganizer ? user?.orgName : orgFilter === "all" ? null : orgFilter;
+  const myOrg = user?.orgName ?? "";
 
   useEffect(() => {
     fetch("/api/analytics").then(r => r.json()).then(setData).catch(() => {});
@@ -63,45 +68,64 @@ export default function AdminAnalytics() {
     return m;
   }, [data]);
 
-  // Events belonging to the scoped organizer (or all, for admin viewing "all").
-  const scopedEvents = useMemo(() => {
-    const belongs = (ev: typeof events[number]) =>
-      !scopedOrgName || ev.organizer === scopedOrgName || (ev.coOrganizers ?? []).includes(scopedOrgName);
-    // Admin filters, combined: a chosen event, and/or events an artist performs in.
-    const picked = (ev: typeof events[number]) =>
-      isOrganizer || ((eventFilter === "all" || String(ev.id) === eventFilter) &&
-        (artistFilter === "all" || (ev.lineup ?? []).some(n => n === artistFilter)));
+  // An organizer signed in only ever sees their own events; admins see everything the search / type lets through.
+  const scopedEvents = (() => {
+    const hit = (v?: string | null) => !!v && v.toLowerCase().includes(q);
+    // Does an event match the search, within the chosen type?
+    const matchEvent = (ev: typeof events[number]) => {
+      if (!q) return true;
+      const byTitle = hit(ev.title);
+      const byOrg = hit(ev.organizer) || (ev.coOrganizers ?? []).some(n => hit(n));
+      const byTalent = (ev.lineup ?? []).some(n => hit(n));
+      switch (typeFilter) {
+        case "events": return byTitle;
+        case "organizers": return byOrg;
+        case "talent": return byTalent;
+        default: return byTitle || byOrg || byTalent;
+      }
+    };
+    // The specific item picked from the dropdown (if any), within the chosen type.
+    const picked = (ev: typeof events[number]) => {
+      if (item === "all") return true;
+      if (typeFilter === "events") return String(ev.id) === item;
+      if (typeFilter === "organizers") return ev.organizer === item || (ev.coOrganizers ?? []).includes(item);
+      if (typeFilter === "talent") return (ev.lineup ?? []).includes(item);
+      return true;
+    };
+    const own = (ev: typeof events[number]) =>
+      ev.organizer === myOrg || (ev.coOrganizers ?? []).includes(myOrg);
     return events
-      .filter(ev => belongs(ev) && picked(ev))
+      .filter(ev => (isOrganizer ? own(ev) : matchEvent(ev) && picked(ev)))
       .map(ev => {
         const c = eventCounts.get(ev.id) ?? { views: 0, clicks: 0 };
         return { ...ev, views: c.views, clicks: c.clicks };
       })
-      .sort((a, b) => b.views - a.views || b.clicks - a.clicks);
-  }, [events, eventCounts, scopedOrgName, eventFilter, artistFilter, isOrganizer]);
+      .sort((x, y) => y.views - x.views || y.clicks - x.clicks);
+  })();
 
-  const totals = useMemo(() => {
-    const views = scopedEvents.reduce((s, e) => s + e.views, 0);
-    const clicks = scopedEvents.reduce((s, e) => s + e.clicks, 0);
-    const profileViews = scopedOrgName ? (orgCounts.get(scopedOrgName)?.views ?? 0) : null;
-    return { views, clicks, profileViews };
-  }, [scopedEvents, orgCounts, scopedOrgName]);
+  // When the search points at exactly one organizer, show that organizer's profile views too.
+  const orgSearchHits = organizers.filter(o => !!q && o.name.toLowerCase().includes(q));
+  const scopedOrgName: string | null = isOrganizer
+    ? (myOrg || null)
+    : typeFilter === "organizers" && item !== "all" ? item
+    : (typeFilter === "all" || typeFilter === "organizers") && orgSearchHits.length === 1 ? orgSearchHits[0].name : null;
 
-  const orgOptions = useMemo(
-    () => [...organizers].map(o => o.name).sort((a, b) => a.localeCompare(b)),
-    [organizers]
-  );
+  const totals = {
+    views: scopedEvents.reduce((sum, e) => sum + e.views, 0),
+    clicks: scopedEvents.reduce((sum, e) => sum + e.clicks, 0),
+    profileViews: scopedOrgName ? (orgCounts.get(scopedOrgName)?.views ?? 0) : null,
+  };
 
-  const eventOptions = useMemo(
-    () => [...events].sort((a, b) => (a.title || "").localeCompare(b.title || "")).map(e => ({ id: String(e.id), title: e.title || "Untitled" })),
-    [events]
-  );
-  const artistOptions = useMemo(
-    () => Array.from(new Set(artists.map(a => a.stageName || a.name).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [artists]
-  );
-  const anyFilter = orgFilter !== "all" || eventFilter !== "all" || artistFilter !== "all";
-  const clearFilters = () => { setOrgFilter("all"); setEventFilter("all"); setArtistFilter("all"); };
+  const anyFilter = typeFilter !== "all" || !!q;
+  const clearFilters = () => { setTypeFilter("all"); setItem("all"); setSearch(""); };
+
+  // Items offered in the second dropdown, for the chosen type.
+  const itemOptions = useMemo(() => {
+    if (typeFilter === "events") return [...events].sort((a, b) => (a.title || "").localeCompare(b.title || "")).map(e => ({ value: String(e.id), label: e.title || "Untitled" }));
+    if (typeFilter === "organizers") return organizers.map(o => o.name).filter(Boolean).sort((a, b) => a.localeCompare(b)).map(n => ({ value: n, label: n }));
+    if (typeFilter === "talent") return Array.from(new Set(artists.map(a => a.stageName || a.name).filter(Boolean))).sort((a, b) => a.localeCompare(b)).map(n => ({ value: n, label: n }));
+    return [];
+  }, [typeFilter, events, organizers, artists]);
 
   // Per-organizer rollup (admin overview): totals across every event they host.
   const orgRollup = useMemo(() => {
@@ -115,6 +139,25 @@ export default function AdminAnalytics() {
       .sort((a, b) => b.views - a.views || b.clicks - a.clicks);
   }, [organizers, events, eventCounts, orgCounts]);
 
+  // Per-talent rollup: totals across every event the artist performs in.
+  const talentRollup = useMemo(() => {
+    return artists
+      .map(a => {
+        const name = a.stageName || a.name;
+        const evs = events.filter(ev => (ev.lineup ?? []).includes(name));
+        const views = evs.reduce((sum, ev) => sum + (eventCounts.get(ev.id)?.views ?? 0), 0);
+        const clicks = evs.reduce((sum, ev) => sum + (eventCounts.get(ev.id)?.clicks ?? 0), 0);
+        return { id: a.id, name, events: evs.length, views, clicks };
+      })
+      .filter(t => t.name)
+      .sort((a, b) => b.views - a.views || b.clicks - a.clicks || b.events - a.events);
+  }, [artists, events, eventCounts]);
+
+  const orgRows = orgRollup.filter(o => (!q || has(o.name)) && (typeFilter !== "organizers" || item === "all" || o.name === item));
+  const talentRows = talentRollup.filter(t => (!q || has(t.name)) && (typeFilter !== "talent" || item === "all" || t.name === item));
+  const showOrgTable = !isOrganizer && (typeFilter === "organizers" || (typeFilter === "all" && (!q || orgRows.length > 0)));
+  const showTalentTable = !isOrganizer && typeFilter === "talent";
+
   return (
     <div style={{ padding: 32 }}>
       {/* Header */}
@@ -127,34 +170,65 @@ export default function AdminAnalytics() {
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 8, maxWidth: 620 }}>
             {isOrganizer
               ? <>Page views and ticket-link clicks for events by <strong style={{ color: "#E8DCC0" }}>{user?.orgName}</strong> — measure how well your promotion is converting.</>
-              : "Page views and ticket-link clicks per event — filter by event, organizer or artist to measure promotion effectiveness."}
+              : "Page views and ticket-link clicks per event — search by event, organizer or talent to measure promotion effectiveness."}
           </p>
         </div>
 
-        {/* Admin-only filters: event, organizer, artist */}
+        {/* Admin-only: one search bar + one type filter (Events / Organizers / Talent) */}
         {!isOrganizer && (
           <div style={{ display: "flex", alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-            {([
-              { label: "Event", value: eventFilter, set: setEventFilter, all: "All events", width: 240, options: eventOptions.map(o => ({ value: o.id, label: o.title })) },
-              { label: "Organizer", value: orgFilter, set: setOrgFilter, all: "All organizers", width: 200, options: orgOptions.map(n => ({ value: n, label: n })) },
-              { label: "Artist", value: artistFilter, set: setArtistFilter, all: "All artists", width: 200, options: artistOptions.map(n => ({ value: n, label: n })) },
-            ]).map(f => (
-              <div key={f.label} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{f.label}</label>
-                <select
-                  value={f.value}
-                  onChange={e => f.set(e.target.value)}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Search</label>
+              <div style={{ position: "relative", width: 300, maxWidth: "100%" }}>
+                <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder={typeFilter === "events" ? "Search events…" : typeFilter === "organizers" ? "Search organizers…" : typeFilter === "talent" ? "Search talent…" : "Search events, organizers or talent…"}
                   style={{
-                    padding: "9px 14px", borderRadius: 9, width: f.width, maxWidth: "100%",
-                    background: "#0d0d12", border: `1px solid ${f.value !== "all" ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.12)"}`,
+                    width: "100%", padding: "9px 14px 9px 34px", borderRadius: 9,
+                    background: "#0d0d12", border: `1px solid ${q ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.12)"}`,
+                    color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit",
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Filter</label>
+              <select
+                value={typeFilter}
+                onChange={e => changeType(e.target.value as typeof typeFilter)}
+                style={{
+                  padding: "9px 14px", borderRadius: 9, width: 180, maxWidth: "100%",
+                  background: "#0d0d12", border: `1px solid ${typeFilter !== "all" ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.12)"}`,
+                  color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit", cursor: "pointer",
+                }}
+              >
+                <option value="all">All</option>
+                <option value="events">Events</option>
+                <option value="organizers">Organizers</option>
+                <option value="talent">Talent</option>
+              </select>
+            </div>
+            {typeFilter !== "all" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>
+                  {typeFilter === "events" ? "Event" : typeFilter === "organizers" ? "Organizer" : "Talent"}
+                </label>
+                <select
+                  value={item}
+                  onChange={e => setItem(e.target.value)}
+                  style={{
+                    padding: "9px 14px", borderRadius: 9, width: 240, maxWidth: "100%",
+                    background: "#0d0d12", border: `1px solid ${item !== "all" ? "rgba(232,220,192,0.5)" : "rgba(255,255,255,0.12)"}`,
                     color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit", cursor: "pointer",
                   }}
                 >
-                  <option value="all">{f.all}</option>
-                  {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <option value="all">{typeFilter === "events" ? "All events" : typeFilter === "organizers" ? "All organizers" : "All talent"}</option>
+                  {itemOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
-            ))}
+            )}
             {anyFilter && (
               <button
                 onClick={clearFilters}
@@ -195,7 +269,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Per-organizer rollup (admin overview) — the report to hand each organizer */}
-      {!isOrganizer && (
+      {showOrgTable && (
         <div style={{ ...card, overflow: "hidden", marginBottom: 16 }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#E8DCC0" }}><Building2 size={14} /></span>
@@ -212,14 +286,14 @@ export default function AdminAnalytics() {
                 </tr>
               </thead>
               <tbody>
-                {orgRollup.map((o, i) => {
-                  const active = orgFilter === o.name;
+                {orgRows.map((o, i) => {
+                  const active = typeFilter === "organizers" && item === o.name;
                   return (
                     <tr
                       key={o.id}
-                      onClick={() => setOrgFilter(active ? "all" : o.name)}
+                      onClick={() => { if (active) setItem("all"); else { setTypeFilter("organizers"); setItem(o.name); } }}
                       style={{
-                        borderBottom: i < orgRollup.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                        borderBottom: i < orgRows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                         cursor: "pointer",
                         background: active ? "rgba(232,220,192,0.08)" : "transparent",
                       }}
@@ -234,8 +308,51 @@ export default function AdminAnalytics() {
                     </tr>
                   );
                 })}
-                {orgRollup.length === 0 && (
-                  <tr><td colSpan={5} style={{ padding: "28px 20px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>No organizers yet.</td></tr>
+                {orgRows.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: "28px 20px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>{q ? "No organizers match this search." : "No organizers yet."}</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Per-talent rollup — totals across every event the artist performs in */}
+      {showTalentTable && (
+        <div style={{ ...card, overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "#E8DCC0" }}><Music2 size={14} /></span>
+            <h2 style={{ fontSize: 13, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em" }}>Talent — Reach Summary</h2>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>Click a row to see that talent&apos;s events</span>
+          </div>
+          <div style={{ overflowX: "auto", maxHeight: 420, overflowY: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 560 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  {["Talent", "Events", "Page Views", "Ticket Clicks", "CTR"].map((h, i) => (
+                    <th key={h} style={{ padding: "10px 20px", textAlign: i === 0 ? "left" : "right", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em", textTransform: "uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {talentRows.map((t, i) => {
+                  const active = item === t.name;
+                  return (
+                    <tr
+                      key={t.id}
+                      onClick={() => setItem(active ? "all" : t.name)}
+                      style={{ borderBottom: i < talentRows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: "pointer", background: active ? "rgba(232,220,192,0.08)" : "transparent" }}
+                    >
+                      <td style={{ padding: "12px 20px", color: active ? "#E8DCC0" : "#fff", fontWeight: 600 }}>{t.name}</td>
+                      <td style={{ padding: "12px 20px", textAlign: "right", color: "rgba(255,255,255,0.55)", fontVariantNumeric: "tabular-nums" }}>{t.events}</td>
+                      <td style={{ padding: "12px 20px", textAlign: "right", color: "rgba(255,255,255,0.85)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{t.views.toLocaleString()}</td>
+                      <td style={{ padding: "12px 20px", textAlign: "right", color: "#60a5fa", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{t.clicks.toLocaleString()}</td>
+                      <td style={{ padding: "12px 20px", textAlign: "right", color: "#E8DCC0", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{ctr(t.clicks, t.views).toFixed(1)}%</td>
+                    </tr>
+                  );
+                })}
+                {talentRows.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: "28px 20px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>{q ? "No talent match this search." : "No talent yet."}</td></tr>
                 )}
               </tbody>
             </table>
@@ -281,7 +398,7 @@ export default function AdminAnalytics() {
               ))}
               {!loading && scopedEvents.length === 0 && (
                 <tr><td colSpan={isOrganizer ? 4 : 5} style={{ padding: "28px 20px", textAlign: "center", color: "rgba(255,255,255,0.25)" }}>
-                  {isOrganizer ? "No events assigned to your organizer account yet." : "No events match this filter."}
+                  {isOrganizer ? "No events assigned to your organizer account yet." : "No events match this search."}
                 </td></tr>
               )}
               {loading && (

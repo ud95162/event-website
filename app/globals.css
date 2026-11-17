@@ -157,6 +157,13 @@ body {
   flex-shrink: 0;
 }
 
+/* Same height as the other home sections, but may grow on small screens where stacked content is taller */
+.snap-section.snap-grow {
+  height: auto !important;
+  min-height: calc(100dvh - var(--nav-h, 64px));
+  overflow: visible;
+}
+
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 

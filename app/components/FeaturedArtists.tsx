@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
+import { useAutoRoll } from "../lib/useAutoRoll";
 import { thumb } from "../lib/images";
 import SponsoredTag from "./SponsoredTag";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAdminData } from "../context/AdminDataContext";
 import { artistSlug } from "../lib/slug";
 
@@ -41,19 +42,19 @@ export default function FeaturedArtists() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Admin-selected featured artists; fall back to the first artists if none picked.
+  // Every admin-selected featured artist; fall back to the first few artists if none picked.
   const artists = useMemo(() => {
     const featured = allArtists.filter((a) => a.featured);
-    return (featured.length ? featured : allArtists).slice(0, 8);
+    return featured.length ? featured : allArtists.slice(0, 8);
   }, [allArtists]);
 
-  const [followed,    setFollowed]    = useState<Set<number>>(new Set());
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
-  const toggleFollow = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFollowed(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
-  };
+  // Cards drift left to right on load (pauses on hover / touch / arrow clicks).
+  const reps = useAutoRoll(scrollRef, artists.length * (CARD_W + 20), artists.length);
+  const rolling = reps > 0;
+  const group = rolling ? Array.from({ length: reps }, () => artists).flat() : artists;
+  const cards = rolling ? [...group, ...group, ...group] : artists;
 
   // Each arrow click scrolls the row by about two cards.
   const scrollByCards = (dir: 1 | -1) => {
@@ -109,7 +110,7 @@ export default function FeaturedArtists() {
           <div
             ref={scrollRef}
             className="fa-row flex overflow-x-auto"
-            style={{ maskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
+            style={{ maskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)", gap: 20, paddingLeft: 56, paddingRight: 56, paddingTop: 8, paddingBottom: 8, scrollbarWidth: "none", scrollSnapType: rolling ? "none" : "x mandatory" }}
           >
             {/* Skeleton placeholders while data is loading (no cached data yet) */}
             {mounted && loading && artists.length === 0 && [...Array(5)].map((_, i) => (
@@ -119,11 +120,11 @@ export default function FeaturedArtists() {
             ))}
             <style>{`@keyframes fa-skel { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
 
-            {mounted && artists.map(card => {
+            {mounted && cards.map((card, idx) => {
               const hovered = hoveredCard === card.id;
               return (
                 <div
-                  key={card.id}
+                  key={`${card.id}-${idx}`}
                   onClick={() => router.push(`/artists/${artistSlug(card)}`)}
                   onMouseEnter={() => setHoveredCard(card.id)}
                   onMouseLeave={() => setHoveredCard(null)}
@@ -149,8 +150,7 @@ export default function FeaturedArtists() {
                       className="w-full h-full object-cover object-top"
                       style={{
                         transform: hovered ? "scale(1.08)" : "scale(1)",
-                        filter: hovered ? "grayscale(0%)" : "grayscale(35%)",
-                        transition: "transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), filter 0.5s ease",
+                        transition: "transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94)",
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F1116] via-transparent to-transparent" />
@@ -158,22 +158,6 @@ export default function FeaturedArtists() {
                     {card.sponsored && (
                       <div className="absolute top-3 left-3 z-10"><SponsoredTag /></div>
                     )}
-
-                    {/* Follow button */}
-                    <button
-                      onClick={(e) => toggleFollow(card.id, e)}
-                      className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200"
-                      style={{
-                        background: followed.has(card.id) ? "rgba(239,68,68,0.9)" : "rgba(0,0,0,0.45)",
-                        border: followed.has(card.id) ? "1px solid rgba(239,68,68,0.6)" : "1px solid rgba(255,255,255,0.15)",
-                        backdropFilter: "blur(6px)",
-                      }}
-                    >
-                      <Heart size={11} strokeWidth={2.5}
-                        style={{ color: followed.has(card.id) ? "#fff" : "rgba(255,255,255,0.7)" }}
-                        fill={followed.has(card.id) ? "#fff" : "none"}
-                      />
-                    </button>
                   </div>
 
                   {/* Info */}

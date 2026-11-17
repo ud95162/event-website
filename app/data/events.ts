@@ -39,6 +39,7 @@ export type Event = {
   links?: {
     website?:   string;
     tickets?:   string;
+    phone?:     string;   // contact number for booking — shown as a tap-to-call button when there is no tickets link
     instagram?: string;
     facebook?:  string;
     tiktok?:    string;

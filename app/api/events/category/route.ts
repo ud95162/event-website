@@ -18,7 +18,7 @@ import { eventCategory } from "../../../lib/eventCategories";
 //   /api/events/category?type=city&value=Colombo
 //   /api/events/category?type=near-you&lat=..&lon=..&radius=50   (upcoming events within `radius` km, nearest first)
 //   /api/events/category?type=week            upcoming events in the next 7 days, soonest first
-//   /api/events/category?type=month           upcoming events this calendar month, soonest first
+//   /api/events/category?type=month           upcoming events later this calendar month, soonest first (excludes the next 7 days, which `week` already shows)
 //   /api/events/category?type=category&value=Music%20%26%20Nightlife   upcoming events in one Events-page section, soonest first
 //   any type + &lat=..&lon=..&within=50   keeps only events within `within` km of that point (the chosen city)
 
@@ -76,11 +76,14 @@ export async function GET(req: NextRequest) {
         .sort((a, b) => parseEventDate(a.date)!.getTime() - parseEventDate(b.date)!.getTime());
       break;
     }
-    case "month":
+    case "month": {
+      // Anything already shown in "This Week" (the next 7 days) is left out, so no event appears in both rows.
+      const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
       picked = rows
-        .filter((e) => { const d = parseEventDate(e.date); return !!d && d >= now && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })
+        .filter((e) => { const d = parseEventDate(e.date); return !!d && d >= weekEnd && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })
         .sort((a, b) => parseEventDate(a.date)!.getTime() - parseEventDate(b.date)!.getTime());
       break;
+    }
     case "category":
       picked = rows
         .filter((e) => { const d = parseEventDate(e.date); return e.category === (sp.get("value") ?? "") && !!d && d >= now; })

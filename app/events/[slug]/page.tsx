@@ -5,7 +5,7 @@ import { toDateTime } from "../../lib/eventTime";
 import { genreColor, genreChipStyle } from "../../lib/genres";
 import { thumb } from "../../lib/images";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { MapPin, Calendar, Ticket, Heart, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Maximize, Minimize, Play, Pause, Mail, Link2, Check, Globe } from "lucide-react";
+import { MapPin, Calendar, Ticket, Share2, ChevronLeft, ShieldAlert, Users, Building2, ExternalLink, Clock, CheckCircle2, Radio, Volume2, VolumeX, Maximize, Minimize, Play, Pause, Mail, Link2, Check, Globe, Phone } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
 import { useUserLocation, haversineKm, formatDistance } from "../../context/LocationContext";
 import { artistSlug, organizerSlug, eventSlug } from "../../lib/slug";
@@ -91,7 +91,6 @@ export default function EventDetailPage() {
 
   const [event,   setEvent]   = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [liked,  setLiked]  = useState(false);
   const [shared, setShared] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -337,16 +336,6 @@ export default function EventDetailPage() {
                     {event.title}
                   </h1>
                   <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => setLiked(l => !l)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
-                      style={{
-                        background: liked ? "rgba(239,68,68,0.9)" : "rgba(255,255,255,0.06)",
-                        border: liked ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      <Heart size={13} fill={liked ? "#fff" : "none"} className="text-white" />
-                    </button>
                     <div className="relative">
                       <button
                         onClick={(e) => { e.stopPropagation(); setShareOpen(o => !o); }}
@@ -456,6 +445,18 @@ export default function EventDetailPage() {
                 >
                   <Calendar size={14} /> Add to Calendar
                 </a>
+
+                {/* No tickets link → a tap-to-call booking number instead */}
+                {!(event.links?.tickets ?? "").trim() && (event.links?.phone ?? "").trim() && (
+                  <a
+                    href={`tel:${(event.links?.phone ?? "").replace(/[^\d+]/g, "")}`}
+                    onClick={() => track("event", event.id, "link_click")}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl text-[11px] font-black tracking-[0.2em] uppercase mb-6 transition-opacity hover:opacity-90"
+                    style={{ background: "#E8DCC0", color: "#000" }}
+                  >
+                    <Phone size={14} /> Call to book · {(event.links?.phone ?? "").trim()}
+                  </a>
+                )}
 
                 {/* Ticket types */}
                 {(event.tickets ?? []).filter(t => t.name || t.price).length > 0 && (
