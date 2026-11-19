@@ -45,6 +45,8 @@ function EventRow({ title, subtitle, events: rowEvents, direction = "left" }: {
   const animating = useRef(false);
   const posRef    = useRef(0);
   const rafRef    = useRef<number>(0);
+  const boxRef    = useRef<HTMLDivElement>(null);   // the clipped viewport the track slides in
+  const swipeUntil = useRef(0);                      // auto-roll stays paused until this time after a trackpad swipe
   const CARD_STEP = 284 * 3; // 3 cards (card 270 + gap 14)
 
   // A row with only a few events just sits still — a scrolling loop of one or two repeated cards
@@ -59,7 +61,7 @@ function EventRow({ title, subtitle, events: rowEvents, direction = "left" }: {
     posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
 
     const step = () => {
-      if (!pausedRef.current && !animating.current) {
+      if (!pausedRef.current && !animating.current && performance.now() >= swipeUntil.current) {
         posRef.current += direction === "left" ? -speed : speed;
         const half = el.scrollWidth / 2;
         if (direction === "left"  && posRef.current <= -half) posRef.current += half;
@@ -71,6 +73,26 @@ function EventRow({ title, subtitle, events: rowEvents, direction = "left" }: {
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
   }, [direction, rowEvents.length, isStatic]);
+
+  // Two-finger trackpad swipe (or shift + wheel) moves the row by hand, looping like the auto-roll.
+  useEffect(() => {
+    const box = boxRef.current;
+    const track = trackRef.current;
+    if (!box || !track || isStatic) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // vertical scrolling stays normal page scrolling
+      e.preventDefault();                                      // also stops the browser's swipe-to-go-back
+      if (animating.current) return;
+      const half = track.scrollWidth / 2;
+      let pos = (posRef.current - e.deltaX) % half;
+      if (pos > 0) pos -= half;
+      posRef.current = pos;
+      track.style.transform = `translateX(${pos}px)`;
+      swipeUntil.current = performance.now() + 1500;
+    };
+    box.addEventListener("wheel", onWheel, { passive: false });
+    return () => box.removeEventListener("wheel", onWheel);
+  }, [isStatic, rowEvents.length]);
 
   const slideTo = (delta: number) => {
     const el = trackRef.current;
@@ -121,6 +143,7 @@ function EventRow({ title, subtitle, events: rowEvents, direction = "left" }: {
       </div>
 
       <div
+        ref={boxRef}
         style={{ overflow: "hidden", position: "relative" }}
         onMouseEnter={() => { pausedRef.current = true; }}
         onMouseLeave={() => { pausedRef.current = false; }}
