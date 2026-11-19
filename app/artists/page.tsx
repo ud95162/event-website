@@ -31,6 +31,8 @@ function ArtistRow({ title, subtitle, artists: rowArtists, direction = "left" }:
   const animating = useRef(false);
   const posRef    = useRef(0);
   const rafRef    = useRef<number>(0);
+  const boxRef    = useRef<HTMLDivElement>(null);   // the clipped viewport the track slides in
+  const swipeUntil = useRef(0);                      // auto-roll stays paused until this time after a trackpad swipe
   const CARD_STEP = 244 * 3;
 
   const isStatic = rowArtists.length <= 3;
@@ -43,7 +45,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, direction = "left" }:
     posRef.current = direction === "right" ? -(el.scrollWidth / 2) : 0;
 
     const step = () => {
-      if (!pausedRef.current && !animating.current) {
+      if (!pausedRef.current && !animating.current && performance.now() >= swipeUntil.current) {
         posRef.current += direction === "left" ? -speed : speed;
         const half = el.scrollWidth / 2;
         if (direction === "left"  && posRef.current <= -half) posRef.current += half;
@@ -55,6 +57,26 @@ function ArtistRow({ title, subtitle, artists: rowArtists, direction = "left" }:
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
   }, [direction, rowArtists.length, isStatic]);
+
+  // Two-finger trackpad swipe (or shift + wheel) moves the row by hand, looping like the auto-roll.
+  useEffect(() => {
+    const box = boxRef.current;
+    const track = trackRef.current;
+    if (!box || !track || isStatic) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // vertical scrolling stays normal page scrolling
+      e.preventDefault();                                      // also stops the browser's swipe-to-go-back
+      if (animating.current) return;
+      const half = track.scrollWidth / 2;
+      let pos = (posRef.current - e.deltaX) % half;
+      if (pos > 0) pos -= half;
+      posRef.current = pos;
+      track.style.transform = `translateX(${pos}px)`;
+      swipeUntil.current = performance.now() + 1500;
+    };
+    box.addEventListener("wheel", onWheel, { passive: false });
+    return () => box.removeEventListener("wheel", onWheel);
+  }, [isStatic, rowArtists.length]);
 
   const slideTo = (delta: number) => {
     const el = trackRef.current;
@@ -120,6 +142,7 @@ function ArtistRow({ title, subtitle, artists: rowArtists, direction = "left" }:
         <h2 style={{ fontSize: "clamp(1rem,2vw,1.4rem)", fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.04em" }}>{title}</h2>
       </div>
       <div
+        ref={boxRef}
         style={{ overflow: "hidden", position: "relative" }}
         onMouseEnter={() => { pausedRef.current = true; }}
         onMouseLeave={() => { pausedRef.current = false; }}
